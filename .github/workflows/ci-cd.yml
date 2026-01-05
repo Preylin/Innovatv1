@@ -44,7 +44,7 @@ jobs:
           username: ${{ env.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd ~/docker/project
+            cd ~/docker/innovatv1
             docker pull ${{ env.REGISTRY }}/${{ env.PROJECT }}:fastapi
             docker pull ${{ env.REGISTRY }}/${{ env.PROJECT }}:frontend
             docker compose up -d
