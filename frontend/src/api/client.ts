@@ -6,10 +6,9 @@ import { getToken } from "./token";
 /**
  * La URL base para la API.
  * Se obtiene de la variable de entorno `VITE_API_URL`,
- * con un respaldo a `http://localhost:8000`.
  */
 export const API_URL =
-  (import.meta.env.VITE_API_URL as string) || "http://localhost:8000";
+  (import.meta.env.VITE_API_URL as string) || "http://66.94.108.125:8000";
 
 /**
  * La instancia principal de axios para realizar solicitudes a la API.
