@@ -8,7 +8,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     env:
-      REGISTRY: ghcr.io/Preylin
+      REGISTRY: ghcr.io/preylin
       PROJECT: innovatv1
       VPS_USER: deploy
       VPS_IP: 66.94.108.125

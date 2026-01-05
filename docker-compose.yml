@@ -8,10 +8,10 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     env:
-      REGISTRY: ghcr.io/usuario   # Cambia a tu Docker Hub si quieres
-      PROJECT: myproject          # Nombre del proyecto
+      REGISTRY: ghcr.io/preylin   # Cambia a tu Docker Hub si quieres
+      PROJECT: innovatv1          # Nombre del proyecto
       VPS_USER: deploy
-      VPS_IP: <IP_VPS>
+      VPS_IP: 66.94.108.125
       SSH_KEY: ${{ secrets.VPS_SSH_KEY }}  # Clave SSH privada del deploy user
 
     steps:
@@ -30,18 +30,18 @@ jobs:
       # 3️⃣ Build imagen FastAPI
       - name: Build FastAPI image
         run: |
-          docker build -t $REGISTRY/$PROJECT:fastapi ./api
+          docker build -t $REGISTRY/$innovatv1:fastapi ./api
 
       # 4️⃣ Build imagen frontend
       - name: Build Frontend image
         run: |
-          docker build -t $REGISTRY/$PROJECT:frontend ./frontend
+          docker build -t $REGISTRY/$innovatv1:frontend ./frontend
 
       # 5️⃣ Push imágenes al registry
       - name: Push images
         run: |
-          docker push $REGISTRY/$PROJECT:fastapi
-          docker push $REGISTRY/$PROJECT:frontend
+          docker push $REGISTRY/$innovatv1:fastapi
+          docker push $REGISTRY/$innovatv1:frontend
 
       # 6️⃣ Deploy al VPS
       - name: Deploy to VPS
@@ -51,9 +51,9 @@ jobs:
           username: ${{ env.VPS_USER }}
           key: ${{ env.SSH_KEY }}
           script: |
-            cd ~/docker/project
+            cd ~/docker/innovatv1
             # Actualizar imágenes desde el registry
-            docker pull $REGISTRY/$PROJECT:fastapi
-            docker pull $REGISTRY/$PROJECT:frontend
+            docker pull $REGISTRY/$innovatv1:fastapi
+            docker pull $REGISTRY/$innovatv1:frontend
             # Levantar containers rootless
             docker compose up -d
