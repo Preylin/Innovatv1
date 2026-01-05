@@ -1,9 +1,8 @@
-from sqlalchemy.orm import Mapped, mapped_column, relationship, declarative_base
-from sqlalchemy import TIMESTAMP, VARCHAR, BigInteger, ForeignKey, text, UniqueConstraint
-from sqlalchemy.types import LargeBinary
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import TIMESTAMP, VARCHAR, BigInteger, text
 from datetime import datetime
+from app.core.base_class import Base
 
-Base = declarative_base()
 
 class Weather(Base):
     __tablename__ = "weather"

@@ -1,10 +1,9 @@
 import base64
-from sqlalchemy.orm import Mapped, mapped_column, relationship, declarative_base
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import TIMESTAMP, VARCHAR, BigInteger, ForeignKey, text, UniqueConstraint
 from sqlalchemy.types import LargeBinary
 from datetime import datetime
-
-Base = declarative_base()
+from app.core.base_class import Base
 
 class Cliente(Base):
     __tablename__ = "cliente"
