@@ -1,21 +1,13 @@
-# Imagen base
-FROM python:3.12-slim
+FROM python:3.11-slim
 
-# Directorio de trabajo
 WORKDIR /app
 
-# Copiar dependencias
-COPY requirements.txt /app/
-
 # Instalar dependencias
-RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar código fuente
-COPY . /app
+# Copiar el contenido de la carpeta api al WORKDIR (/app)
+COPY . .
 
-# Exponer puerto
-EXPOSE 8000
-
-# Comando para iniciar FastAPI
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# CORRECCIÓN: Como main.py está en la carpeta 'app', usamos app.main:app
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
