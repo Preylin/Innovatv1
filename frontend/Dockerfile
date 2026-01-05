@@ -1,5 +1,6 @@
 # Etapa 1: Build con Bun
-FROM jarredsumner/bun:latest AS builder
+# CAMBIO: Usamos la imagen oficial de Bun
+FROM oven/bun:latest AS builder
 WORKDIR /app
 
 # Copiar dependencias
