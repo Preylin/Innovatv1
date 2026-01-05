@@ -1,0 +1,82 @@
+import base64
+from sqlalchemy.orm import Mapped, mapped_column, relationship, declarative_base
+from sqlalchemy import TIMESTAMP, VARCHAR, BigInteger, ForeignKey, text, UniqueConstraint
+from sqlalchemy.types import LargeBinary
+from datetime import datetime
+
+Base = declarative_base()
+
+class Cliente(Base):
+    __tablename__ = "cliente"
+    __table_args__ = {"schema": "administracion"}
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    ruc: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"), nullable=False)
+
+    ubicacion: Mapped[list["Ubicacion"]] = relationship(back_populates="cliente", cascade="all, delete-orphan", lazy="selectin")
+
+
+class Ubicacion(Base):
+    __tablename__ = "ubicacion"
+    __table_args__ = (
+        UniqueConstraint("cliente_id", "name", name="uq_ubicacion_cliente_name"),
+        {"schema": "administracion"},
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
+    cliente_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("administracion.cliente.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"), nullable=False)
+
+    cliente: Mapped["Cliente"] = relationship(back_populates="ubicacion", lazy="joined")
+
+
+class Chip(Base):
+    __tablename__ = "chip"
+    __table_args__ = {"schema": "administracion"}
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    numero: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False)
+    iccid: Mapped[str] = mapped_column(VARCHAR(255), unique=True, nullable=False)
+    operador: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
+    mb: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
+    activacion: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    instalacion: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    adicional: Mapped[str] = mapped_column(VARCHAR(255), nullable=True)
+    status: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"), nullable=False)
+
+    imagen: Mapped[list["ImagenChips"]] = relationship(back_populates="chip", cascade="all, delete-orphan", lazy="selectin")
+    
+
+class ImagenChips(Base):
+    __tablename__ = "imagen_chips"
+    __table_args__ = {"schema": "administracion"}
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    image_byte: Mapped[bytes] = mapped_column(LargeBinary)
+    chip_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("administracion.chip.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"), nullable=False)
+
+    chip: Mapped["Chip"] = relationship(back_populates="imagen")
+
+    @property
+    def image_base64(self) -> str | None:
+        if not self.image_byte:
+            return None
+        try:
+            return base64.b64encode(self.image_byte).decode("utf-8")
+        except Exception:
+            return None
+
+
