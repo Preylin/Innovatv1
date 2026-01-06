@@ -1,5 +1,6 @@
 import logging
 from fastapi import FastAPI
+from api.app.core.security import hash_password
 from app.api.v1.routes.auth import auth, usuario
 from app.api.v1.routes.modulos.administracion.monitoreo.router_wather_pro_monitoreo_administracion import router_weather, router_pro
 from app.api.v1.routes.modulos.administracion.monitoreo.router_clientes_ubicacion_chips_monitoreo_administracion import router_clientes, router_chips, rourter_ubicaciones
@@ -59,4 +60,3 @@ app.include_router(router_chips)
 app.include_router(rourter_ubicaciones)
 app.include_router(router_weather)
 app.include_router(router_pro)
-

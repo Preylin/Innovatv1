@@ -23,8 +23,8 @@ class ConfigSettings(BaseSettings):
     DB_MAX_OVERFLOW: int = Field(..., description="Número máximo de conexiones que pueden exceder el tamaño del pool.")
     DB_POOL_RECYCLE: int = Field(..., description="Tiempo en segundos después del cual las conexiones del pool son recicladas.")
     JWT_SECRET_KEY: str = Field(..., min_length=32, description="Clave secreta para firmar los tokens JWT. Debe tener al menos 32 caracteres.")
-    JWT_ALG: str = Field("HS256", description="Algoritmo de cifrado utilizado para los tokens JWT.")
-    JWT_EXPIRE_MINUTES: int = Field(960, description="Tiempo de expiración de los tokens JWT en minutos.")
+    JWT_ALG: str = Field(..., description="Algoritmo de cifrado utilizado para los tokens JWT.")
+    JWT_EXPIRE_MINUTES: int = Field(..., description="Tiempo de expiración de los tokens JWT en minutos.")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
