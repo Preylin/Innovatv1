@@ -74,12 +74,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    if (!isLoading) {
+    // Solo resolvemos si ya no está cargando Y (si está autenticado, ya tenemos al usuario)
+    const isReady = !isLoading && (isAuthenticated ? !!user : true);
+
+    if (isReady) {
       readyRef.current?.resolve?.();
-      // después de resolver, opcionalmente podemos establecer resolve en null para evitar volver a resolver
-      // readyRef.current!.resolve = null;
     }
-  }, [isLoading]);
+  }, [isLoading, isAuthenticated, user]);
 
   // forzar un nuevo renderizado cuando cambia el token
   const [, setTick] = useState(0);
@@ -92,14 +93,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(
-  async (email: string, password: string): Promise<UsuarioOutType> => {
-    await loginMutation.mutateAsync({ email, password });
-    const { data } = await refetch();
-    if (!data) throw new Error("Usuario no disponible");
-    return data;
-  },
-  [loginMutation, refetch]
-);
+    async (email: string, password: string): Promise<UsuarioOutType> => {
+      await loginMutation.mutateAsync({ email, password });
+      const { data } = await refetch();
+      if (!data) throw new Error("Usuario no disponible");
+      return data;
+    },
+    [loginMutation, refetch]
+  );
 
   const logout = useCallback(() => {
     logoutFn();
@@ -118,12 +119,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   if (isLoading || (isAuthenticated && !user)) {
-  return (
-    <div className="h-screen w-screen grid place-content-center">
-       <SpinAtom size="large">Cargando datos de sesión...</SpinAtom>
-    </div>
-  );
-}
+    return (
+      <div className="h-screen w-screen grid place-content-center">
+        <SpinAtom size="large">Cargando datos de sesión...</SpinAtom>
+      </div>
+    );
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
