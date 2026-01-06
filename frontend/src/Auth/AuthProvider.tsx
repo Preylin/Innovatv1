@@ -117,17 +117,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, isAuthenticated, isLoading, login, logout]
   );
 
-  if (isLoading) {
-    return (
-      <div className="h-screen w-screen grid place-content-center">
-        <div className="flex flex-row">
-          <SpinAtom size="large">
-            <div className="p-4">Cargando…</div>
-          </SpinAtom>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading || (isAuthenticated && !user)) {
+  return (
+    <div className="h-screen w-screen grid place-content-center">
+       <SpinAtom size="large">Cargando datos de sesión...</SpinAtom>
+    </div>
+  );
+}
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

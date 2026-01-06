@@ -4,7 +4,7 @@ import api, { fetchJson } from "./client";
 import { getToken, setToken, clearToken, onTokenChange } from "./token";
 import { LoginInSchema, TokenOutSchema, type LoginInType, type TokenOutType } from "./auth.api.schema";
 import { UsuarioOutSchema, type UsuarioOutType } from "./queries/auth/usuarios.api.schema";
-import { ApiError, normalizeError } from "./normalizeError";
+import { ApiError } from "./normalizeError";
 
 
 /**
@@ -50,24 +50,20 @@ export function useLogin() {
   const qc = useQueryClient();
   return useMutation<TokenOutType, ApiError, LoginInType>({
     mutationFn: async (payload) => {
-      try {
-        // Validar el input (frontera interna)
-        const validPayload = LoginInSchema.parse(payload);
-        // Request HTTP
-        const res = await api.post("/auth/login", validPayload);
-        // Validar respuesta (frontera externa)
-        const token = TokenOutSchema.parse(res.data);
-        // Side-effects
-        setToken(token.access_token);
-        await qc.invalidateQueries({ queryKey: ["auth", "me"] });
-        return token;
-      } catch (err) {
-        // Transformar cualquier error a ApiError
-        if (err instanceof ApiError) throw err; // ya es ApiError
-        throw new ApiError({
-          ...normalizeError(err),
-        });
-      }
+      const validPayload = LoginInSchema.parse(payload);
+      const res = await api.post("/auth/login", validPayload);
+      const token = TokenOutSchema.parse(res.data);
+      
+      setToken(token.access_token);
+      
+      // CAMBIO CLAVE: Ejecutar el fetch de "me" inmediatamente y esperar el resultado
+      // Esto asegura que cuando la mutación termine, la caché ya tenga al usuario.
+      await qc.fetchQuery({ 
+        queryKey: ["auth", "me"], 
+        queryFn: fetchMe 
+      });
+      
+      return token;
     },
   });
 }
