@@ -24,9 +24,14 @@ export default function CircularMenuContainer() {
 
   const handleLogin = useCallback(
     ({ route, isAllowed }: LoginResult) => {
-      setSelected(null);
-      if (!isAllowed) return;
-      navigate({ to: route });
+      if (isAllowed) {
+        // Navegamos primero mientras el contexto del modal aún existe
+        navigate({ to: route }).then(() => {
+          setSelected(null);
+        });
+      } else {
+        setSelected(null);
+      }
     },
     [navigate]
   );
