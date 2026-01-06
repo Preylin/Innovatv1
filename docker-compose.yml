@@ -20,6 +20,9 @@ services:
     env_file: .env
     depends_on:
       - db
+      #temporal
+    volumes:
+      - ./api/alembic/versions:/app/alembic/versions
 
   frontend:
     image: ghcr.io/preylin/innovatv1:frontend
