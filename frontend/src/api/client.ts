@@ -7,8 +7,9 @@ import { getToken } from "./token";
  * La URL base para la API.
  * Se obtiene de la variable de entorno `VITE_API_URL`,
  */
-export const API_URL =
-  (import.meta.env.VITE_API_URL as string);
+
+export const API_URL = 
+  (import.meta.env.VITE_API_BASE_URL as string);
 
 /**
  * La instancia principal de axios para realizar solicitudes a la API.
