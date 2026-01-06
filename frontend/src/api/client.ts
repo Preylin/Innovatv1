@@ -43,11 +43,12 @@ axiosRetry(api, {
 api.interceptors.request.use((cfg) => {
   const token = getToken();
   if (token) {
-    cfg.headers = cfg.headers || {};
-    (cfg.headers as Record<string, string>)["Authorization"] =
-      `Bearer ${token}`;
+    // Aseguramos que el token se asigne directamente al objeto de cabeceras
+    cfg.headers.Authorization = `Bearer ${token}`;
   }
   return cfg;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 /**

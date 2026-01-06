@@ -1,6 +1,6 @@
 // src/lib/Api/auth.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api, { fetchJson } from "./client";
+import api from "./client";
 import { getToken, setToken, clearToken, onTokenChange } from "./token";
 import { LoginInSchema, TokenOutSchema, type LoginInType, type TokenOutType } from "./auth.api.schema";
 import { UsuarioOutSchema, type UsuarioOutType } from "./queries/auth/usuarios.api.schema";
@@ -15,8 +15,16 @@ import { ApiError } from "./normalizeError";
 export async function fetchMe(): Promise<UsuarioOutType | null> {
   const token = getToken();
   if (!token) return null;
-  const data = await fetchJson<unknown>("/auth/me");
-  return UsuarioOutSchema.parse(data);
+  
+  try {
+    // Usamos api directamente para asegurar que pase por el interceptor con el token
+    const res = await api.get("/auth/me"); 
+    return UsuarioOutSchema.parse(res.data);
+  } catch (e) {
+    console.error("Error en fetchMe:", e);
+    clearToken(); // Si el token no sirve, lo limpiamos
+    return null;
+  }
 }
 
 /**
