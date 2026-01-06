@@ -8,7 +8,7 @@ import { getToken } from "./token";
  * Se obtiene de la variable de entorno `VITE_API_URL`,
  */
 export const API_URL =
-  (import.meta.env.VITE_API_URL as string) || "http://66.94.108.125:8000";
+  (import.meta.env.VITE_API_URL as string);
 
 /**
  * La instancia principal de axios para realizar solicitudes a la API.
