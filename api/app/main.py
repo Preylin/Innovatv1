@@ -1,6 +1,5 @@
 import logging
 from fastapi import FastAPI
-from app.core.security import hash_password
 from app.api.v1.routes.auth import auth, usuario
 from app.api.v1.routes.modulos.administracion.monitoreo.router_wather_pro_monitoreo_administracion import router_weather, router_pro
 from app.api.v1.routes.modulos.administracion.monitoreo.router_clientes_ubicacion_chips_monitoreo_administracion import router_clientes, router_chips, rourter_ubicaciones
@@ -23,7 +22,7 @@ app = FastAPI()
 
 # configuracio cors
 origins = [
-    "http://66.94.108.125:8080",  # Vite default port (ajusta si usas otro)
+    "http://66.94.108.125:8080" 
 ]
 
 app.add_middleware(
