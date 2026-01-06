@@ -37,6 +37,15 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ env.PROJECT }}:fastapi
           docker push ${{ env.REGISTRY }}/${{ env.PROJECT }}:frontend
 
+      - name: Copy docker-compose.yml to VPS
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ env.VPS_IP }}
+          username: ${{ env.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "docker-compose.yml"
+          target: "~/docker/innovatv1"
+          
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v0.1.7
         with:
