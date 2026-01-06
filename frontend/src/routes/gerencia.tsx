@@ -17,12 +17,23 @@ import MainLayout, {
 import { LazyIcon } from "../components/atoms/icons/IconsSiderBar";
 import { PanelSuperior } from "../components/interfaz_modulos/TopPanel";
 
+const canon = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
 export const Route = createFileRoute("/gerencia")({
   beforeLoad: async ({ context }) => {
     const auth = context.auth;
     await auth.ensureReady();
 
     if (!auth.isAuthenticated) {
+      throw redirect({ to: "/" });
+    }
+    const tienePermiso = auth.user?.permisos?.some(
+      (p) => canon(p.name_module) === canon("gerencia")
+    );
+
+    if (!tienePermiso) {
+      console.warn("Acceso denegado a Gerencia");
       throw redirect({ to: "/" });
     }
   },
