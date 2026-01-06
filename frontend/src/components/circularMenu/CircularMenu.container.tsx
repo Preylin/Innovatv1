@@ -23,13 +23,14 @@ export default function CircularMenuContainer() {
   }, []);
 
   const handleLogin = useCallback(
-    ({ route, isAllowed }: LoginResult) => {
+    async ({ route, isAllowed }: LoginResult) => {
       if (isAllowed) {
-        // Navegamos primero mientras el contexto del modal aún existe
-        navigate({ to: route }).then(() => {
-          setSelected(null);
-        });
+        // 1. Navegamos PRIMERO (importante: esperar a que termine)
+        await navigate({ to: route });
+        // 2. Cerramos el modal SOLO después de que la ruta cambió
+        setSelected(null);
       } else {
+        console.error("Acceso denegado: El permiso no coincide con el módulo");
         setSelected(null);
       }
     },

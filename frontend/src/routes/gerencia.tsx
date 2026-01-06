@@ -33,7 +33,6 @@ export const Route = createFileRoute("/gerencia")({
     );
 
     if (!tienePermiso) {
-      console.warn("Acceso denegado a Gerencia");
       throw redirect({ to: "/" });
     }
   },
