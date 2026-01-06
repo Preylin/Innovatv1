@@ -14,10 +14,6 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy import text
 from app.core.config import settings
 
-from app.models.auth.auth_models import Usuario, Permiso
-from app.models.modulos.administracion.monitoreo.individuales.models_weather_pro_chips_monitoreo_administracion import Weather, Pro
-from app.models.modulos.administracion.monitoreo.matrices.models_matrices_monitoreo_administracion import Cliente, Ubicacion, Chip, ImagenChips
-
 engine: Optional[AsyncEngine] = None
 """El objeto Engine de SQLAlchemy para la conexión asíncrona a la base de datos."""
 AsyncSessionLocal: Optional[async_sessionmaker[AsyncSession]] = None
