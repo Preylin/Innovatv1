@@ -18,7 +18,7 @@ export const UsuarioOutSchema = z.object({
         id: z.number(),
         usuario_id: z.number(),
         created_at: z.iso.datetime(),
-    })).nullable(),
+    })).optional(),
     created_at: z.iso.datetime(),
 
 })
