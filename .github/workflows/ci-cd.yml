@@ -41,13 +41,13 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ env.PROJECT }}:fastapi
           docker push ${{ env.REGISTRY }}/${{ env.PROJECT }}:frontend
 
-      - name: Copy docker-compose.yml to VPS
+      - name: Copy files to VPS
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ env.VPS_IP }}
           username: ${{ env.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "docker-compose.yml,nginx.conf"
+          source: "docker-compose.yml,nginx.conf,api/alembic/versions/*"
           target: "~/docker/innovatv1"
           
       - name: Deploy to VPS
@@ -61,3 +61,4 @@ jobs:
             docker pull ${{ env.REGISTRY }}/${{ env.PROJECT }}:fastapi
             docker pull ${{ env.REGISTRY }}/${{ env.PROJECT }}:frontend
             docker compose up -d
+            docker compose exec -T fastapi alembic upgrade head

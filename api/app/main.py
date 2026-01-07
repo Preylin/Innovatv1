@@ -22,7 +22,7 @@ app = FastAPI()
 
 # configuracio cors
 origins = [
-    "http://66.94.108.125:8080", "http://localhost:5173" # Vite default port (ajusta si usas otro)
+    "http://66.94.108.125:8080" # Vite default port (ajusta si usas otro)
 ]
 
 app.add_middleware(

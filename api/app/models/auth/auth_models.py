@@ -40,7 +40,7 @@ class Usuario(Base):
     cargo: Mapped[str|None] = mapped_column(nullable=False)
     estado: Mapped[str] = mapped_column(estado_usuario_pg, server_default=text("'bloqueado'::acceso.estado_usuario"), nullable=False)
     imagen:Mapped[bytes | None] = mapped_column(LargeBinary)
-    created_at: Mapped[datetime] = mapped_column(server_default=text("NOW()"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"), nullable=False)
 
     permisos: Mapped[list["Permiso"]] = relationship(back_populates="usuario", cascade="all, delete-orphan", lazy="selectin")
 
@@ -78,6 +78,5 @@ class Permiso(Base):
         ForeignKey("acceso.usuario.id", ondelete="CASCADE"),
         nullable=False,
     )
-    created_at: Mapped[datetime] = mapped_column(server_default=text("NOW()"), nullable=False)
-
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"), nullable=False)
     usuario: Mapped["Usuario"] = relationship(back_populates="permisos", lazy="joined")

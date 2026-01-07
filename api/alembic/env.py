@@ -16,11 +16,6 @@ if config.config_file_name is not None:
 
 # 2. CONFIGURAR METADATA (Crucial para autogenerate)
 from app.core.base_class import Base
-
-from app.models.auth.auth_models import Usuario, Permiso
-from app.models.modulos.administracion.monitoreo.individuales.models_weather_pro_chips_monitoreo_administracion import Weather, Pro
-from app.models.modulos.administracion.monitoreo.matrices.models_matrices_monitoreo_administracion import Cliente, Ubicacion, Chip, ImagenChips
-
 target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
