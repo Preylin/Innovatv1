@@ -74,13 +74,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    // Solo resolvemos si ya no está cargando Y (si está autenticado, ya tenemos al usuario)
-    const isReady = !isLoading && (isAuthenticated ? !!user : true);
-
-    if (isReady) {
+    if (!isLoading) {
       readyRef.current?.resolve?.();
+      // después de resolver, opcionalmente podemos establecer resolve en null para evitar volver a resolver
+      // readyRef.current!.resolve = null;
     }
-  }, [isLoading, isAuthenticated, user]);
+  }, [isLoading]);
 
   // forzar un nuevo renderizado cuando cambia el token
   const [, setTick] = useState(0);
@@ -93,14 +92,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(
-    async (email: string, password: string): Promise<UsuarioOutType> => {
-      await loginMutation.mutateAsync({ email, password });
-      const { data } = await refetch();
-      if (!data) throw new Error("Usuario no disponible");
-      return data;
-    },
-    [loginMutation, refetch]
-  );
+  async (email: string, password: string): Promise<UsuarioOutType> => {
+    await loginMutation.mutateAsync({ email, password });
+    const { data } = await refetch();
+    if (!data) throw new Error("Usuario no disponible");
+    return data;
+  },
+  [loginMutation, refetch]
+);
 
   const logout = useCallback(() => {
     logoutFn();
@@ -118,10 +117,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, isAuthenticated, isLoading, login, logout]
   );
 
-  if (isLoading || (isAuthenticated && !user)) {
+  if (isLoading) {
     return (
       <div className="h-screen w-screen grid place-content-center">
-        <SpinAtom size="large">Cargando datos de sesión...</SpinAtom>
+        <div className="flex flex-row">
+          <SpinAtom size="large">
+            <div className="p-4">Cargando…</div>
+          </SpinAtom>
+        </div>
       </div>
     );
   }

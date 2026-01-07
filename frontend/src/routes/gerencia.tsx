@@ -17,36 +17,12 @@ import MainLayout, {
 import { LazyIcon } from "../components/atoms/icons/IconsSiderBar";
 import { PanelSuperior } from "../components/interfaz_modulos/TopPanel";
 
-const canon = (s: string) =>
-  s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
 export const Route = createFileRoute("/gerencia")({
   beforeLoad: async ({ context }) => {
     const auth = context.auth;
     await auth.ensureReady();
 
     if (!auth.isAuthenticated) {
-      console.log("REDIRECCIÓN: No autenticado");
-      throw redirect({ to: "/" });
-    }
-
-    const permisosActuales = auth.user?.permisos || [];
-    const moduloBuscado = "gerencia";
-    
-    const tienePermiso = permisosActuales.some(
-      (p) => canon(p.name_module) === canon(moduloBuscado)
-    );
-
-    // ESTE LOG ES VITAL
-    console.log("DEBUG PERMISOS:", {
-      usuario: auth.user?.email,
-      buscando: moduloBuscado,
-      disponibles: permisosActuales.map(p => p.name_module),
-      resultado: tienePermiso
-    });
-
-    if (!tienePermiso) {
-      console.log("REDIRECCIÓN: Sin permiso para este módulo");
       throw redirect({ to: "/" });
     }
   },

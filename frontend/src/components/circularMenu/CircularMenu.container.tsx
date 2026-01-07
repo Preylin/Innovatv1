@@ -23,17 +23,10 @@ export default function CircularMenuContainer() {
   }, []);
 
   const handleLogin = useCallback(
-    async ({ route, isAllowed }: LoginResult) => {
-      if (!isAllowed) {
-        setSelected(null);
-        return;
-      }
-
-      // Navegamos primero
-      await navigate({ to: route });
-
-      // Solo después de navegar con éxito cerramos el modal
+    ({ route, isAllowed }: LoginResult) => {
       setSelected(null);
+      if (!isAllowed) return;
+      navigate({ to: route });
     },
     [navigate]
   );

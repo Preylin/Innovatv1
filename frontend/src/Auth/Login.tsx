@@ -51,11 +51,6 @@ export function LoginModal({
         const permisos = user.permisos ?? [];
         const allowed = new Set(permisos.map((p) => canon(p.name_module)));
         const targetCanon = canon(String(to));
-        console.log("DEBUG PERMISOS:", {
-          target: targetCanon,
-          misPermisos: Array.from(allowed),
-          loTiene: allowed.has(targetCanon),
-        });
 
         onLogin?.({
           userId: user.id.toString(),
