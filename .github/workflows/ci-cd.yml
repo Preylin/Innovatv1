@@ -26,7 +26,7 @@ jobs:
 
       - name: Create env file for Frontend
         run: |
-          echo "VITE_API_BASE_URL=http://66.94.108.125:8000" > ./frontend/.env
+          echo "VITE_API_BASE_URL=https://innovatv1.kittnight.com/api" > ./frontend/.env
 
       - name: Build FastAPI image
         run: |
