@@ -156,9 +156,9 @@ function MostrarProveedoresList() {
   }, [allData, searchParams]);
 
   if (isLoading) return <Skeleton active paragraph={{ rows: 10 }} />;
+  if (isLoading) return <Skeleton active className="p-6" />;
   if (isError)
-    return <Alert type="error" title="Error al cargar Proveedores" showIcon />;
-  
+    return <Alert type="error" title="Error al cargar datos" showIcon />;  
 
   return (
     <div className="flex flex-col gap-4 px-2">

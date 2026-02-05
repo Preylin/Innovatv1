@@ -1,7 +1,7 @@
 import { useMemo, memo } from "react";
 import { useCatalogoStockLimiteMercaderiaList } from "../../../../api/queries/modulos/almacen/ingresos/mercaderia.api";
 import type { StockActualLimiteType } from "../../../../api/queries/modulos/almacen/ingresos/mercaderia.api.schema";
-import { Badge, Card, Flex, Typography } from "antd";
+import { Alert, Badge, Card, Empty, Flex, Skeleton, Typography } from "antd";
 import InfiniteCarousel from "../../../../components/molecules/carrucel/CarrucelInfinito";
 import CarrucelImagenes from "../../../../components/molecules/carrucel/Carucel";
 import { defaultImage } from "../../../../assets/images";
@@ -77,7 +77,7 @@ const ProductCard = memo(({ item }: { item: ServicioMcData }) => (
 
 // --- Componente Principal ---
 function MercaderiaStatus() {
-  const { data, isLoading, isError } = useCatalogoStockLimiteMercaderiaList();
+  const { data, isLoading, isError} = useCatalogoStockLimiteMercaderiaList();
 
   const categorizedData = useMemo(() => {
     const result = {
@@ -109,8 +109,11 @@ function MercaderiaStatus() {
     return result;
   }, [data]);
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error!</div>;
+  if (isLoading) return <Skeleton active paragraph={{ rows: 10 }} />;
+  if (isError)
+    return <Alert type="error" title="Error al cargar datos" showIcon />;
+  if (!data || data.length === 0)
+    return <Empty description="No se encontraron datos" />;
 
   const sections = [
     { title: "Agotado", data: categorizedData.agotado, color: "#f5222d" },

@@ -3,8 +3,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { CircularMenuUI } from "./CircularMenu.ui";
 import { Modulos, type LoginResult, type Modulo } from "./types";
 import SpinAtom from "../atoms/spin/Spin";
-import { useCircularSizes } from "./sizeResponsive";
 import { useCircularLayout } from "./useCircularLayout";
+import { useCircularSizes } from "./useCircularSizes";
 
 const LoginModal = lazy(() => import("../../Auth/Login"));
 

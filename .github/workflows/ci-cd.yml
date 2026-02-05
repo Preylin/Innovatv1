@@ -47,6 +47,7 @@ jobs:
           host: ${{ env.VPS_IP }}
           username: ${{ env.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
           source: "docker-compose.yml,nginx.conf,api/alembic/versions/*"
           target: "~/docker/innovatv1"
           strip_components: 0

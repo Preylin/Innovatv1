@@ -7,6 +7,7 @@ import {
   Badge,
   Grid,
   Skeleton,
+  Alert,
 } from "antd";
 
 import { useCallback, useMemo, useState } from "react";
@@ -121,11 +122,9 @@ function MostrarStockMercaderias() {
     [screens], 
   );
 
-  if (isLoading) return <Skeleton active className="p-6" />;
+  if (isLoading) return <Skeleton active paragraph={{ rows: 10 }} />;
   if (isError)
-    return (
-      <div className="p-6 text-red-500 text-center">Error al cargar datos</div>
-    );
+    return <Alert type="error" title="Error al cargar datos" showIcon />;
 
   return (
     <>

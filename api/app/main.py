@@ -36,7 +36,9 @@ app = FastAPI(title="ERP Innovat API")
 
 # configuracio cors
 origins = [
-    "http://66.94.108.125:8080", "http://localhost:5173"
+    "https://innovatv1.kittnight.com",
+    "http://66.94.108.125:8080", 
+    "http://localhost:5173"
 ]
 
 app.add_middleware(
@@ -116,4 +118,3 @@ app.include_router(router_salidaMercaderia)
 app.include_router(router_salidaMaterial)
 app.include_router(router_clientesGerenciaInicio)
 app.include_router(router_proveedoresGerenciaInicio)
-

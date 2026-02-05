@@ -1,4 +1,5 @@
 import {
+  Alert,
   Empty,
   Flex,
   Image,
@@ -90,7 +91,7 @@ function TablaMostrarIngresoMercaderia() {
   const [openCreateModal, setOpenCreateModal] = useState(false);
 
   //Queries
-  const { data, isLoading, } =
+  const { data, isLoading, isError} =
     useCatalogoSalidaMercaderiaList();
   const { mutate, isPending } = useDeteteSalidaMercaderia();
 
@@ -379,6 +380,8 @@ function TablaMostrarIngresoMercaderia() {
   );
 
   if (isLoading) return <Skeleton active paragraph={{ rows: 20 }} />;
+  if (isError)
+    return <Alert type="error" title="Error al cargar datos" showIcon />;
 
   return (
     <div>

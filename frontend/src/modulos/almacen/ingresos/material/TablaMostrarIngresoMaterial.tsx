@@ -1,4 +1,5 @@
 import {
+  Alert,
   Empty,
   Flex,
   Image,
@@ -92,7 +93,7 @@ function TablaMostrarIngresoMaterial() {
   const [openCreateModal, setOpenCreateModal] = useState(false);
 
   //Queries
-  const { data, isLoading} = useCatalogoIngresoMaterialList();
+  const { data, isLoading, isError } = useCatalogoIngresoMaterialList();
   const { mutate, isPending } = useDeteteIngresoMaterial();
 
   //Memoizacion de datos procesados
@@ -380,6 +381,8 @@ function TablaMostrarIngresoMaterial() {
   );
 
   if (isLoading) return <Skeleton active paragraph={{ rows: 20 }} />;
+  if (isError)
+    return <Alert type="error" title="Error al cargar datos" showIcon />;
 
   return (
     <div>

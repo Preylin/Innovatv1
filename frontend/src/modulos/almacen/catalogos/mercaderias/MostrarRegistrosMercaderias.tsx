@@ -10,6 +10,7 @@ import {
   Dropdown,
   Popconfirm,
   App,
+  Alert,
 } from "antd";
 
 import { useCallback, useMemo, useState } from "react";
@@ -153,9 +154,7 @@ function MostrarRegistrosMercaderias() {
 
   if (isLoading) return <Skeleton active className="p-6" />;
   if (isError)
-    return (
-      <div className="p-6 text-red-500 text-center">Error al cargar datos</div>
-    );
+    return <Alert type="error" title="Error al cargar datos" showIcon />;
   
 
   return (

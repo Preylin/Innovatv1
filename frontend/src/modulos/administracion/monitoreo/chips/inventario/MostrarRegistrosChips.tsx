@@ -10,6 +10,7 @@ import {
   Grid,
   type MenuProps,
   Dropdown,
+  Alert,
 } from "antd";
 import {
   useChipsList,
@@ -113,7 +114,7 @@ function Showchips() {
   const getMenuItems = (id: number): MenuProps["items"] => [
     {
       key: "edit",
-      icon: <ButtonUpdate style={{margin: '0px'}}/>,
+      icon: <ButtonUpdate style={{ margin: "0px" }} />,
       onClick: () => handleOpenUpdate(id),
     },
     {
@@ -132,7 +133,7 @@ function Showchips() {
           cancelText="Cancelar"
           okButtonProps={{ loading: isPending, danger: true }}
         >
-          <ButtonDelete style={{margin: '0px'}}/>
+          <ButtonDelete style={{ margin: "0px" }} />
         </Popconfirm>
       ),
     },
@@ -154,7 +155,9 @@ function Showchips() {
         instalacion: isoToDDMMYYYY(chip.instalacion) ?? "-",
         adicional: chip.adicional ?? "-",
         status: getStatusLabel(chip.status),
-        imagenTotal: [chip.imagen1 ?? "", chip.imagen2 ?? ""].filter(Boolean) as string[],
+        imagenTotal: [chip.imagen1 ?? "", chip.imagen2 ?? ""].filter(
+          Boolean,
+        ) as string[],
         created_at: chip.created_at ?? "-",
       }),
     );
@@ -182,11 +185,7 @@ function Showchips() {
 
   if (isLoading) return <Skeleton active className="p-6" />;
   if (isError)
-    return (
-      <div className="p-6 text-red-500 text-center">Error al cargar datos</div>
-    );
-  if (!data || data.length === 0)
-    return <Empty description="No hay chips registrados" className="mt-10" />;
+    return <Alert type="error" title="Error al cargar datos" showIcon />;
 
   return (
     <div className="flex flex-col gap-4 px-2">
@@ -208,74 +207,80 @@ function Showchips() {
 
       {/* Grid de Cards */}
       <Flex wrap="wrap" gap={12} justify="start">
-        {filteredData.map((chip) => (
-          <Card
-            key={chip.id}
-            style={cardFlexStyle}
-            hoverable
-            className="shadow-sm border-gray-100"
-            styles={{
-              body: {
-                padding: "10px",
-                display: "flex",
-                flexDirection: "column",
-                height: "100%",
-              },
-            }}
-          >
-            <div
-              style={{ position: "absolute", top: 10, right: 10, zIndex: 10 }}
+        {filteredData.length === 0 ? (
+          <Empty description="No se encontraron datos" />
+        ) : (
+          filteredData.map((chip) => (
+            <Card
+              key={chip.id}
+              style={cardFlexStyle}
+              hoverable
+              className="shadow-sm border-gray-100"
+              styles={{
+                body: {
+                  padding: "10px",
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                },
+              }}
             >
-              <Dropdown
-                menu={{ items: getMenuItems(chip.id) }}
-                trigger={["click"]}
-                styles={{ item: { padding: "3px 0px" } }}
+              <div
+                style={{ position: "absolute", top: 10, right: 10, zIndex: 10 }}
               >
-                <MoreOutlined
-                  style={{
-                    fontSize: "20px",
-                    cursor: "pointer",
-                    color: "#8c8c8c",
-                  }}
+                <Dropdown
+                  menu={{ items: getMenuItems(chip.id) }}
+                  trigger={["click"]}
+                  styles={{ item: { padding: "3px 0px" } }}
+                >
+                  <MoreOutlined
+                    style={{
+                      fontSize: "20px",
+                      cursor: "pointer",
+                      color: "#8c8c8c",
+                    }}
+                  />
+                </Dropdown>
+              </div>
+              <div className="mb-3">
+                <CarrucelImagenes
+                  autoplay={false}
+                  height={160}
+                  fallback={defaultImage}
+                  preview={true}
+                  images={chip.imagenTotal.map((img) =>
+                    getBase64WithPrefix(img),
+                  )}
                 />
-              </Dropdown>
-            </div>
-            <div className="mb-3">
-              <CarrucelImagenes
-                autoplay={false}
-                height={160}
-                fallback={defaultImage}
-                preview={true}
-                images={chip.imagenTotal.map((img) => getBase64WithPrefix(img))}
-              />
-            </div>
+              </div>
 
-            <div className="space-y-1 text-sm text-gray-600">
-              <p>
-                <strong>Número:</strong> {chip.numero}
-              </p>
-              <p>
-                <strong>ICCID:</strong> {chip.iccid}
-              </p>
-              <p>
-                <strong>Operador:</strong> {chip.operador}
-              </p>
-              <p>
-                <strong>Plan MB:</strong> {chip.mb}
-              </p>
-              <p>
-                <strong>Activación:</strong> {chip.activacion}
-              </p>
-              <p>
-                <strong>Instalación:</strong> {chip.instalacion}
-              </p>
-              <p className="truncate">
-                <strong>Adicional:</strong> {chip.adicional}
-              </p>
-              <OptionStatusUI status={chip.status} />
-            </div>
-          </Card>
-        ))}
+              <div className="space-y-1 text-sm text-gray-600">
+                <p>
+                  <strong>Número:</strong> {chip.numero}
+                </p>
+                <p>
+                  <strong>ICCID:</strong> {chip.iccid}
+                </p>
+                <p>
+                  <strong>Operador:</strong> {chip.operador}
+                </p>
+                <p>
+                  <strong>Plan MB:</strong> {chip.mb}
+                </p>
+                <p>
+                  <strong>Activación:</strong> {chip.activacion}
+                </p>
+                <p>
+                  <strong>Instalación:</strong> {chip.instalacion}
+                </p>
+                <p className="truncate">
+                  <strong>Adicional:</strong> {chip.adicional}
+                </p>
+                <OptionStatusUI status={chip.status} />
+              </div>
+            </Card>
+          ))
+        )}
       </Flex>
 
       {/* Modales con Renderizado Condicional para limpieza de memoria */}

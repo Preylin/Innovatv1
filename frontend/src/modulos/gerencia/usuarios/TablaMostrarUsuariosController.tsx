@@ -112,7 +112,7 @@ function UsuarioTable() {
         fixed: "left",
         render: (src) => (
           <Popover
-            content={<Image src={src} width={70} height={60} fallback={defaultImage} />}
+            content={<Image src={src} width={70} height={60} />}
             trigger="hover"
             placement="right"
           >

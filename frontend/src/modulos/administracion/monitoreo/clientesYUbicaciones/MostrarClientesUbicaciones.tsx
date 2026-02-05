@@ -118,9 +118,7 @@ function ShowClientes() {
 
   if (isLoading) return <Skeleton active paragraph={{ rows: 10 }} />;
   if (isError)
-    return <Alert type="error" title="Error al cargar clientes" showIcon />;
-  if (!data || data.length === 0)
-    return <Empty description="No se encontraron clientes" />;
+    return <Alert type="error" title="Error al cargar datos" showIcon />;
 
   return (
     <div className="flex flex-col gap-4 px-2">
