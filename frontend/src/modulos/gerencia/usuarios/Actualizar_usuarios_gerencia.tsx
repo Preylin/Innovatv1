@@ -15,7 +15,7 @@ import { useEffect } from "react";
 import type { SelectProps } from "antd";
 import { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
-import type { UsuarioOutType } from "../../../api/queries/auth/usuarios.api.schema";
+import type { UsuarioOutType, UsuarioUpdateType } from "../../../api/queries/auth/usuarios.api.schema";
 import { ApiError } from "../../../api/normalizeError";
 import { useUpdateUsuario } from "../../../api/queries/auth/usuarios";
 import FormUploadImage from "../../../components/molecules/upload/UploadImage";
@@ -57,16 +57,6 @@ const isUsuarioField = (field: string): field is UsuarioField => {
   return uiFields.includes(field as UsuarioField);
 };
 
-type UsuarioUpdatePayload = Partial<{
-  name: string;
-  last_name: string;
-  email: string;
-  password: string;
-  cargo: string;
-  estado: "activo" | "bloqueado";
-  image_byte: string;
-  permisos: { name_module: string }[];
-}>;
 
 /* ===================== OPTIONS ===================== */
 
@@ -152,12 +142,13 @@ function ModalUpdateUsuario({
     onSubmit: async ({ value, formApi }) => {
       try {
         // 1. Limpiar campos vacíos
-        const payload: UsuarioUpdatePayload = {
+        const payload: UsuarioUpdateType = {
           name: value.name.trim(),
           last_name: value.last_name.trim(),
           email: value.email.trim(),
           cargo: value.cargo.trim(),
           estado: value.estado,
+          image_byte: value.image_byte[0]?.image_byte.split(",")[1] || "",
           permisos: value.permisos,
         };
 

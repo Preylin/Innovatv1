@@ -26,8 +26,8 @@ export const UsuarioCreateSchema = z.object({
     email: z.email(),
     cargo: z.string(),
     estado: z.string(),
-    image_byte: z.array(z.object({image_byte: z.string()})),
-    password: z.string().min(8),
+    image_byte: z.string(),
+    password: z.string(),
     permisos: z.array(z.object({
         name_module: z.string(),
     })),
@@ -41,8 +41,8 @@ export const UsuarioUpdateSchema = z.object({
     email: z.email().optional(),
     cargo: z.string().nullable().optional(),
     estado: z.enum(["activo", "bloqueado"]).optional(),
-    password: z.string().min(8).optional(),
-    image_byte: z.base64().nullable().optional(),
+    password: z.string().optional(),
+    image_byte: z.string().optional(),
     permisos: z.array(
       z.object({
         name_module: z.string(),

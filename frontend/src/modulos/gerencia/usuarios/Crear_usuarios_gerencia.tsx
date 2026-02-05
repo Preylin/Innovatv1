@@ -128,7 +128,13 @@ function ModalAddNewUser({
     onSubmit: async ({ value, formApi }) => {
       try {
         const payload: UsuarioCreateType = {
-          ...value,
+          name: value.name.trim(),
+          last_name: value.last_name.trim(),
+          email: value.email.trim(),
+          password: value.password.trim(),
+          cargo: value.cargo.trim(),
+          estado: value.estado,
+          image_byte: value.image_byte[0]?.image_byte.split(",")[1] || "",
           permisos: value.permisos.map((p) => ({
             name_module: p.name_module,
           })),
