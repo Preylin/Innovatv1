@@ -12,15 +12,12 @@ export function createQuery<T>({ request, schema }: CreateQueryParams<T>) {
       const response = await request();
       return schema.parse(response.data);
     } catch (err) {
+      // 1. Obtenemos el error ya normalizado con su unión discriminada correcta
       const normalized = normalizeError(err);
 
-      throw new ApiError({
-        message: normalized.message,
-        httpStatus: normalized.httpStatus,
-        kind: normalized.kind,
-        data: normalized.kind === "validation" ? normalized.data : undefined,
-        raw: normalized.raw,
-      });
+      // 2. Pasamos el objeto completo al constructor. 
+      // Esto mantiene la integridad de los tipos: validation, http o unknown.
+      throw new ApiError(normalized);
     }
   };
 }
