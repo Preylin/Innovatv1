@@ -1,6 +1,5 @@
-// src/lib/queryClient.ts
+// src/api/queryClient.ts
 import { QueryClient } from "@tanstack/react-query";
-
 /**
  * @description
  * Instancia del cliente de React Query con configuración por defecto para toda la aplicación.
@@ -20,9 +19,11 @@ import { QueryClient } from "@tanstack/react-query";
 export const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-        staleTime: 3 * 60 * 1000, 
+        staleTime: 3 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
         retry: 1,
         refetchOnWindowFocus: false,
+        refetchOnReconnect: true,
         retryOnMount: false,
         },
         mutations: {

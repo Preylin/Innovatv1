@@ -1,4 +1,4 @@
-import { Select } from "antd";
+import { Button, Flex, Select } from "antd";
 
 interface InputSearchProps {
   value?: string | number;
@@ -9,6 +9,8 @@ interface InputSearchProps {
   onChange?: (value: string | number | undefined) => void;
   onBlur?: () => void;
   placeholder: string;
+  handleOpen?: () => void;
+  ButtonName?: string;
 }
 
 function InputSearch({
@@ -17,11 +19,13 @@ function InputSearch({
   value,
   onChange,
   onBlur,
+  handleOpen,
+  ButtonName = "",
 }: InputSearchProps) {
   return (
     <Select
       placeholder={placeholder}
-      value={value}
+      value={value === "" ? undefined : value}
       onChange={onChange}
       onBlur={onBlur}
       allowClear
@@ -31,6 +35,14 @@ function InputSearch({
       }}
       style={{ width: "100%" }}
       options={options}
+      popupRender={(menu) => (
+        <>
+          {menu}
+          <Flex wrap justify="end" align="center">
+            <Button type="primary" onClick={handleOpen}>{ButtonName}</Button>
+          </Flex>
+        </>
+      )}
     />
   );
 }

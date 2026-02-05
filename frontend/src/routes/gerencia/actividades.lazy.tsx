@@ -1,6 +1,6 @@
 import { createLazyFileRoute } from "@tanstack/react-router";
 import CardAtom from "../../components/atoms/card/Card";
-import UsuarioTable from "../../components/atoms/table/Tabla_panel_control";
+import UsuarioTable from "../../modulos/gerencia/usuarios/TablaMostrarUsuariosController";
 
 
 export const Route = createLazyFileRoute("/gerencia/actividades")({

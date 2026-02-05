@@ -1,21 +1,14 @@
 //src/routes/Gerencia.tsx
-import {
-  createFileRoute,
-  redirect,
-} from "@tanstack/react-router";
-import {
-  SlackOutlined,
-} from "@ant-design/icons";
-import { useAuthState } from "../api/auth";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import MainLayout, {
-  buildModulos,
-  getItem,
   mapNavToMenu,
   type AppMenuItem,
   type NavNodeInterface,
 } from "../components/templates/MainLayout";
-import { LazyIcon } from "../components/atoms/icons/IconsSiderBar";
 import { PanelSuperior } from "../components/interfaz_modulos/TopPanel";
+import { useMemo } from "react";
+import SpinAtom from "../components/atoms/spin/Spin";
+import { UseBarGerenciaIcons } from "../components/atoms/icons/AntDesign/gerencia/BarGerencia";
 
 export const Route = createFileRoute("/gerencia")({
   beforeLoad: async ({ context }) => {
@@ -26,119 +19,123 @@ export const Route = createFileRoute("/gerencia")({
       throw redirect({ to: "/" });
     }
   },
+  pendingComponent: () => (
+    <SpinAtom size="large" fullscreen styles={{indicator: {color: '#00d4ff'}}}/>
+  ),
   component: RouteComponent,
 });
 
-
 function RouteComponent() {
-  return(
-    <MainLayout header={<PanelSuperior title="GERENCIA" />} modulos={useSiderBarContent()} />
-  )
+  return (
+    <MainLayout
+      header={<PanelSuperior title="GERENCIA" MenuItems={useSiderBarContent()}/>}
+    />
+  );
 }
 
-
 function useSiderBarContent(): AppMenuItem[] {
-  const { user } = useAuthState();
 
-  const nav: NavNodeInterface[] = [
-    {
-      label: "Actividades",
-      key: "actividades",
-      icon: <LazyIcon name="Actividades" />,
-      children: [
-        {
-          label: "Programación",
-          key: "/gerencia/actividades/programacion",
-          icon:  <LazyIcon name="Programacion" />,
-          to: "/gerencia/actividades/programacion",
-        },
-        {
-          label: "Historial",
-          key: "/gerencia/actividades/historial",
-          icon:  <LazyIcon name="Historial" />,
-          to: "/gerencia/actividades/historial",
-        },
-      ],
-    },
-    {
-      label: "Cotizaciones",
-      key: "cotizaciones",
-      icon: <LazyIcon name="Cotizaciones" />,
-      children: [
-        {
-          label: "Crear",
-          key: "/gerencia/cotizaciones/crear",
-          icon:  <LazyIcon name="Adicionar" />,
-          to: "/gerencia/cotizaciones/crear",
-        },
-        {
-          label: "Pendientes",
-          key: "/gerencia/cotizaciones/pendientes",
-          icon:  <LazyIcon name="Pendientes" />,
-          to: "/gerencia/cotizaciones/pendientes",
-        },
-        {
-          label: "Hechas",
-          key: "/gerencia/cotizaciones/hechas",
-          icon:  <LazyIcon name="Hechas" />,
-          to: "/gerencia/cotizaciones/hechas",
-        },
-        {
-          label: "Consultas",
-          key: "/gerencia/cotizaciones/consultas",
-          icon:  <LazyIcon name="Consultas" />,
-          to: "/gerencia/cotizaciones/consultas",
-        },
-      ],
-    },
-    {
-      label: "Ordenes",
-      key: "ordenes",
-      icon: <LazyIcon name="Ordenes" />,
-      children: [
-        {
-          label: "Crear",
-          key: "/gerencia/ordenes/crear",
-          icon:  <LazyIcon name="Adicionar" />,
-          to: "/gerencia/ordenes/crear",
-        },
-        {
-          label: "Pendientes",
-          key: "/gerencia/ordenes/pendientes",
-          icon:  <LazyIcon name="Pendientes" />,
-          to: "/gerencia/ordenes/pendientes",
-        },
-        {
-          label: "Hechas",
-          key: "/gerencia/ordenes/hechas",
-          icon:  <LazyIcon name="Hechas" />,
-          to: "/gerencia/ordenes/hechas",
-        },
-        {
-          label: "Consultas",
-          key: "/gerencia/ordenes/consultas",
-          icon:  <LazyIcon name="Consultas" />,
-          to: "/gerencia/ordenes/consultas",
-        },
-      ],
-    },
-    {
-      label: "Usuarios",
-      key: "/gerencia/usuarios",
-      icon: <LazyIcon name="Usuarios" />,
-      to: "/gerencia/usuarios",
-    },
-  ];
+  return useMemo(() => {
+    const nav: NavNodeInterface[] = [
+      {
+        label: "Inicio",
+        key: "/gerencia",
+        icon: <UseBarGerenciaIcons name="inicio" />,
+        to: "/gerencia/",
+      },
+      {
+        label: "Actividades",
+        key: "/gerencia/actividades",
+        icon: <UseBarGerenciaIcons name="actividades" />,
+        children: [
+          {
+            label: "Programación",
+            key: "/gerencia/actividades/programacion",
+            icon: <UseBarGerenciaIcons name="programacion" />,
+            to: "/gerencia/actividades/programacion",
+          },
+          {
+            label: "Historial",
+            key: "/gerencia/actividades/historial",
+            icon: <UseBarGerenciaIcons name="historial" />,
+            to: "/gerencia/actividades/historial",
+          },
+        ],
+      },
+      {
+        label: "Cotizaciones",
+        key: "/gerencia/cotizaciones",
+        icon: <UseBarGerenciaIcons name="cotizaciones" />,
+        children: [
+          {
+            label: "Crear",
+            key: "/gerencia/cotizaciones/crear",
+            icon: <UseBarGerenciaIcons name="agregar" />,
+            to: "/gerencia/cotizaciones/crear",
+          },
+          {
+            label: "Pendientes",
+            key: "/gerencia/cotizaciones/pendientes",
+            icon: <UseBarGerenciaIcons name="pendiente" />,
+            to: "/gerencia/cotizaciones/pendientes",
+          },
+          {
+            label: "Hechas",
+            key: "/gerencia/cotizaciones/hechas",
+            icon: <UseBarGerenciaIcons name="realizado" />,
+            to: "/gerencia/cotizaciones/hechas",
+          },
+          {
+            label: "Consultas",
+            key: "/gerencia/cotizaciones/consultas",
+            icon: <UseBarGerenciaIcons name="consultar" />,
+            to: "/gerencia/cotizaciones/consultas",
+          },
+        ],
+      },
+      {
+        label: "Ordenes",
+        key: "/gerencia/ordenes",
+        icon: <UseBarGerenciaIcons name="ordenes" />,
+        children: [
+          {
+            label: "Crear",
+            key: "/gerencia/ordenes/crear",
+            icon: <UseBarGerenciaIcons name="agregar" />,
+            to: "/gerencia/ordenes/crear",
+          },
+          {
+            label: "Pendientes",
+            key: "/gerencia/ordenes/pendientes",
+            icon: <UseBarGerenciaIcons name="pendiente" />,
+            to: "/gerencia/ordenes/pendientes",
+          },
+          {
+            label: "Hechas",
+            key: "/gerencia/ordenes/hechas",
+            icon: <UseBarGerenciaIcons name="realizado" />,
+            to: "/gerencia/ordenes/hechas",
+          },
+          {
+            label: "Consultas",
+            key: "/gerencia/ordenes/consultas",
+            icon: <UseBarGerenciaIcons name="consultar" />,
+            to: "/gerencia/ordenes/consultas",
+          },
+        ],
+      },
+      {
+        label: "Usuarios",
+        key: "/gerencia/usuarios",
+        icon: <UseBarGerenciaIcons name="usuarios" />,
+        to: "/gerencia/usuarios",
+      },
+    ];
 
-  const baseMenu = mapNavToMenu(nav);
+    const baseMenu = mapNavToMenu(nav);
 
-  return [
-    ...baseMenu,
-    getItem(
-      "Módulos",
-      "modulos",
-      <SlackOutlined />,
-      buildModulos(user?.permisos)
-    ),
-  ];
+    return (
+      baseMenu
+    );
+  }, []);
 }

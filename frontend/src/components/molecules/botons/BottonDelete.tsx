@@ -6,6 +6,7 @@ interface Props {
     children?: React.ReactNode;
     onClick?: () => void;
     loading?: boolean;
+    style?: React.CSSProperties;
 }
 <LoadingOutlined />
 

@@ -1,13 +1,14 @@
 // assets/images.ts mapea las imagenes de la carpeta assets y permite exportarlos y usarlos en el proyecto
-import gerenciaImg from "../assets/inicio/gerencia.svg";
-import administracionImg from "../assets/inicio/administracion.svg";
-import contabilidadImg from "../assets/inicio/contabilidad.webp";
+import gerenciaImg from "../assets/inicio/gerencia.png";
+import administracionImg from "../assets/inicio/administracion.png";
+import contabilidadImg from "../assets/inicio/contabilidad.png";
 import tesoreriaImg from "../assets/inicio/tesoreria.png";
-import rrhhImg from "../assets/inicio/rrhh.svg";
+import rrhhImg from "../assets/inicio/rrhh.png";
 import ventasImg from "../assets/inicio/ventas.png";
-import almacenImg from "../assets/inicio/almacen.svg";
+import almacenImg from "../assets/inicio/almacen.png";
 import produccionImg from "../assets/inicio/produccion.png";
 import innovathomeImg from "../assets/inicio/innovathome.webp";
+import imagenDefault from "../assets/imagenDefault.jpg"
 
 
 export const ImagesHome: Record<string, string>= {
@@ -22,3 +23,4 @@ export const ImagesHome: Record<string, string>= {
 } as const;
 
 export const logo = innovathomeImg
+export const defaultImage = imagenDefault

@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
 
-/**
- * Métricas del menú circular
- */
 export type CircularSizes = {
   radius: number;
   mainSize: number;
@@ -10,57 +7,53 @@ export type CircularSizes = {
   wrapperSize: number;
 };
 
-/**
- * Hook que calcula tamaños responsivos del menú circular
- * basado en el tamaño real de la pantalla.
- */
 export function useCircularSizes(): CircularSizes {
   const [sizes, setSizes] = useState<CircularSizes>(() => calculate());
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
     const onResize = () => setSizes(calculate());
     window.addEventListener("resize", onResize);
-
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
   return sizes;
 }
 
-/* -------------------------------------------------- */
-/* Helpers                                            */
-/* -------------------------------------------------- */
-
-function clamp(min: number, value: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-/**
- * Cálculo centralizado y determinista
- */
 function calculate(): CircularSizes {
-  // SSR / fallback seguro
   if (typeof window === "undefined") {
-    return {
-      radius: 200,
-      mainSize: 180,
-      childSize: 120,
-      wrapperSize: 500,
-    };
+    return { radius: 120, mainSize: 100, childSize: 80, wrapperSize: 350 };
   }
 
-  const minScreen = Math.min(window.innerWidth, window.innerHeight);
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  // Usamos el menor de los dos para asegurar que el círculo quepa verticalmente también
+  const viewportMin = Math.min(width, height);
 
-  // Límites UX-safe
-  const radius = clamp(150, Math.round(minScreen * 0.3), 320);
+  let radius: number;
+  let mainSize: number;
+  let childSize: number;
 
-  // Relación geométrica estable
-  const mainSize = Math.round(radius * 0.8);
-  const childSize = Math.round(radius * 0.65);
+  if (width >= 768) { 
+    // DESKTOP (lg: 1024px+)
+    radius = viewportMin * 0.31; // 35% del viewport
+    mainSize = radius * 0.80;    
+    childSize = radius * 0.55;
+  } else if (width >= 414) { 
+    // TABLET (md: 768px+)
+    radius = viewportMin * 0.30;
+    mainSize = radius * 0.75;
+    childSize = radius * 0.50;
+  } else {
+    // MOBILE (base)
+    radius = viewportMin * 0.29;
+    mainSize = radius * 0.90;
+    childSize = radius * 0.65;
+  }
 
-  const wrapperSize = Math.max(mainSize, radius * 2 + childSize);
+  // CORRECCIÓN CRÍTICA: El wrapper debe ser el diámetro (radius * 2) 
+  // más el tamaño completo de un hijo para que no se desborde al estar en los extremos.
+  const wrapperSize = (radius * 2) + childSize + 40; 
 
   return { radius, mainSize, childSize, wrapperSize };
 }

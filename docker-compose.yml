@@ -7,21 +7,32 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: erp_innovat
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - ../pgdata:/var/lib/postgresql/data
     restart: always
     networks:
       - internal-net
 
+  # --- NUEVO SERVICIO: REDIS ---
+  redis:
+    image: redis:7-alpine
+    container_name: innovatv1-redis
+    restart: always
+    networks:
+      - internal-net
+    # No exponemos puertos a proxy-network porque solo la API hablará con él
+
   fastapi:
     image: ghcr.io/preylin/innovatv1:fastapi
     container_name: innovatv1-api
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
-    ports:
+    # Agregamos parámetros para mejorar el manejo de WebSockets
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips="*"
+    expose:
       - "8000"
     restart: always
     env_file: .env
     depends_on:
       - db
+      - redis # Ahora depende de Redis también
     volumes:
       - ./api/alembic/versions:/app/alembic/versions
     networks:
@@ -31,7 +42,7 @@ services:
   frontend:
     image: ghcr.io/preylin/innovatv1:frontend
     container_name: innovatv1-frontend
-    ports:
+    expose:
       - "80"
     restart: always
     volumes:
@@ -42,9 +53,10 @@ services:
     networks:
       - internal-net
       - proxy-network
-      
+
 networks:
-  internal-net: # Aísla la DB de todo lo demás
+  internal-net:
+    driver: bridge
   proxy-network:
     external: true
 

@@ -1,7 +1,5 @@
 import z from "zod";
 
-const base64Regex =
-  /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
 
 // PARA CLIENTES
 export const ClienteOutSchema = z.object({
@@ -79,14 +77,8 @@ export const ChipOutSchema = z.object({
   instalacion: z.iso.datetime().nullable(),
   adicional: z.string().nullable(),
   status: z.number(),
-  imagen: z.array(
-    z.object({
-      id: z.number(),
-      chip_id: z.number(),
-      image_base64: z.string().nullable(),
-      created_at: z.iso.datetime(),
-    })
-  ),
+  imagen1: z.string().nullable(),
+  imagen2: z.string().nullable(),
   created_at: z.iso.datetime(),
 });
 
@@ -101,11 +93,8 @@ export const ChipCreateSchema = z.object({
   instalacion: z.iso.datetime().optional(),
   adicional: z.string().optional(),
   status: z.number(),
-  image_byte: z.array(
-    z.object({
-      image_byte: z.string().regex(base64Regex),
-    })
-  ),
+  imagen1: z.string().nullable(),
+  imagen2: z.string().nullable(),
 });
 
 export type ChipCreateType = z.infer<typeof ChipCreateSchema>;
@@ -119,11 +108,8 @@ export const ChipUpdateSchema = z.object({
   instalacion: z.string().optional(),
   adicional: z.string().optional(),
   status: z.number().optional(),
-  image_byte: z.array(
-    z.object({
-      image_byte: z.string().regex(base64Regex),
-    })
-  ).optional(),
+  imagen1: z.string().optional(),
+  imagen2: z.string().optional(),
 });
 
 export type ChipUpdateType = z.infer<typeof ChipUpdateSchema>;

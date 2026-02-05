@@ -11,6 +11,7 @@ import PageNoExiste from "./components/pages/resultado/PageNotExiste";
 import { StrictMode, useMemo } from "react";
 import { ThemeProvider } from "./Theme/useTheme";
 import { App as AntdApp } from "antd";
+import { useDatabaseWatcher } from "./hooks/useDatabaseWatcher";
 
 interface MyRouterContext {
   auth: AuthContextValue;
@@ -27,7 +28,7 @@ function NotFoundPage() {
 
 const router = createRouter({
   routeTree,
-  context: { auth: null as any as AuthContextValue } as MyRouterContext,
+  context: undefined!,
   defaultNotFoundComponent: NotFoundPage
 });
 
@@ -39,6 +40,7 @@ declare module "@tanstack/react-router" {
 
 function InnerApp() {
   const auth = useAuth();
+  useDatabaseWatcher();
   const routerContext = useMemo(() => ({ auth }) as MyRouterContext, [auth]);
   return <RouterProvider router={router} context={routerContext} />;
 }

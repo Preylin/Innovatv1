@@ -16,9 +16,7 @@ function RouteComponent() {
   const { isDark } = useTheme(); 
   return (
     <AntdProvider dark={isDark}>
-        <div className="bg-gray-100, dark:bg-gray-950">
           <Outlet />
-        </div>
     </AntdProvider>
   );
 }

@@ -1,4 +1,4 @@
-# lectura de keys de archivo .env y configuracion.
+# app/core/config.py
 """
 Módulo para la configuración de la aplicación.
 
@@ -25,6 +25,7 @@ class ConfigSettings(BaseSettings):
     JWT_SECRET_KEY: str = Field(..., min_length=32, description="Clave secreta para firmar los tokens JWT. Debe tener al menos 32 caracteres.")
     JWT_ALG: str = Field(..., description="Algoritmo de cifrado utilizado para los tokens JWT.")
     JWT_EXPIRE_MINUTES: int = Field(..., description="Tiempo de expiración de los tokens JWT en minutos.")
+    REDIS_URL: str = Field(..., description="URL de Redis")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

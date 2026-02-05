@@ -5,13 +5,14 @@ interface Props {
     children?: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
+    name?: string;
 }
 <LoadingOutlined />
 
 
-function ButtomNew(props: Props){
+function ButtomNew({disabled, name = "Nuevo", ...props}: Props){
     return(
-        <ButtonAtom icon={props.disabled ? <LoadingOutlined /> : <PlusOutlined />} {...props}> Nuevo</ButtonAtom>
+        <ButtonAtom icon={disabled ? <LoadingOutlined /> : <PlusOutlined />} {...props}> {name}</ButtonAtom>
     )
 }
 

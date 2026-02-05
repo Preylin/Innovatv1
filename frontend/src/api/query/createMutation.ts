@@ -14,42 +14,25 @@ export function createMutation<TInput, TOutput>({
 }: CreateMutationParams<TInput, TOutput>) {
   return async (input: TInput): Promise<TOutput> => {
     try {
-      // Frontera de entrada
+      // 1. Validar datos antes de enviarlos (Client-side validation)
       const parsedInput = inputSchema.parse(input);
 
-      // Request
+      // 2. Ejecutar petición
       const response = await request(parsedInput);
 
-      // Frontera de salida (condicional)
+      // 3. Validar respuesta (opcional)
       if (outputSchema) {
         return outputSchema.parse(response.data);
       }
 
-      // Endpoint sin respuesta
       return undefined as TOutput;
     } catch (err) {
-      const normalized = normalizeError(err);
-
-      throw new ApiError({
-        message: normalized.message,
-        httpStatus: normalized.httpStatus,
-        kind: normalized.kind,
-        data: normalized.kind === "validation" ? normalized.data : undefined,
-        raw: normalized.raw,
-      });
+      // Si ya es un ApiError (lanzado por Zod o manualmente), lo re-lanzamos
+      if (err instanceof ApiError) throw err;
+      
+      // Si es un error de Axios o Zod (parse), lo normalizamos y lanzamos como ApiError
+      // Nuestra nueva clase ApiError ahora es mucho más limpia de instanciar:
+      throw new ApiError(normalizeError(err));
     }
   };
 }
-
-
-
-//uso en tanstack form para los errores
-
-// const { mutate, error } = useCreateUsuario();
-
-// if (error instanceof ApiError && error.kind === "validation") {
-//   error.data.forEach(e => {
-//     const field = e.loc.at(-1);
-//     // mapear directamente a formulario
-//   });
-// }

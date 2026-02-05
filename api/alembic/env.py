@@ -16,6 +16,7 @@ if config.config_file_name is not None:
 
 # 2. CONFIGURAR METADATA (Crucial para autogenerate)
 from app.core.base_class import Base
+import app.models
 target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:

@@ -12,7 +12,7 @@ interface Props {
 function ButtonWatch(props: Props){
     return(
         <TooltipAtom content="Ver" placement="top">
-            <ButtonAtom color="yellow" icon={props.disabled ? <EyeInvisibleOutlined /> : <EyeOutlined/>} {...props}/>
+            <ButtonAtom  color="gold" icon={props.disabled ? <EyeInvisibleOutlined /> : <EyeOutlined/>} {...props}/>
         </TooltipAtom>
 
     )

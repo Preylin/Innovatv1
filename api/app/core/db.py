@@ -1,3 +1,4 @@
+#app/core/db.py
 # modulo de configuracion de la base de datos: engine, sessionmaker, dependencias.
 # conexion asyncrona a la base de datos usando SQLAlchemy.
 """

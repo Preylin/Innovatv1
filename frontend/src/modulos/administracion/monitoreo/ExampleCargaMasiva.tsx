@@ -1,310 +1,220 @@
-// ChipImport.tsx
 import { z } from "zod";
-import * as XLSX from "xlsx";
-import { useState } from "react";
+import ExcelJS from "exceljs";
+import { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Upload, Button, Alert, Typography, Spin, Space, App, Modal } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import { Upload, Button, Alert, Typography, Space, App, Modal, Progress } from "antd";
+import { UploadOutlined, LoadingOutlined } from "@ant-design/icons";
 import api from "../../../api/client";
-import { ApiError, toApiError } from "../../../api/normalizeError";
-
-export function useCreateChipMasivo() {
-  const qc = useQueryClient();
-  const { message } = App.useApp();
-
-  return useMutation<void, ApiError, FormData>({
-    mutationFn: async (formData) => {
-      try {
-        await api.post("/chips/import", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-      } catch (err) {
-        throw toApiError(err);
-      }
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["chips"] });
-      message.success("Importación exitosa");
-    },
-    onError: (err) => {
-      if (err.kind === "validation" && err.data) {
-        err.data.forEach((e) => {
-          const field = e.loc.join(".");
-          message.error(`${field}: ${e.msg}`);
-        });
-      } else {
-        message.error(err.message);
-      }
-    },
-  });
-}
-
-
-/* ======================================================
-   1️⃣ Utilidad: Excel date → ISO string (UTC)
-   ====================================================== */
-/**
- * Excel guarda fechas como números seriales (sistema 1900).
- * Esta conversión es estándar en ETL y BI.
- */
-function excelDateToISO(value: unknown): string | undefined {
-  // Caso Excel serial (number)
-  if (typeof value === "number") {
-    const jsDate = new Date(Math.round((value - 25569) * 86400 * 1000));
-    return jsDate.toISOString();
-  }
-
-  // Caso Date (algunos XLSX lo entregan así)
-  if (value instanceof Date) {
-    return value.toISOString();
-  }
-
-  // Caso string (por ejemplo: 2023-10-15)
-  if (typeof value === "string") {
-    return value;
-  }
-
-  return undefined;
-}
-
-/* ======================================================
-   2️⃣ Campo de fecha robusto para Zod
-   ====================================================== */
-const dateField = z.preprocess(
-  (v) => excelDateToISO(v),
-  z.iso.datetime("Error de formato de fecha")
-);
-
-/* ======================================================
-   3️⃣ Schema Zod (alineado con Pydantic)
-   ====================================================== */
-const ChipImportSchema = z.object({
-  numero: z.coerce.number().int().positive(),
-  iccid: z.string().min(10),
-  operador: z.string().min(1),
-  mb: z.string().min(1),
-  activacion: dateField,
-  instalacion: dateField,
-  adicional: z.string().optional().default(""),
-});
-
-type ChipImport = z.infer<typeof ChipImportSchema>;
-
-const EXPECTED_HEADERS = [
-  "numero",
-  "iccid",
-  "operador",
-  "mb",
-  "activacion",
-  "instalacion",
-  "adicional",
-] as const;
-
-type ExpectedHeader = (typeof EXPECTED_HEADERS)[number];
-
-/* ======================================================
-   4️⃣ Parseo XLSX (solo Excel)
-   ====================================================== */
-async function parseXlsx(
-  file: File
-): Promise<{ headers: string[]; rows: unknown[] }> {
-  const buffer = await file.arrayBuffer();
-  const workbook = XLSX.read(buffer, { cellDates: true });
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
-
-  // Headers reales (fila 1)
-  const headerRow = XLSX.utils.sheet_to_json(sheet, {
-    header: 1,
-    range: 0,
-  })[0] as string[];
-
-  const rows = XLSX.utils.sheet_to_json(sheet, {
-    defval: undefined,
-  });
-
-  return {
-    headers: headerRow.map((h) => h?.toString().trim()),
-    rows,
-  };
-}
-
-// validacion de headers
-
-type HeaderValidationError = {
-  missing: string[];
-  extra: string[];
-};
-
-function validateHeaders(headers: string[]): HeaderValidationError | null {
-  const normalized = headers.map((h) => h.toLowerCase());
-
-  const missing = EXPECTED_HEADERS.filter((h) => !normalized.includes(h));
-
-  const extra = normalized.filter(
-    (h) => !EXPECTED_HEADERS.includes(h as ExpectedHeader)
-  );
-
-  if (missing.length === 0 && extra.length === 0) return null;
-
-  return { missing, extra };
-}
-
-/* ======================================================
-   5️⃣ Validación por filas
-   ====================================================== */
-type RowValidationError = {
-  row: number;
-  errors: Record<string, string[]>;
-};
-
-function validateRows(rows: unknown[]) {
-  const valid: ChipImport[] = [];
-  const errors: RowValidationError[] = [];
-
-  rows.forEach((row, index) => {
-    const result = ChipImportSchema.safeParse(row);
-
-    if (result.success) {
-      valid.push(result.data);
-    } else {
-      errors.push({
-        row: index + 2, // fila real en Excel (1 = header)
-        errors: result.error.flatten().fieldErrors,
-      });
-    }
-  });
-
-  return { valid, errors };
-}
-
-/* ======================================================
-   6️⃣ Componente UI
-   ====================================================== */
+import { ApiError } from "../../../api/normalizeError";
 
 const { Text } = Typography;
 
-export default function ChipImport(
-    {open,
-    onClose,}: {
-      open: boolean;
-      onClose: () => void;
-    }
-) {
+/* ====================================================== 
+   1️⃣ Esquema de Validación
+   ====================================================== */
+const dateSchema = z.union([
+  z.date(),
+  z.iso.datetime(),
+  z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Fecha inválida" })
+]).pipe(z.coerce.date());
+
+const ChipImportSchema = z.object({
+  numero: z.coerce.number().int().positive("Número requerido"),
+  iccid: z.string().min(10, "ICCID inválido"),
+  operador: z.string().min(1, "Operador requerido"),
+  mb: z.coerce.string().min(1, "MB requerido"),
+  activacion: dateSchema,
+  instalacion: dateSchema,
+  adicional: z.string().optional().nullable().transform(val => val ?? ""),
+});
+
+type ChipImport = z.infer<typeof ChipImportSchema>;
+const EXPECTED_HEADERS = ["numero", "iccid", "operador", "mb", "activacion", "instalacion"];
+
+/* ====================================================== 
+   2️⃣ Componente UI
+   ====================================================== */
+export default function ChipImport({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [file, setFile] = useState<File | null>(null);
-  const [rows, setRows] = useState<ChipImport[]>([]);
-  const [errors, setErrors] = useState<RowValidationError[]>([]);
+  const [rowsCount, setRowsCount] = useState(0);
+  const [errors, setErrors] = useState<{ row: number; messages: string[] }[]>([]);
+  const [parsingProgress, setParsingProgress] = useState(0);
+  const [status, setStatus] = useState<"idle" | "parsing" | "ready" | "error" | "uploading">("idle");
+  
+  const { message } = App.useApp();
+  const qc = useQueryClient();
 
-  /* ---- Upload backend ---- */
-  const mutation = useCreateChipMasivo();
-
-  /* ---- Selección y validación ---- */
-  const beforeUpload = async (file: File) => {
-    // reset total
+  // Reset de estados
+  const reset = useCallback(() => {
     setFile(null);
-    setRows([]);
+    setRowsCount(0);
     setErrors([]);
+    setParsingProgress(0);
+    setStatus("idle");
+  }, []);
 
-    setFile(file);
-
-    const { headers, rows: rawRows } = await parseXlsx(file);
-
-    const headerError = validateHeaders(headers);
-
-    if (headerError) {
-      setErrors([
-        {
-          row: 1,
-          errors: {
-            headers: [
-              ...(headerError.missing.length
-                ? [`Faltan columna/as: ${headerError.missing.join(", ")}`]
-                : []),
-              ...(headerError.extra.length
-                ? [`Columnas no permitidas: ${headerError.extra.join(", ")}`]
-                : []),
-            ],
-          },
-        },
-      ]);
-
-      return false;
-    }
-
-    const { valid, errors } = validateRows(rawRows);
-
-    setRows(valid);
-    setErrors(errors);
-
-    return false; // ⛔ antd no sube automático
+  const handleClose = () => {
+    if (status === "uploading" || status === "parsing") return;
+    reset();
+    onClose();
   };
 
-  /* ---- Envío ---- */
+  /* ---- Lógica de parseo con progreso ---- */
+  const parseFile = async (file: File) => {
+    setStatus("parsing");
+    setParsingProgress(0);
+    
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const buffer = await file.arrayBuffer();
+      await workbook.xlsx.load(buffer);
+      const worksheet = workbook.getWorksheet(1);
+
+      if (!worksheet) throw new Error("Hoja de cálculo no encontrada");
+
+      const headers: string[] = [];
+      worksheet.getRow(1).eachCell((c) => headers.push(c.text.toLowerCase().trim()));
+
+      const missing = EXPECTED_HEADERS.filter(h => !headers.includes(h));
+      if (missing.length > 0) throw new Error(`Columnas faltantes: ${missing.join(", ")}`);
+
+      const validRows: ChipImport[] = [];
+      const rowErrors: { row: number; messages: string[] }[] = [];
+      const seenIccid = new Set();
+      const totalRows = worksheet.rowCount - 1;
+
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return;
+
+        const rowData: any = {};
+        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+          const h = headers[colNumber - 1];
+          if (h) rowData[h] = cell.value;
+        });
+
+        const result = ChipImportSchema.safeParse(rowData);
+        if (!result.success) {
+          rowErrors.push({ row: rowNumber, messages: result.error.issues.map(e => e.message) });
+        } else {
+          if (seenIccid.has(result.data.iccid)) {
+            rowErrors.push({ row: rowNumber, messages: ["ICCID duplicado en el archivo"] });
+          } else {
+            seenIccid.add(result.data.iccid);
+            validRows.push(result.data);
+          }
+        }
+
+        // Actualizar progreso cada 50 filas para no saturar el renderizado
+        if (rowNumber % 50 === 0 || rowNumber === worksheet.rowCount) {
+          setParsingProgress(Math.round(((rowNumber - 1) / totalRows) * 100));
+        }
+      });
+
+      setRowsCount(validRows.length);
+      setErrors(rowErrors);
+      setStatus(rowErrors.length > 0 ? "error" : "ready");
+      setFile(file);
+
+    } catch (err: any) {
+      setErrors([{ row: 0, messages: [err.message] }]);
+      setStatus("error");
+    }
+  };
+
+  /* ---- Mutación de subida ---- */
+  const mutation = useMutation<void, ApiError, FormData>({
+    mutationFn: (fd) => api.post("/chips/import", fd),
+    onMutate: () => setStatus("uploading"),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["chips"] });
+      message.success("Datos importados correctamente");
+      handleClose();
+    },
+    onError: (err) => {
+      setStatus("error");
+      message.error(err.message || "Error al subir el archivo");
+    }
+  });
+
   const onSubmit = () => {
-  if (!file || rows.length === 0 || errors.length > 0) return;
-
-  const formData = new FormData();
-  formData.append("file", file);
-
-  mutation.mutate(formData);
-};
+    if (!file) return;
+    const fd = new FormData();
+    fd.append("file", file);
+    mutation.mutate(fd);
+  };
 
   return (
     <Modal
-      title={"Importar chips"}
+      title="Importación Masiva"
       open={open}
-      onCancel={onClose}
-      footer={null}
-      maskClosable={false}
-      keyboard={false}
-      destroyOnHidden
-      width={{ xs: "90%", sm: "80%", lg: "60%" }}
-    >
-      <div style={{ maxWidth: 900 }}>
-      {/* Upload */}
-      <Upload
-        accept=".xlsx"
-        maxCount={1}
-        beforeUpload={beforeUpload}
-        showUploadList={false}
-      >
-        <Button icon={<UploadOutlined />}>Seleccionar archivo XLSX</Button>
-      </Upload>
-
-      {/* Info archivo */}
-      {file && (
-        <Text type="secondary" style={{ display: "block", marginTop: 8 }}>
-          Archivo seleccionado: <strong>{file.name}</strong>
-        </Text>
-      )}
-
-      {/* Errores */}
-      {errors.length > 0 && (
-        <Alert
-          type="error"
-          title={`Errores de validación (${errors.length})`}
-          description={
-            <Space orientation="vertical" size={4}>
-              {errors.map((e) => (
-                <Text key={e.row} type="danger">
-                  Fila {e.row}: {JSON.stringify(e.errors)}
-                </Text>
-              ))}
-            </Space>
-          }
-        />
-      )}
-
-      {/* Botón */}
-      <div style={{ marginTop: 16 }}>
-        <Button
-          type="primary"
-          onClick={onSubmit}
-          disabled={!file || rows.length === 0 || errors.length > 0}
+      onCancel={handleClose}
+      closable={status !== "uploading"}
+      footer={[
+        <Button key="cancel" onClick={handleClose} disabled={status === "uploading"}>
+          Cancelar
+        </Button>,
+        <Button 
+          key="ok" 
+          type="primary" 
+          onClick={onSubmit} 
+          loading={status === "uploading"}
+          disabled={status !== "ready"}
         >
-          {mutation.isPending ? <Spin size="small" /> : "Importar"}
+          {status === "uploading" ? "Subiendo..." : "Confirmar Importación"}
         </Button>
-      </div>
-    </div>
-      </Modal>
+      ]}
+    >
+      <Space orientation="vertical" style={{ width: "100%" }} size="middle">
+        <Upload.Dragger
+          accept=".xlsx"
+          beforeUpload={(file) => { parseFile(file); return false; }}
+          showUploadList={false}
+          disabled={status === "parsing" || status === "uploading"}
+        >
+          <p className="ant-upload-drag-icon">
+            {status === "parsing" ? <LoadingOutlined /> : <UploadOutlined />}
+          </p>
+          <p className="ant-upload-text">Haz clic o arrastra el archivo Excel aquí</p>
+        </Upload.Dragger>
+
+        {status === "parsing" && (
+          <div style={{ textAlign: 'center' }}>
+            <Text>Analizando registros...</Text>
+            <Progress percent={parsingProgress} status="active" />
+          </div>
+        )}
+
+        {status === "uploading" && (
+          <div style={{ textAlign: 'center' }}>
+            <Text strong>Subiendo al servidor...</Text>
+            <Progress percent={100} status="active" strokeColor="#52c41a" />
+          </div>
+        )}
+
+        {status === "ready" && (
+          <Alert
+            title="Archivo validado"
+            description={`Se procesarán ${rowsCount} chips exitosamente.`}
+            type="success"
+            showIcon
+          />
+        )}
+
+        {errors.length > 0 && (
+          <Alert
+            type="error"
+            title="Errores de validación encontrados"
+            description={
+              <div style={{ maxHeight: 180, overflowY: 'auto' }}>
+                {errors.map((e, i) => (
+                  <div key={i}><Text strong>Fila {e.row}:</Text> {e.messages.join(", ")}</div>
+                ))}
+              </div>
+            }
+            showIcon
+          />
+        )}
+      </Space>
+    </Modal>
   );
 }

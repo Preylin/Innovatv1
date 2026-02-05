@@ -1,7 +1,5 @@
 import z from "zod";
 
-const base64Regex = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
-
 export const UsuarioOutSchema = z.object({
     id: z.number(),
     name: z.string(),
@@ -9,16 +7,13 @@ export const UsuarioOutSchema = z.object({
     email: z.email(),
     cargo: z.string(),
     estado: z.enum(["activo", "bloqueado"]),
-    image_base64: z
-    .string()
-    .regex(base64Regex)
-    .nullable(),
+    image_base64: z.string(),
     permisos: z.array(z.object({
         name_module: z.string(),
         id: z.number(),
         usuario_id: z.number(),
         created_at: z.iso.datetime(),
-    })).optional(),
+    })),
     created_at: z.iso.datetime(),
 
 })
@@ -31,7 +26,7 @@ export const UsuarioCreateSchema = z.object({
     email: z.email(),
     cargo: z.string(),
     estado: z.string(),
-    image_byte: z.base64(),
+    image_byte: z.array(z.object({image_byte: z.string()})),
     password: z.string().min(8),
     permisos: z.array(z.object({
         name_module: z.string(),
@@ -54,10 +49,6 @@ export const UsuarioUpdateSchema = z.object({
       })
     ).optional(),
   })
-  .refine(
-    (data) => Object.keys(data).length > 0,
-    { message: "Debe enviarse al menos un campo a actualizar" }
-  );
   
 export type UsuarioUpdateType = z.infer<typeof UsuarioUpdateSchema>;
 

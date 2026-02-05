@@ -1,3 +1,4 @@
+# app/core/security.py
 # --- seguridad: hash de contraseñas y manejo de JWT ---
 """
 Módulo de seguridad para la aplicación.

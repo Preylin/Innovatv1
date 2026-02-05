@@ -51,16 +51,19 @@ export function LoginModal({
         const permisos = user.permisos ?? [];
         const allowed = new Set(permisos.map((p) => canon(p.name_module)));
         const targetCanon = canon(String(to));
+        const isAllowed = allowed.has(targetCanon);
 
-        onLogin?.({
-          userId: user.id.toString(),
-          targetId: String(to),
-          route: buildRoute(String(to)),
-          isAllowed: allowed.has(targetCanon),
-          moduleName: name,
-        });
+        setTimeout(() => {
+          onLogin?.({
+            userId: user.id.toString(),
+            targetId: String(to),
+            route: buildRoute(String(to)),
+            isAllowed: isAllowed,
+            moduleName: name,
+          });
 
-        onClose();
+          onClose();
+        }, 100);
       } catch (err) {
         if (err instanceof ApiError) {
           setGeneralError(authErrorToMessage(err));
@@ -86,6 +89,8 @@ export function LoginModal({
       onCancel={onClose}
       destroyOnHidden
       closable={false}
+      maskClosable={false}
+      keyboard={false}
     >
       <Title level={3} style={{ textAlign: "center", marginBottom: 0 }}>
         Iniciar sesión
@@ -147,6 +152,7 @@ export function LoginModal({
               <Input.Password
                 value={field.state.value}
                 onChange={(e) => field.handleChange(e.target.value)}
+                autoComplete="new-password"
               />
             </Form.Item>
           )}

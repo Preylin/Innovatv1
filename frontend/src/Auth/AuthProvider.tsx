@@ -94,9 +94,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(
   async (email: string, password: string): Promise<UsuarioOutType> => {
     await loginMutation.mutateAsync({ email, password });
-    const { data } = await refetch();
-    if (!data) throw new Error("Usuario no disponible");
-    return data;
+    const result = await refetch();
+    if (!result.data) {
+      throw new Error("No se pudo obtener la información del usuario tras el inicio de sesión.");
+    }
+    return result.data;
   },
   [loginMutation, refetch]
 );
@@ -119,13 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="h-screen w-screen grid place-content-center">
-        <div className="flex flex-row">
-          <SpinAtom size="large">
-            <div className="p-4">Cargando…</div>
-          </SpinAtom>
-        </div>
-      </div>
+      <SpinAtom size="large" tip="Cargando..." fullscreen styles={{indicator: {color: '#00d4ff'}}}/>
     );
   }
 

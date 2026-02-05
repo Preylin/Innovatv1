@@ -51,7 +51,7 @@ export function SearchBar({
         value={field}
         onChange={(val) => setField(val)}
         options={options}
-        style={{ width: 120, background: "#0891b2"}}
+        style={{ width: 120}}
         disabled={disabled}
         placeholder="Campo"
       />

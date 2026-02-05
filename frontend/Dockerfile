@@ -1,26 +1,22 @@
 # Etapa 1: Build con Bun
-# CAMBIO: Usamos la imagen oficial de Bun
 FROM oven/bun:latest AS builder
 WORKDIR /app
 
-# Copiar dependencias
 COPY package.json bun.lock /app/
-RUN bun install
+RUN bun install --frozen-lockfile
 
-# Copiar todo el código fuente
 COPY . /app
-
-# Generar build de producción
+# Asegúrate de que tus variables de entorno (VITE_API_URL, etc.) 
+# estén disponibles durante el build si las usas
 RUN bun run build
 
 # Etapa 2: Servir con Nginx
 FROM nginx:stable-alpine
 
-# Copiar build de la etapa anterior al directorio de Nginx
+# Copiar configuración personalizada de Nginx si la tienes (opcional)
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Exponer puerto 80
 EXPOSE 80
-
-# Iniciar Nginx en primer plano
 CMD ["nginx", "-g", "daemon off;"]

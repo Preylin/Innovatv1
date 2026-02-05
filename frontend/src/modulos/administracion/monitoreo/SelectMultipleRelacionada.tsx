@@ -1,4 +1,4 @@
-import { Button, Flex, Select, Space } from "antd";
+import { Button, Col, Flex, Row, Select } from "antd";
 import { useMemo } from "react";
 
 export interface DependentOption {
@@ -62,42 +62,47 @@ export function DependentSelectOther({
   }, [data, parentValue]);
 
   return (
-    <Space wrap>
-      <Select
-        style={{ width: 250 }}
-        value={parentValue || undefined}
-        placeholder={parentPlaceholder}
-        options={parentOptions}
-        onChange={onParentChange}
-        onBlur={onParentBlur} // Importante
-        disabled={disabled}
-        popupRender={(menu) => (
-          <>
-            {menu}
-            <Flex wrap justify="end" align="center">
-              <Button type="primary" onClick={handleOpenParent} >{ButtonNameParent}</Button>
-            </Flex>
-          </>
-        )}
-      />
-
-      <Select
-        style={{ minWidth: 300 }}
-        value={childValue || undefined}
-        placeholder={childPlaceholder}
-        options={childOptions}
-        onChange={onChildChange}
-        onBlur={onChildBlur} // Importante
-        disabled={!parentValue || disabled}
-        popupRender={(menu) => (
-          <>
-            {menu}
-            <Flex wrap justify="end" align="center">
-              <Button type="primary" onClick={handleOpenChild}>{ButtonNameChild}</Button>
-            </Flex>
-          </>
-        )}
-      />
-    </Space>
+      <Row gutter={8}>
+        <Col span={12}>
+          <Select
+            value={parentValue || undefined}
+            placeholder={parentPlaceholder}
+            options={parentOptions}
+            onChange={onParentChange}
+            onBlur={onParentBlur} // Importante
+            disabled={disabled}
+            popupRender={(menu) => (
+              <>
+                {menu}
+                <Flex wrap justify="end" align="center">
+                  <Button type="primary" onClick={handleOpenParent}>
+                    {ButtonNameParent}
+                  </Button>
+                </Flex>
+              </>
+            )}
+          />
+        </Col>
+        <Col span={12}>
+          <Select
+            value={childValue || undefined}
+            placeholder={childPlaceholder}
+            options={childOptions}
+            onChange={onChildChange}
+            onBlur={onChildBlur} // Importante
+            disabled={!parentValue || disabled}
+            popupRender={(menu) => (
+              <>
+                {menu}
+                <Flex wrap justify="end" align="center">
+                  <Button type="primary" onClick={handleOpenChild}>
+                    {ButtonNameChild}
+                  </Button>
+                </Flex>
+              </>
+            )}
+          />
+        </Col>
+      </Row>
   );
 }

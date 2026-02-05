@@ -29,6 +29,10 @@ export const AntdProvider: FC<AntdProviderProps> = ({ children, dark = false}) =
             colorBorderSecondary: dark ? "#393939" : "#B0B0B0",
             colorBgContainer: dark ? "#2B2B2B" : "#FCFCFC",
           },
+          Table: {
+            headerBg: dark ? "#333333" : "#E5E7D0",
+          },
+
         }
       }}
     >

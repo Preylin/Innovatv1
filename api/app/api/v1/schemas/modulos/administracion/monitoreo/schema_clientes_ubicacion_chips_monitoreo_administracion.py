@@ -1,10 +1,27 @@
-from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional, List
+import base64
 from datetime import datetime, timezone
-from pydantic import field_validator
+from typing import List, Optional
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+# ---- MIXINS Y CONFIGURACIÓN ----
 
-# ----MODELO DE UBICACIONES----
+class DateTimeUTCMixin:
+    @field_validator("activacion", "instalacion", mode="before", check_fields=False)
+    @classmethod
+    def normalize_datetime(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, str):
+            # Maneja formato ISO y el sufijo 'Z'
+            v = datetime.fromisoformat(v.replace("Z", "+00:00"))
+        if v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v.astimezone(timezone.utc)
+
+# Configuración base para modelos de salida
+cfg_from_attributes = ConfigDict(from_attributes=True)
+
+# ---- MODELO DE UBICACIONES ----
 
 class UbicacionBase(BaseModel):
     name: str
@@ -13,18 +30,16 @@ class UbicacionCreate(BaseModel):
     cliente_id: int
     ubicaciones: List[UbicacionBase] = Field(..., min_length=1)
 
-
 class UbicacionUpdate(BaseModel):
     name: Optional[str] = None
 
 class UbicacionOut(UbicacionBase):
-    model_config = ConfigDict(from_attributes=True)
-
+    model_config = cfg_from_attributes
     id: int
     cliente_id: int
     created_at: datetime
 
-# ----MODELO DE CLIENTE ----
+# ---- MODELO DE CLIENTE ----
 
 class ClienteBase(BaseModel):
     ruc: str
@@ -39,49 +54,23 @@ class ClienteUpdate(BaseModel):
     ubicaciones: Optional[List[UbicacionBase]] = None
 
 class ClienteOut(ClienteBase):
-    model_config = ConfigDict(from_attributes=True)
-
+    model_config = cfg_from_attributes
     id: int
-    ubicaciones: list[UbicacionOut] = Field(default_factory=list)
+    ubicaciones: List[UbicacionOut] = Field(
+        default_factory=list, 
+        validation_alias='ubicacion' 
+    )
     created_at: datetime
 
-
-#---- MODELO DE IMAGEN CHIPS ----
-
-class ImagenChipsBase(BaseModel):
-    image_byte: str
-
-class ImagenChipsCreate(ImagenChipsBase):
-    pass
-
-class ImagenChipsUpdate(BaseModel):
-    image_byte: Optional[str] = Field(default=None, repr=False)
-
-class ImagenChipsOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    chip_id: int
-    image_base64: str
-    created_at: datetime
-
-# ----MODELO CHIPS----
-
-class DateTimeUTCMixin:
-    @field_validator("activacion", "instalacion", mode="before", check_fields=False)
+    @field_validator('ruc', mode='before')
     @classmethod
-    def normalize_datetime(cls, v):
+    def transform_ruc_to_str(cls, v):
         if v is None:
             return v
+        return str(v)
 
-        if isinstance(v, str):
-            v = datetime.fromisoformat(v.replace("Z", "+00:00"))
 
-        if v.tzinfo is None:
-            return v.replace(tzinfo=timezone.utc)
-
-        return v.astimezone(timezone.utc)
-
+# ---- MODELO CHIPS ----
 
 class ChipBase(BaseModel):
     numero: int
@@ -89,15 +78,13 @@ class ChipBase(BaseModel):
     operador: str
     mb: str
 
-
 class ChipCreate(DateTimeUTCMixin, ChipBase):
     activacion: Optional[datetime] = None
     instalacion: Optional[datetime] = None
     adicional: Optional[str] = None
-    image_byte: List[ImagenChipsCreate] = Field(default_factory=list)
-    status: int = 0
-# los valores de status son 0=stock, 1=online y 2=baja 
-
+    imagen1: Optional[str] = None
+    imagen2: Optional[str] = None
+    status: int = 0  # 0=stock, 1=activo, 2=baja
 
 class ChipUpdate(DateTimeUTCMixin, BaseModel): 
     numero: Optional[int] = None
@@ -107,28 +94,35 @@ class ChipUpdate(DateTimeUTCMixin, BaseModel):
     activacion: Optional[datetime] = None
     instalacion: Optional[datetime] = None
     adicional: Optional[str] = None
-    image_byte: Optional[List[ImagenChipsUpdate]] = None
+    imagen1: Optional[str] = None
+    imagen2: Optional[str] = None
+    status: Optional[int] = None
 
 class ChipOut(ChipBase):
-    model_config = ConfigDict(from_attributes=True)
-
+    model_config = cfg_from_attributes
     id: int
     activacion: Optional[datetime]
     instalacion: Optional[datetime]
     adicional: Optional[str]
     status: int
-    imagen: List[ImagenChipsOut] = Field(default_factory=list)
+    imagen1: Optional[str]
+    imagen2: Optional[str]
     created_at: datetime
-    
 
-# importacion masiva
-class ChipImportSchema(DateTimeUTCMixin, BaseModel):
-    numero: int
-    iccid: str
-    operador: str
-    mb: str
+    @field_validator("imagen1", "imagen2", mode="before")
+    @classmethod
+    def bytes_to_base64(cls, v):
+        """Convierte automáticamente cualquier campo de imagen de bytes a base64."""
+        if isinstance(v, bytes):
+            return base64.b64encode(v).decode("utf-8")
+        return v
+
+
+class ChipImportSchema(DateTimeUTCMixin, ChipBase):
+    """Hereda de ChipBase para evitar repetir campos de texto/int"""
     activacion: Optional[datetime] = None
     instalacion: Optional[datetime] = None
     adicional: Optional[str] = None
     status: int = Field(default=0)
-    model_config = {"extra": "forbid"}
+    
+    model_config = ConfigDict(extra="forbid")

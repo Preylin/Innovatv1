@@ -3,9 +3,11 @@ function isoToDDMMYYYY(isoStr?: string | null): string {
   const date = new Date(isoStr);
   if (isNaN(date.getTime())) return "-";
 
-  return `${String(date.getUTCDate()).padStart(2, "0")}/${
-    String(date.getUTCMonth() + 1).padStart(2, "0")
-  }/${date.getUTCFullYear()}`;
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const year = date.getUTCFullYear();
+
+  return `${day}/${month}/${year}`;
 }
 
 export default isoToDDMMYYYY;

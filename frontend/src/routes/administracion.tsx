@@ -1,9 +1,10 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { LazyIcon } from '../components/atoms/icons/IconsSiderBar';
-import MainLayout, { buildModulos, getItem, mapNavToMenu, type AppMenuItem, type NavNodeInterface } from '../components/templates/MainLayout';
-import { useAuthState } from '../api/auth';
+import MainLayout, { mapNavToMenu, type AppMenuItem, type NavNodeInterface } from '../components/templates/MainLayout';
 import { PanelSuperior } from '../components/interfaz_modulos/TopPanel';
-import {SlackOutlined,} from "@ant-design/icons";
+import { useMemo } from 'react';
+import SpinAtom from '../components/atoms/spin/Spin';
+import { UseBarAdministracionIcons } from '../components/atoms/icons/AntDesign/administracion/barAdmIcons';
+import { UseComercialesIconsLO } from '../components/atoms/icons/OtrasLibs/Comerciales';
 
 
 export const Route = createFileRoute('/administracion')({
@@ -15,170 +16,173 @@ export const Route = createFileRoute('/administracion')({
         throw redirect({ to: "/" });
         }
     },
+    pendingComponent: () => (
+    <SpinAtom size="large" fullscreen styles={{indicator: {color: '#00d4ff'}}}/>
+  ),
     component: RouteComponent,
   })
 
 
 function RouteComponent() {
   return(
-    <MainLayout header={<PanelSuperior title="ADMINISTRACIÓN" />} modulos={useSiderBarContent()} />
+    <MainLayout header={<PanelSuperior title="ADMINISTRACIÓN" MenuItems={useSiderBarContent()} />} />
   )
 }
 
-
 function useSiderBarContent(): AppMenuItem[] {
-  const { user } = useAuthState();
 
-  const nav: NavNodeInterface[] = [
+  return useMemo(() => {
+    const nav: NavNodeInterface[] = [
+      {
+        label: "Inicio",
+        key: "/administracion",
+        icon: <UseBarAdministracionIcons name="inicio" />,
+        to: "/administracion/",
+      },
     {
       label: "Actividades administrativas",
-      key: "actividades",
-      icon: <LazyIcon name="Actividades" />,
+      key: "/administracion/actividades",
+      icon: <UseBarAdministracionIcons name="actividades" />,
       to: "/administracion/actividades",
     },
     {
       label: "Cotizaciones",
-      key: "cotizaciones",
-      icon: <LazyIcon name="Cotizaciones" />,
+      key: "/administracion/cotizaciones",
+      icon: <UseBarAdministracionIcons name="cotizaciones" />,
       children: [
         {
           label: "Crear",
           key: "/administracion/cotizaciones/crear",
-          icon:  <LazyIcon name="Adicionar" />,
+          icon:  <UseBarAdministracionIcons name="agregar" />,
           to: "/administracion/cotizaciones/crear",
         },
         {
           label: "Pendientes",
           key: "/administracion/cotizaciones/pendientes",
-          icon:  <LazyIcon name="Pendientes" />,
+          icon:  <UseBarAdministracionIcons name="pendiente" />,
           to: "/administracion/cotizaciones/pendientes",
         },
         {
           label: "Hechas",
           key: "/administracion/cotizaciones/hechas",
-          icon:  <LazyIcon name="Hechas" />,
+          icon:  <UseBarAdministracionIcons name="realizado" />,
           to: "/administracion/cotizaciones/hechas",
         },
         {
           label: "Consultas",
           key: "/administracion/cotizaciones/consultas",
-          icon:  <LazyIcon name="Consultas" />,
+          icon:  <UseBarAdministracionIcons name="consultar" />,
           to: "/administracion/cotizaciones/consultas",
         },
       ],
     },
     {
       label: "Ordenes",
-      key: "ordenes",
-      icon: <LazyIcon name="Ordenes" />,
+      key: "/administracion/ordenes",
+      icon: <UseBarAdministracionIcons name="ordenes" />,
       children: [
         {
           label: "Crear",
           key: "/administracion/ordenes/crear",
-          icon:  <LazyIcon name="Adicionar" />,
+          icon:  <UseBarAdministracionIcons name="agregar" />,
           to: "/administracion/ordenes/crear",
         },
         {
           label: "Pendientes",
           key: "/administracion/ordenes/pendientes",
-          icon:  <LazyIcon name="Pendientes" />,
+          icon:  <UseBarAdministracionIcons name="pendiente" />,
           to: "/administracion/ordenes/pendientes",
         },
         {
           label: "Hechas",
           key: "/administracion/ordenes/hechas",
-          icon:  <LazyIcon name="Hechas" />,
+          icon:  <UseBarAdministracionIcons name="realizado" />,
           to: "/administracion/ordenes/hechas",
         },
         {
           label: "Consultas",
           key: "/administracion/ordenes/consultas",
-          icon:  <LazyIcon name="Consultas" />,
+          icon:  <UseBarAdministracionIcons name="consultar" />,
           to: "/administracion/ordenes/consultas",
         },
       ],
     },
     {
       label: "Productos por adquirir",
-      key: "productos",
-      icon: <LazyIcon name="Actividades" />,
+      key: "/administracion/productos",
+      icon: <UseBarAdministracionIcons name="productAdq" />,
       to: "/administracion/productos",
     },
     {
       label: "Monitoreo",
-      key: "monitoreo",
-      icon: <LazyIcon name="Ordenes" />,
+      key: "/administracion/monitoreo",
+      icon: <UseBarAdministracionIcons name="monitoreo" />,
       children: [
         {
           label: "Inicio",
           key: "/administracion/monitoreo/inicio",
-          icon:  <LazyIcon name="Adicionar" />,
+          icon:  <UseBarAdministracionIcons name="inicio" />,
           to: "/administracion/monitoreo/inicio",
         },
         {
           label: "Weather",
           key: "/administracion/monitoreo/weather",
-          icon:  <LazyIcon name="Adicionar" />,
+          icon:  <UseBarAdministracionIcons name="weather" />,
           to: "/administracion/monitoreo/weather",
         },
         {
           label: "Pro",
           key: "/administracion/monitoreo/pro",
-          icon:  <LazyIcon name="Ordenes" />,
+          icon:  <UseBarAdministracionIcons name="pro" />,
           to: "/administracion/monitoreo/pro",
         },
         {
           label: "Chips",
           key: "/administracion/monitoreo/chips",
-          icon:  <LazyIcon name="Ordenes" />,
+          icon:  <UseBarAdministracionIcons name="chips" />,
           to: "/administracion/monitoreo/chips",
         },
         {
           label: "Servicios de M/C",
           key: "/administracion/monitoreo/servicios",
-          icon:  <LazyIcon name="Ordenes" />,
+          icon:  <UseBarAdministracionIcons name="servicios" />,
           to: "/administracion/monitoreo/servicios",
         },
       ],
     },
     {
       label: "Lista de contactos",
-      key: "lista",
-      icon: <LazyIcon name="Ordenes" />,
+      key: "/administracion/lista",
+      icon: <UseBarAdministracionIcons name="contactos" />,
       children: [
         {
           label: "Proveedores",
           key: "/administracion/lista/proveedores",
-          icon:  <LazyIcon name="Ordenes" />,
+          icon:  <UseComercialesIconsLO name="proveedor" style={{transform: 'rotateY(180deg)'}} />,
           to: "/administracion/lista/proveedores",
         },
         {
           label: "Clientes",
           key: "/administracion/lista/clientes",
-          icon:  <LazyIcon name="Ordenes" />,
+          icon:  <UseComercialesIconsLO name="cliente" />,
           to: "/administracion/lista/clientes",
         },
       ],
     },
     {
       label: "Historial de ventas",
-      key: "ventas",
-      icon: <LazyIcon name="Activos" />,
+      key: "/administracion/ventas",
+      icon: <UseBarAdministracionIcons name="historial" />,
       to: "/administracion/ventas",
     },
   ];
 
   const baseMenu = mapNavToMenu(nav);
 
-  return [
-    ...baseMenu,
-    getItem(
-      "Módulos",
-      "modulos",
-      <SlackOutlined />,
-      buildModulos(user?.permisos)
-    ),
-  ];
+  return(
+    baseMenu
+  )
+}, [])
 }
 
 

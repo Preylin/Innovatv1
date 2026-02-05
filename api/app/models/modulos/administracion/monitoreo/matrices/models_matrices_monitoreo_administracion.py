@@ -49,33 +49,20 @@ class Chip(Base):
     instalacion: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     adicional: Mapped[str] = mapped_column(VARCHAR(255), nullable=True)
     status: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    imagen1: Mapped[bytes] = mapped_column(LargeBinary, nullable=True)
+    imagen2: Mapped[bytes] = mapped_column(LargeBinary, nullable=True)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"), nullable=False)
 
-    imagen: Mapped[list["ImagenChips"]] = relationship(back_populates="chip", cascade="all, delete-orphan", lazy="selectin")
-    
-
-class ImagenChips(Base):
-    __tablename__ = "imagen_chips"
-    __table_args__ = {"schema": "administracion"}
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    image_byte: Mapped[bytes] = mapped_column(LargeBinary)
-    chip_id: Mapped[int] = mapped_column(
-        BigInteger,
-        ForeignKey("administracion.chip.id", ondelete="CASCADE"),
-        nullable=False,
-    )
-    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"), nullable=False)
-
-    chip: Mapped["Chip"] = relationship(back_populates="imagen")
+    def _convert_to_base64(self, image_data: bytes | None) -> str | None:
+        if not image_data: return None
+        try:
+            return base64.b64encode(image_data).decode("utf-8")
+        except Exception: return None
 
     @property
-    def image_base64(self) -> str | None:
-        if not self.image_byte:
-            return None
-        try:
-            return base64.b64encode(self.image_byte).decode("utf-8")
-        except Exception:
-            return None
-
-
+    def imagenes_base64(self) -> dict[str, str | None]:
+        """Genera dinámicamente el diccionario de imágenes decodificadas."""
+        return {
+            f"imagen{i}": self._convert_to_base64(getattr(self, f"imagen{i}"))
+            for i in range(1, 2)
+        }
