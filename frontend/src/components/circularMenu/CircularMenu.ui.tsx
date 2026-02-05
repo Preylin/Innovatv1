@@ -67,11 +67,11 @@ export function CircularMenuUI({
                 {img && (
                   <img
                     src={img}
-                    className="w-1/2 h-auto mb-1 transition-transform group-hover:scale-110"
+                    className="w-1/2 h-auto mb-2 transition-transform group-hover:scale-110"
                     alt={mod.name}
                   />
                 )}
-                <span className="text-[7px] sm:text-[10px] font-bold text-slate-700 uppercase tracking-tighter leading-none mt-1.5">
+                <span className="text-[7px] sm:text-[10px] lg:text-[11px] px-2 font-bold text-slate-700 uppercase tracking-tighter leading-none">
                   {mod.name}
                 </span>
               </div>
