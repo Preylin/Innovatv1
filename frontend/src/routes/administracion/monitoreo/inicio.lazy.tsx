@@ -1,9 +1,8 @@
 import { createLazyFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense, useState } from "react";
-import { Col, Divider, Flex, Grid, Modal, Row, Skeleton, Typography } from "antd";
+import { Col, Divider, Flex, Modal, Row, Skeleton, Typography } from "antd";
 import ButtonWatch from "../../../components/molecules/botons/BottonWatch";
 const { Title } = Typography;
-const { useBreakpoint } = Grid;
 
   const LazyShowClientes = lazy(() => import('../../../modulos/administracion/monitoreo/clientesYUbicaciones/MostrarClientesUbicaciones'))
   const LazyPanelWPanelCollapseShowTables = lazy(() => import('../../../modulos/administracion/monitoreo/inicio/CollapseShowTables'));
@@ -16,18 +15,15 @@ export const Route = createLazyFileRoute("/administracion/monitoreo/inicio")({
 
 
 function RouteComponent(){
-  const screens = useBreakpoint();
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
   return (
     <>
-      <Flex justify="space-between" align="center" >
+      <Flex justify="space-between" align="center" style={{marginBottom: '4px'}} >
           <Title level={2}
-            style={{
-              fontSize: screens.md ? "28px" : "18px",
-            }}
+            style={{ marginBottom: '1px', fontSize: 'clamp(1rem, 2vw + 0.5rem, 2rem)'}}
           >Monitoreo de servicios</Title>
           <ButtonWatch onClick={handleOpen}>
             Ver clientes

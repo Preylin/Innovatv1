@@ -3,7 +3,6 @@ import {
   Flex,
   Typography,
   Empty,
-  Space,
   Badge,
   Grid,
   Skeleton,
@@ -11,6 +10,8 @@ import {
   Popconfirm,
   App,
   Alert,
+  Row,
+  Col,
 } from "antd";
 
 import { useCallback, useMemo, useState } from "react";
@@ -186,10 +187,7 @@ function MostrarRegistrosMercaderias() {
             style={cardStyle}
             styles={{
               body: {
-                padding: "8px",
-                display: "flex",
-                flexDirection: "row",
-                height: "100%",
+                padding: "10px",
               },
             }}
           >
@@ -210,9 +208,8 @@ function MostrarRegistrosMercaderias() {
                 />
               </Dropdown>
             </div>
-            <Flex gap="large" align="start" style={{ width: "100%" }}>
-              {/* Sección Visual: Carrusel */}
-              <div style={{ width: 200, flexShrink: 0 }}>
+              <Row gutter={16}>
+                <Col xs={24} md={8}>
                 <CarrucelImagenes
                   autoplay={true}
                   height={160}
@@ -222,10 +219,8 @@ function MostrarRegistrosMercaderias() {
                     img ? getBase64WithPrefix(img) : defaultImage
                   )}
                 />
-              </div>
-
-              {/* Sección Información */}
-              <Flex vertical style={{ flex: 1 }}>
+                </Col>
+                <Col xs={24} md={16}>
                 <Title
                   level={5}
                   style={{ margin: 0, fontSize: "14px", width: "90%" }}
@@ -234,17 +229,19 @@ function MostrarRegistrosMercaderias() {
                 </Title>
                 <Badge
                   count={item.categoria}
-                  style={{ backgroundColor: "#f5222d", fontSize: "8px" }}
+                  style={{ backgroundColor: "#853C66", fontSize: "8px", }}
                 />
-                <Space size={4}>
+                <div style={{display: 'block',}}>
                   <Text type="secondary" style={{ fontSize: "12px" }}>
                     [{item.codigo}]
                   </Text>
-                  <Text type="secondary" style={{ fontSize: "12px" }}>
-                    • {item.medida}
+                  <Text type="secondary" style={{ fontSize: "12px", margin: '8px 8px'}}>
+                    • 
                   </Text>
-                </Space>
-
+                  <Text type="secondary" style={{ fontSize: "12px"}}>
+                    {item.medida}
+                  </Text>
+                  </div>
                 <div>
                   <Text strong>{item.marca}</Text>
                   <Text type="secondary"> / {item.modelo}</Text>
@@ -262,8 +259,9 @@ function MostrarRegistrosMercaderias() {
                     {item.descripcion}
                   </Text>
                 )}
-              </Flex>
-            </Flex>
+                </Col>
+              </Row>
+
           </Card>
         ))
       )}

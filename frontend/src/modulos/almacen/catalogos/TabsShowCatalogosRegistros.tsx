@@ -22,7 +22,6 @@ function TabsShowCatalogosRegistros() {
 
   return (
       <Tabs
-      style={{minWidth: '500px'}}
       defaultActiveKey="1" items={items}></Tabs>
   );
 }

@@ -22,7 +22,6 @@ function TabsShowStockRegistros() {
 
   return (
       <Tabs
-      style={{minWidth: '700px'}}
       defaultActiveKey="1" items={items}></Tabs>
   );
 }

@@ -3,7 +3,6 @@ import {
   App,
   Button,
   Flex,
-  Grid,
   Image,
   Popconfirm,
   Popover,
@@ -34,7 +33,6 @@ import getBase64WithPrefix from "../../../helpers/ImagesBase64";
 
 
 const { Title } = Typography;
-const { useBreakpoint } = Grid;
 
 // --- Tipado e Interfaces ---
 interface DataType {
@@ -63,7 +61,6 @@ const PERMISO_COLORS: Record<string, string> = {
 
 function UsuarioTable() {
   const { message } = App.useApp();
-  const screens = useBreakpoint();
 
   // --- Estados ---
   const [openCreateModal, setOpenCreateModal] = useState(false);
@@ -223,9 +220,7 @@ function UsuarioTable() {
               level={2}
               style={{
                 margin: 0,
-                color: "#6E3535",
-                fontSize: screens.md ? "30px" : "1.2rem",
-                textShadow: "2px 1px 1px #EEF5C6",
+                fontSize: 'clamp(1rem, 2vw + 0.5rem, 2rem)'
               }}
             >
               Panel de Control de Usuarios

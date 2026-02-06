@@ -3,11 +3,12 @@ import {
   Flex,
   Typography,
   Empty,
-  Space,
   Badge,
   Grid,
   Skeleton,
   Alert,
+  Row,
+  Col,
 } from "antd";
 
 import { useCallback, useMemo, useState } from "react";
@@ -57,12 +58,10 @@ const SEARCH_OPTIONS = [
   { label: "Stock actual", value: "stock_actual" },
   { label: "Valor unitario", value: "valor" },
   { label: "Ubicación", value: "ubicacion" },
-  
 ];
 
 function MostrarStockMaterial() {
-  const { data, isLoading, isError } =
-    useCatalogoStockDetalladoMaterialList();
+  const { data, isLoading, isError } = useCatalogoStockDetalladoMaterialList();
   const screens = useBreakpoint();
 
   const [searchParams, setSearchParams] = useState({
@@ -80,7 +79,10 @@ function MostrarStockMaterial() {
   const dataSource = useMemo(() => {
     if (!data) return [];
     const mapped = data.map(
-      (item: StockActualDetalladoMaterialType, index: number): ServicioMcData => ({
+      (
+        item: StockActualDetalladoMaterialType,
+        index: number,
+      ): ServicioMcData => ({
         id: index,
         codigo: item.codigo ?? "",
         name: item.name.toUpperCase() ?? "",
@@ -93,7 +95,7 @@ function MostrarStockMaterial() {
         serie: item.serie ?? "",
         stock_actual: item.stock_actual ?? 0,
         valor: item.valor ?? 0,
-        total: ((item.stock_actual ?? 0) * (item.valor ?? 0)),
+        total: (item.stock_actual ?? 0) * (item.valor ?? 0),
         moneda: item.moneda ?? "",
         fecha_ingreso: item.fecha_ingreso ?? "",
         image_byte: getBase64WithPrefix(item.image_byte) ?? "",
@@ -119,7 +121,7 @@ function MostrarStockMaterial() {
       flex: screens.md ? "0 0 calc(50% - 12px)" : "1 1 100%",
       minWidth: screens.md ? "650px" : "100%",
     }),
-    [screens], 
+    [screens],
   );
 
   if (isLoading) return <Skeleton active paragraph={{ rows: 10 }} />;
@@ -151,16 +153,12 @@ function MostrarStockMaterial() {
               style={cardStyle}
               styles={{
                 body: {
-                  padding: "8px",
-                  display: "flex",
-                  flexDirection: "row",
-                  height: "100%",
+                  padding: "10px",
                 },
               }}
             >
-              <Flex gap="large" align="start" style={{ width: "100%" }}>
-                {/* Sección Visual: Carrusel */}
-                <div style={{ width: 200, flexShrink: 0 }}>
+              <Row gutter={16}>
+                <Col xs={24} md={8}>
                   <CarrucelImagenes
                     autoplay={true}
                     height={160}
@@ -168,65 +166,70 @@ function MostrarStockMaterial() {
                     preview={true}
                     images={item.image_byte ? [item.image_byte] : []}
                   />
-                </div>
+                </Col>
+                <Col xs={24} md={16}>
+                  <Flex vertical style={{ flex: 1 }} gap={2}>
+                    <Title
+                      style={{ margin: 0, fontSize: "14px", width: "90%" }}
+                    >
+                      {item.name}
+                    </Title>
+                    <Badge
+                        count={item.tipo}
+                        style={{ backgroundColor: "#7A753B", fontSize: "8px" }}
+                      />
+                      <div style={{ display: "block" }}>
+                        <Text type="secondary" style={{ fontSize: "12px" }}>
+                          [{item.codigo}]
+                        </Text>
+                        <Text type="secondary" style={{ fontSize: "12px" }}>
+                          • {item.medida}
+                        </Text>
+                      </div>
+                    <div>
+                      <Text strong style={{ fontSize: "12px" }}>
+                        {item.marca}
+                      </Text>
+                      <Text type="secondary" style={{ fontSize: "12px" }}>
+                        {" "}
+                        / {item.modelo}
+                      </Text>
+                    </div>
+                    <Text style={{ fontSize: "12px" }}>
+                      <Text strong>Dimensión: </Text> {item.dimension}
+                    </Text>
 
-                {/* Sección Información */}
-                <Flex vertical style={{ flex: 1 }} gap={2}>
-                  <Title
-                    style={{ margin: 0, fontSize: "14px", width: "90%" }}
-                  >
-                    {item.name}
-                  </Title>
-                  <Space size={8} style={{ fontSize: "12px" }}>
-                    <Space size={4}>
-                    <Text type="secondary" style={{ fontSize: "12px" }}>
-                      [{item.codigo}]
+                    <Flex gap={8}>
+                      <Text style={{ fontSize: "12px" }}>
+                        <Text strong>En stock: </Text> {item.stock_actual}
+                      </Text>
+                      <Text style={{ fontSize: "12px" }}>
+                        <Text strong>- V.U: </Text> {item.moneda}{" "}
+                        {item.valor.toFixed(2)}
+                      </Text>
+                      <Text style={{ fontSize: "12px" }}>
+                        <Text strong>- Total: </Text> {item.moneda}{" "}
+                        {item.total.toFixed(2)}
+                      </Text>
+                    </Flex>
+                    <Flex gap={8}>
+                      <Text style={{ fontSize: "12px" }}>
+                        <Text strong>Stock mínimo: </Text> {item.plimit}
+                      </Text>
+                      <Text style={{ fontSize: "12px" }}>
+                        <Text strong>Fecha de ingreso: </Text>{" "}
+                        {isoToDDMMYYYY(item.fecha_ingreso)}
+                      </Text>
+                    </Flex>
+                    <Text style={{ fontSize: "12px" }}>
+                      <Text strong>Serie o codigo único: </Text> {item.serie}
                     </Text>
-                    <Text type="secondary" style={{ fontSize: "12px" }}>
-                      • {item.medida}
+                    <Text style={{ fontSize: "12px" }}>
+                      <Text strong>Ubicación: </Text> {item.ubicacion}
                     </Text>
-                  </Space>
-                  <Badge
-                    count={item.tipo}
-                    style={{ backgroundColor: "#f5222d", fontSize: "8px" }}
-                  />
-                  </Space>
-                  <div>
-                    <Text strong style={{ fontSize: "12px" }}>{item.marca}</Text>
-                    <Text type="secondary" style={{ fontSize: "12px" }}> / {item.modelo}</Text>
-                  </div>
-                  <Text style={{ fontSize: "12px" }}>
-                    <Text strong>Dimensión: </Text> {item.dimension}
-                  </Text>
-                  
-                  <Flex gap={8}>
-                  <Text style={{ fontSize: "12px" }}>
-                    <Text strong>En stock: </Text> {item.stock_actual}
-                  </Text>
-                  <Text style={{ fontSize: "12px" }}>
-                    <Text strong>- V.U: </Text> {item.moneda}{" "}
-                    {item.valor.toFixed(2)}
-                  </Text>
-                  <Text style={{ fontSize: "12px" }}>
-                    <Text strong>- Total: </Text> {item.moneda}{" "} {item.total.toFixed(2)}
-                  </Text>
                   </Flex>
-                  <Flex gap={8}>
-                  <Text style={{ fontSize: "12px" }}>
-                    <Text strong>Stock mínimo: </Text> {item.plimit}
-                  </Text>
-                  <Text style={{ fontSize: "12px" }}>
-                    <Text strong>Fecha de ingreso: </Text> {isoToDDMMYYYY(item.fecha_ingreso)}
-                  </Text>
-                  </Flex>
-                  <Text style={{ fontSize: "12px" }}>
-                    <Text strong>Serie o codigo único: </Text> {item.serie }
-                  </Text>
-                  <Text style={{ fontSize: "12px" }}>
-                    <Text strong>Ubicación: </Text> {item.ubicacion }
-                  </Text>
-                </Flex>
-              </Flex>
+                </Col>
+              </Row>
             </Card>
           ))
         )}

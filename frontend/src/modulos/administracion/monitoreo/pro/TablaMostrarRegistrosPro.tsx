@@ -3,7 +3,6 @@ import { SearchOutlined } from "@ant-design/icons";
 import type { InputRef, TableColumnsType, TableColumnType } from "antd";
 import {
   Flex,
-  Grid,
   Input,
   Popconfirm,
   Skeleton,
@@ -25,7 +24,6 @@ import { ordenarPorFecha } from "../../../../helpers/OrdenacionAscDscPorFechasIS
 import ButtonDelete from "../../../../components/molecules/botons/BottonDelete";
 
 const { Text, Title } = Typography;
-const { useBreakpoint } = Grid;
 
 interface DataType {
   item: number;
@@ -59,7 +57,6 @@ const mapProTable = (proData: ProOutApiType[]): DataType[] => {
 };
 
 function TablaMostrarRegistrosPro() {
-  const screens = useBreakpoint();
   const searchInput = useRef<InputRef>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -263,7 +260,7 @@ function TablaMostrarRegistrosPro() {
               level={2} 
               style={{ 
                 margin: 0, 
-                fontSize: screens.md ? "28px" : "18px" 
+                fontSize: 'clamp(1rem, 2vw + 0.5rem, 2rem)'
               }}
             >
               Servicios licencias Pro 
@@ -278,7 +275,6 @@ function TablaMostrarRegistrosPro() {
         pagination={{ pageSize: 12, size: "small" }}
         scroll={{ x: 1200, y: 600 }}
         rowKey="key"
-        styles={{ title: { textShadow: "2px 1px 1px #EEF5C6" } }}
       />
 
       {/* OPTIMIZACIÓN: Renderizado condicional para liberar memoria */}

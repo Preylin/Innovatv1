@@ -4,7 +4,6 @@ import type { InputRef, TableColumnsType, TableColumnType } from "antd";
 import {
   Alert,
   Flex,
-  Grid,
   Input,
   Popconfirm,
   Skeleton,
@@ -29,7 +28,6 @@ import { ordenarPorFecha } from "../../../../helpers/OrdenacionAscDscPorFechasIS
 import type { WeatherOutApiType } from "../../../../api/queries/modulos/administracion/monitoreo/weather/weather.api.schema";
 
 const { Text, Title } = Typography;
-const { useBreakpoint } = Grid;
 
 // --- Interfaces ---
 interface DataType {
@@ -64,7 +62,6 @@ const mapWeatherToTable = (weather: WeatherOutApiType[]): DataType[] => {
 };
 
 function TablaMostrarRegistrosWather() {
-  const screens = useBreakpoint();
   const searchInput = useRef<InputRef>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -294,8 +291,7 @@ function TablaMostrarRegistrosWather() {
               level={2}
               style={{
                 margin: 0,
-                fontSize: screens.md ? "28px" : "18px",
-                textShadow: "2px 1px 1px #EEF5C6",
+                fontSize: 'clamp(1rem, 2vw + 0.5rem, 2rem)',
               }}
             >
               Servicios Innovat-Weather

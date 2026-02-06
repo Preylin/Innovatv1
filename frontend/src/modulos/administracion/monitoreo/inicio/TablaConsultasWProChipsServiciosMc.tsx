@@ -4,7 +4,6 @@ import { useProList } from "../../../../api/queries/modulos/administracion/monit
 import { useWeatherList } from "../../../../api/queries/modulos/administracion/monitoreo/weather/weather.api";
 import {
     Flex,
-  Grid,
   Input,
   Table,
   Tag,
@@ -26,10 +25,8 @@ import {
 import { useServiciosMCList } from "../../../../api/queries/modulos/administracion/monitoreo/serviciosMC/serviciosMC.api";
 
 const { Text, Title } = Typography;
-const { useBreakpoint } = Grid;
 
 function TablaConsultasWProChips() {
-  const screens = useBreakpoint();
   const searchInput = useRef<InputRef>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [searchText, setSearchText] = useState("");
@@ -240,10 +237,7 @@ function TablaConsultasWProChips() {
           <Flex justify="space-between">
             <Title
             level={2}
-            style={{
-              margin: 0,
-              fontSize: screens.md ? "28px" : "18px",
-            }}
+            style={{ marginBottom: '1px', fontSize: 'clamp(1rem, 2vw + 0.5rem, 2rem)'}}
           >
             Consultas de servicios
           </Title>
@@ -253,7 +247,7 @@ function TablaConsultasWProChips() {
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                fontSize: screens.md ? "16px" : "12px"
+                fontSize: 'clamp(1rem, 1.5vw + 0.5rem, 1.5rem)'
             }}
             >{TotalRegistros} registros</Tag>
           </Flex>

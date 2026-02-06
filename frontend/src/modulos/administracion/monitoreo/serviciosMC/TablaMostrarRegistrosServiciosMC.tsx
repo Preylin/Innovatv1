@@ -1,4 +1,4 @@
-import { Flex, Grid, Input, Popconfirm, Skeleton, Space, Table, Tag, Typography, type InputRef, type TableColumnsType, type TableColumnType } from "antd";
+import { Flex, Input, Popconfirm, Skeleton, Space, Table, Tag, Typography, type InputRef, type TableColumnsType, type TableColumnType } from "antd";
 import { useDeleteServiciosMC, useServiciosMCList } from "../../../../api/queries/modulos/administracion/monitoreo/serviciosMC/serviciosMC.api";
 import isoToDDMMYYYY from "../../../../helpers/Fechas";
 import type { ServiciosMCOutApiType } from "../../../../api/queries/modulos/administracion/monitoreo/serviciosMC/serviciosMC.api.schema";
@@ -14,7 +14,6 @@ import ModalCreateServiciosMc from "./ModalCreateServiciosMC";
 import ModalUpdateServiciosMc from "./ModalActualizarRegistroServicioMC";
 
 const { Text, Title } = Typography;
-const { useBreakpoint } = Grid;
 
 interface DataType {
   item: number;
@@ -56,7 +55,6 @@ const mapServiciosMCTable = (proData: ServiciosMCOutApiType[]): DataType[] => {
 };
 
 function TablaMostrarRegistrosMc() {
-  const screens = useBreakpoint();
   const searchInput = useRef<InputRef>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -310,7 +308,7 @@ function TablaMostrarRegistrosMc() {
               level={2} 
               style={{ 
                 margin: 0, 
-                fontSize: screens.md ? "28px" : "18px" 
+                fontSize: 'clamp(1rem, 2vw + 0.5rem, 2rem)'
               }}
             >
               Servicios de Mantenimiento y Calibración

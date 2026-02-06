@@ -10,7 +10,7 @@ export const Route = createLazyFileRoute("/almacen/")({
 function RouteComponent() {
   return (
     <div>
-      <Title style={{ marginBottom: '1px'}} level={3}>Monitoreo de productos en STOCK</Title>
+      <Title style={{ marginBottom: '1px', fontSize: 'clamp(1rem, 2vw + 0.5rem, 2rem)'}} >Monitoreo de productos en STOCK</Title>
       <TabsShowStatusRegistros />
       <Outlet />
     </div>

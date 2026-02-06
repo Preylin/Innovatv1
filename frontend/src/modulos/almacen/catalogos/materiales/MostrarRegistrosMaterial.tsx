@@ -3,7 +3,6 @@ import {
   Flex,
   Typography,
   Empty,
-  Space,
   Badge,
   Grid,
   Skeleton,
@@ -11,6 +10,8 @@ import {
   Popconfirm,
   App,
   Alert,
+  Row,
+  Col,
 } from "antd";
 
 import { useCallback, useMemo, useState } from "react";
@@ -25,8 +26,11 @@ import ButtonUpdate from "../../../../components/molecules/botons/BottonUpdate";
 import ButtonDelete from "../../../../components/molecules/botons/BottonDelete";
 import { MoreOutlined } from "@ant-design/icons";
 import CatalogoMaterialUpdate from "./ActualizarCatalogoMaterial";
-import {useToggle, useUpdateModal} from "../../../../hooks/Toggle";
-import { useCatalogoMaterialList, useDeleteCatalogoMaterial } from "../../../../api/queries/modulos/almacen/catalogos/materiales/material.api";
+import { useToggle, useUpdateModal } from "../../../../hooks/Toggle";
+import {
+  useCatalogoMaterialList,
+  useDeleteCatalogoMaterial,
+} from "../../../../api/queries/modulos/almacen/catalogos/materiales/material.api";
 import type { CatalogoMaterialOutType } from "../../../../api/queries/modulos/almacen/catalogos/materiales/material.api.schema";
 import getBase64WithPrefix from "../../../../helpers/ImagesBase64";
 
@@ -82,7 +86,7 @@ function MostrarRegistrosMateriales() {
   const getMenuItems = (id: number): MenuProps["items"] => [
     {
       key: "edit",
-      icon: <ButtonUpdate style={{margin: '0px'}} />,
+      icon: <ButtonUpdate style={{ margin: "0px" }} />,
       onClick: () => id !== undefined && editModal.handlerOpen(id),
       disabled: id === undefined,
     },
@@ -102,7 +106,7 @@ function MostrarRegistrosMateriales() {
           cancelText="Cancelar"
           okButtonProps={{ loading: isPending, danger: true }}
         >
-          <ButtonDelete style={{margin: '0px'}}/>
+          <ButtonDelete style={{ margin: "0px" }} />
         </Popconfirm>
       ),
     },
@@ -175,97 +179,100 @@ function MostrarRegistrosMateriales() {
       </div>
 
       <Flex justify="start" wrap="wrap" gap={12} style={{ padding: "16px" }}>
-      {dataSource.length === 0 ? (
-        <Empty description="No hay registros"/>
-      ) : (
-        dataSource.map((item) => (
-          <Card
-            key={item.id}
-            hoverable
-            style={cardStyle}
-            styles={{
-              body: {
-                padding: "8px",
-                display: "flex",
-                flexDirection: "row",
-                height: "100%",
-              },
-            }}
-          >
-            <div
-              style={{ position: "absolute", top: 10, right: 10, zIndex: 10 }}
+        {dataSource.length === 0 ? (
+          <Empty description="No hay registros" />
+        ) : (
+          dataSource.map((item) => (
+            <Card
+              key={item.id}
+              hoverable
+              style={cardStyle}
+              styles={{
+                body: {
+                  padding: "10px",
+                },
+              }}
             >
-              <Dropdown
-                menu={{ items: getMenuItems(item.id) }}
-                trigger={["click"]}
-                styles={{ item: { padding: "3px 0px" } }}
+              <div
+                style={{ position: "absolute", top: 10, right: 10, zIndex: 10 }}
               >
-                <MoreOutlined
-                  style={{
-                    fontSize: "20px",
-                    cursor: "pointer",
-                    color: "#8c8c8c",
-                  }}
-                />
-              </Dropdown>
-            </div>
-            <Flex gap="large" align="start" style={{ width: "100%" }}>
-              {/* Sección Visual: Carrusel */}
-              <div style={{ width: 200, flexShrink: 0 }}>
-                <CarrucelImagenes
-                  autoplay={true}
-                  height={160}
-                  fallback={defaultImage}
-                  preview={true}
-                  images={item.imagenTotal.map((img) =>
-                    img ? getBase64WithPrefix(img) : defaultImage
-                  )}
-                />
-              </div>
-
-              {/* Sección Información */}
-              <Flex vertical style={{ flex: 1 }}>
-                <Title
-                  level={5}
-                  style={{ margin: 0, fontSize: "14px", width: "90%" }}
+                <Dropdown
+                  menu={{ items: getMenuItems(item.id) }}
+                  trigger={["click"]}
+                  styles={{ item: { padding: "3px 0px" } }}
                 >
-                  {item.name}
-                </Title>
-                <Badge
-                  count={item.categoria}
-                  style={{ backgroundColor: "#f5222d", fontSize: "8px" }}
-                />
-                <Space size={4}>
+                  <MoreOutlined
+                    style={{
+                      fontSize: "20px",
+                      cursor: "pointer",
+                      color: "#8c8c8c",
+                    }}
+                  />
+                </Dropdown>
+              </div>
+              <Row gutter={16}>
+                <Col xs={24} md={8}>
+                <CarrucelImagenes
+                    autoplay={true}
+                    height={160}
+                    fallback={defaultImage}
+                    preview={true}
+                    images={item.imagenTotal.map((img) =>
+                      img ? getBase64WithPrefix(img) : defaultImage,
+                    )}
+                  />
+                </Col>
+                <Col xs={24} md={16}>
+                  <Title
+                    level={5}
+                    style={{ margin: 0, fontSize: "14px", width: "90%" }}
+                  >
+                    {item.name}
+                  </Title>
+                  <Badge
+                    count={item.categoria}
+                    style={{ backgroundColor: "#7A753B", fontSize: "8px" }}
+                  />
+                  <div style={{display: 'block',}}>
                   <Text type="secondary" style={{ fontSize: "12px" }}>
                     [{item.codigo}]
                   </Text>
-                  <Text type="secondary" style={{ fontSize: "12px" }}>
-                    • {item.medida}
+                  <Text type="secondary" style={{ fontSize: "12px", margin: '8px 8px'}}>
+                    • 
                   </Text>
-                </Space>
-
-                <div>
-                  <Text strong>{item.marca}</Text>
-                  <Text type="secondary"> / {item.modelo}</Text>
-                </div>
-
-                {item.dimension && (
-                  <Text style={{ display: "block", marginTop: 4 }}>
-                    <Text strong>Dimensión: </Text> {item.dimension}
+                  <Text type="secondary" style={{ fontSize: "12px"}}>
+                    {item.medida}
                   </Text>
-                )}
+                  </div>
 
-                {item.descripcion && (
-                  <Text italic type="secondary">
-                    <Text strong>Descripción: </Text>
-                    {item.descripcion}
-                  </Text>
-                )}
+                  <div>
+                    <Text strong>{item.marca}</Text>
+                    <Text type="secondary"> / {item.modelo}</Text>
+                  </div>
+
+                  {item.dimension && (
+                    <Text style={{ display: "block", marginTop: 4 }}>
+                      <Text strong>Dimensión: </Text> {item.dimension}
+                    </Text>
+                  )}
+
+                  {item.descripcion && (
+                    <Text italic type="secondary">
+                      <Text strong>Descripción: </Text>
+                      {item.descripcion}
+                    </Text>
+                  )}
+                </Col>
+              </Row>
+              <Flex gap="large" align="start" style={{ width: "100%" }}>
+
+
+                {/* Sección Información */}
+                
               </Flex>
-            </Flex>
-          </Card>
-        ))
-      )}
+            </Card>
+          ))
+        )}
       </Flex>
       {/* Modales con Renderizado Condicional para limpieza de memoria */}
       {createModal.isToggled && (
@@ -287,6 +294,3 @@ function MostrarRegistrosMateriales() {
 }
 
 export default MostrarRegistrosMateriales;
-
-
-
