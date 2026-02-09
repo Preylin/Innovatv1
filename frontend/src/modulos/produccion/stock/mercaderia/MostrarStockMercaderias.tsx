@@ -53,10 +53,9 @@ const SEARCH_OPTIONS = [
   { label: "Medida", value: "medida" },
   { label: "Dimensión", value: "dimension" },
   { label: "Categoría", value: "categoria" },
+  { label: "Stock", value: "stock_actual" },
   { label: "Serie", value: "serie" },
   { label: "Código", value: "codigo" },
-  { label: "Stock actual", value: "stock_actual" },
-  { label: "Valor unitario", value: "valor" },
   { label: "Ubicación", value: "ubicacion" },
 ];
 
@@ -235,18 +234,11 @@ function MostrarStockMercaderias() {
                               {item.stock_actual}
                             </span>
                           </Text>
-                          <Text className="text-xs">
-                            <Text strong>V.U: </Text> {item.moneda} {item.valor.toFixed(2)}
-                          </Text>
-                          <Text className="text-xs">
-                            <Text strong>Total: </Text> {item.moneda} {item.total.toFixed(2)}
-                          </Text>
                         </Flex>
 
                         {/* Fila de Tiempos y Ubicación */}
                         <div className="mt-1">
                           <Text className="block text-xs">
-                            <Text strong>Stock Mín: </Text> {item.plimit} • 
                             <Text strong> Ingreso: </Text> {isoToDDMMYYYY(item.fecha_ingreso)}
                           </Text>
                           <Text className="block text-xs truncate">

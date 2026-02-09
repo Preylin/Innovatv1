@@ -1,6 +1,5 @@
 import {
   Card,
-  Flex,
   Typography,
   Empty,
   Badge,
@@ -13,8 +12,9 @@ import {
   Row,
   Col,
 } from "antd";
+import { useCallback, useMemo, useState, useRef, useEffect } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
-import { useCallback, useMemo, useState } from "react";
 import CarrucelImagenes from "../../../../components/molecules/carrucel/Carucel";
 import { defaultImage } from "../../../../assets/images";
 import { ordenarPorFecha } from "../../../../helpers/OrdenacionAscDscPorFechasISO";
@@ -51,7 +51,6 @@ interface ServicioMcData {
   created_at: string;
 }
 
-// --- Constantes y Helpers
 const SEARCH_OPTIONS = [
   { label: "Nombre", value: "name" },
   { label: "Categoría", value: "categoria" },
@@ -70,25 +69,22 @@ function MostrarRegistrosMateriales() {
   const screens = useBreakpoint();
   const editModal = useUpdateModal<number>();
   const createModal = useToggle();
+
+  const parentRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useState({
     field: "name",
     value: "",
   });
 
-  const handleSearch = useCallback(
-    (params: { field: string; value: string }) => {
-      setSearchParams(params);
-    },
-    [],
-  );
+  const handleSearch = useCallback((params: { field: string; value: string }) => {
+    setSearchParams(params);
+  }, []);
 
-  // --- Función para generar el menú por cada item
   const getMenuItems = (id: number): MenuProps["items"] => [
     {
       key: "edit",
       icon: <ButtonUpdate style={{ margin: "0px" }} />,
       onClick: () => id !== undefined && editModal.handlerOpen(id),
-      disabled: id === undefined,
     },
     {
       key: "delete",
@@ -116,54 +112,72 @@ function MostrarRegistrosMateriales() {
     if (!data) return [];
     const mapped = data.map(
       (item: CatalogoMaterialOutType): ServicioMcData => ({
-        id: item.id ?? undefined,
+        id: item.id!,
         codigo: item.codigo ?? "-",
         name: item.name ?? "-",
         marca: item.marca ?? "-",
         modelo: item.modelo ?? "-",
         medida: item.medida ?? "-",
-        categoria: item.tipo ?? "-",
-        dimension: item.dimension ?? "-",
-        descripcion: item.descripcion ?? "-",
+        categoria: item.tipo ?? "-", // Nota: aquí usas item.tipo
+        dimension: item.dimension ?? "",
+        descripcion: item.descripcion ?? "",
         imagenTotal: [
-          item.imagen1 ?? "",
-          item.imagen2 ?? "",
-          item.imagen3 ?? "",
-          item.imagen4 ?? "",
+          item.imagen1,
+          item.imagen2,
+          item.imagen3,
+          item.imagen4,
         ].filter(Boolean) as string[],
         created_at: item.created_at ?? "-",
-      }),
+      })
     );
 
-    // 2. Ordenar
     const sorted = ordenarPorFecha(mapped, "created_at", "desc");
 
-    // 3. Filtrar
     if (!searchParams.value) return sorted;
     const term = searchParams.value.toLowerCase();
     return sorted.filter((item) =>
       String(item[searchParams.field as keyof ServicioMcData] ?? "")
         .toLowerCase()
-        .includes(term),
+        .includes(term)
     );
   }, [data, searchParams]);
 
-  const cardStyle = useMemo(
-    () => ({
-      flex: screens.md ? "0 0 calc(50% - 12px)" : "1 1 100%",
-      minWidth: screens.md ? "500px" : "100%",
-    }),
-    [screens],
-  );
+  // --- Lógica de Virtualización ---
+  const itemsPerRow = screens.md ? 2 : 1;
+  const rows = useMemo(() => {
+    const result = [];
+    for (let i = 0; i < dataSource.length; i += itemsPerRow) {
+      result.push(dataSource.slice(i, i + itemsPerRow));
+    }
+    return result;
+  }, [dataSource, itemsPerRow]);
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: useCallback(() => (screens.md ? 180 : 380), [screens.md]),
+    overscan: 5,
+  });
+
+  // Re-medir cuando cambie el layout (responsive)
+  useEffect(() => {
+    rowVirtualizer.measure();
+  }, [itemsPerRow, rowVirtualizer]);
 
   if (isLoading) return <Skeleton active className="p-6" />;
-  if (isError)
-    return <Alert type="error" title="Error al cargar datos" showIcon />;
+  if (isError) return <Alert type="error" message="Error al cargar datos" showIcon />;
 
   return (
-    <>
-      <div className="sticky top-0 z-10 backdrop-blur-sm pt-2 px-6 shadow-sm mb-2">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+    <div
+      ref={parentRef}
+      style={{
+        height: "calc(100vh - 120px)",
+        overflowY: "auto",
+        padding: "0 16px",
+      }}
+    >
+      <div className="sticky top-0 z-20 backdrop-blur-md pt-2 mb-4 border-b">
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-4">
           <div className="flex-1 min-w-[300px]">
             <SearchBar
               options={SEARCH_OPTIONS}
@@ -178,103 +192,114 @@ function MostrarRegistrosMateriales() {
         </div>
       </div>
 
-      <Flex justify="start" wrap="wrap" gap={12} style={{ padding: "16px" }}>
-        {dataSource.length === 0 ? (
-          <Empty description="No hay registros" />
-        ) : (
-          dataSource.map((item) => (
-            <Card
-              key={item.id}
-              hoverable
-              style={cardStyle}
-              styles={{
-                body: {
-                  padding: "10px",
-                },
+      {dataSource.length === 0 ? (
+        <Empty description="No hay registros" />
+      ) : (
+        <div
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: "100%",
+            position: "relative",
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => (
+            <div
+              key={virtualRow.key}
+              data-index={virtualRow.index}
+              ref={rowVirtualizer.measureElement}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${virtualRow.start}px)`,
+                display: "flex",
+                gap: "12px",
+                paddingBottom: "12px",
               }}
             >
-              <div
-                style={{ position: "absolute", top: 10, right: 10, zIndex: 10 }}
-              >
-                <Dropdown
-                  menu={{ items: getMenuItems(item.id) }}
-                  trigger={["click"]}
-                  styles={{ item: { padding: "3px 0px" } }}
+              {rows[virtualRow.index].map((item) => (
+                <Card
+                  key={item.id}
+                  hoverable
+                  style={{ flex: 1, minWidth: 0 }}
+                  styles={{ body: { padding: "10px" } }}
                 >
-                  <MoreOutlined
-                    style={{
-                      fontSize: "20px",
-                      cursor: "pointer",
-                      color: "#8c8c8c",
-                    }}
-                  />
-                </Dropdown>
-              </div>
-              <Row gutter={16}>
-                <Col xs={24} md={8}>
-                <CarrucelImagenes
-                    autoplay={true}
-                    height={160}
-                    fallback={defaultImage}
-                    preview={true}
-                    images={item.imagenTotal.map((img) =>
-                      img ? getBase64WithPrefix(img) : defaultImage,
-                    )}
-                  />
-                </Col>
-                <Col xs={24} md={16}>
-                  <Title
-                    level={5}
-                    style={{ margin: 0, fontSize: "14px", width: "90%" }}
-                  >
-                    {item.name}
-                  </Title>
-                  <Badge
-                    count={item.categoria}
-                    style={{ backgroundColor: "#7A753B", fontSize: "8px" }}
-                  />
-                  <div style={{display: 'block',}}>
-                  <Text type="secondary" style={{ fontSize: "12px" }}>
-                    [{item.codigo}]
-                  </Text>
-                  <Text type="secondary" style={{ fontSize: "12px", margin: '8px 8px'}}>
-                    • 
-                  </Text>
-                  <Text type="secondary" style={{ fontSize: "12px"}}>
-                    {item.medida}
-                  </Text>
+                  <div className="absolute top-2 right-2 z-10">
+                    <Dropdown
+                      menu={{ items: getMenuItems(item.id) }}
+                      trigger={["click"]}
+                      styles={{ item: { padding: "3px 0px" } }}
+                    >
+                      <MoreOutlined className="text-xl cursor-pointer text-gray-400 hover:text-gray-600" />
+                    </Dropdown>
                   </div>
 
-                  <div>
-                    <Text strong>{item.marca}</Text>
-                    <Text type="secondary"> / {item.modelo}</Text>
-                  </div>
+                  <Row gutter={16} align="top">
+                    <Col xs={24} md={8}>
+                      <CarrucelImagenes
+                        autoplay={item.imagenTotal.length > 1}
+                        height={140}
+                        fallback={defaultImage}
+                        preview={true}
+                        images={item.imagenTotal.map((img) =>
+                          img ? getBase64WithPrefix(img) : defaultImage
+                        )}
+                      />
+                    </Col>
+                    <Col xs={24} md={16}>
+                      <Title
+                        level={5}
+                        style={{ margin: 0, fontSize: "14px", width: "85%" }}
+                        ellipsis
+                      >
+                        {item.name}
+                      </Title>
+                      
+                      <Badge
+                        count={item.categoria}
+                        style={{ backgroundColor: "#7A753B", fontSize: "10px" }}
+                      />
 
-                  {item.dimension && (
-                    <Text style={{ display: "block", marginTop: 4 }}>
-                      <Text strong>Dimensión: </Text> {item.dimension}
-                    </Text>
-                  )}
+                      <div className="mt-1 flex gap-2">
+                        <Text type="secondary" className="text-xs">
+                          [{item.codigo}]
+                        </Text>
+                        <Text type="secondary" className="text-xs">
+                          • {item.medida}
+                        </Text>
+                      </div>
 
-                  {item.descripcion && (
-                    <Text italic type="secondary">
-                      <Text strong>Descripción: </Text>
-                      {item.descripcion}
-                    </Text>
-                  )}
-                </Col>
-              </Row>
-              <Flex gap="large" align="start" style={{ width: "100%" }}>
+                      <div className="truncate mt-1">
+                        <Text strong className="text-sm">{item.marca}</Text>
+                        <Text type="secondary" className="text-sm"> / {item.modelo}</Text>
+                      </div>
 
+                      {item.dimension && (
+                        <Text className="block text-xs mt-1">
+                          <Text strong>Dimensión: </Text> {item.dimension}
+                        </Text>
+                      )}
 
-                {/* Sección Información */}
-                
-              </Flex>
-            </Card>
-          ))
-        )}
-      </Flex>
-      {/* Modales con Renderizado Condicional para limpieza de memoria */}
+                      {item.descripcion && (
+                        <Text italic type="secondary" ellipsis={{ tooltip: true }}>
+                          <Text strong>Desc: </Text> {item.descripcion}
+                        </Text>
+                      )}
+                    </Col>
+                  </Row>
+                </Card>
+              ))}
+              {/* Espaciador para filas impares */}
+              {rows[virtualRow.index].length < itemsPerRow && (
+                <div style={{ flex: 1 }} />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modales */}
       {createModal.isToggled && (
         <CatalogoMaterialCreate
           open={createModal.isToggled}
@@ -289,7 +314,7 @@ function MostrarRegistrosMateriales() {
           onClose={editModal.handlerClose}
         />
       )}
-    </>
+    </div>
   );
 }
 

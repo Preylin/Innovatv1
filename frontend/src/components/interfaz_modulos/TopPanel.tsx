@@ -47,7 +47,7 @@ const MODULE_LABELS: Record<string, string> = {
 const STYLES = {
   row: { width: "100%", height: "48px", margin: 0 },
   logoCol: { height: "48px", display: "flex", alignItems: "center", padding: "0 10px"},
-  logoImg: { height: "35px", width: "auto", padding: "0 4px"},
+  logoImg: { height: "35px", width: "100%",marginLeft: "2px"},
   titleCol: {
     height: "48px",
     display: "flex",

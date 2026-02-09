@@ -12,6 +12,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TesoreriaRouteImport } from './routes/tesoreria'
+import { Route as ProduccionRouteImport } from './routes/produccion'
 import { Route as GerenciaRouteImport } from './routes/gerencia'
 import { Route as ContabilidadRouteImport } from './routes/contabilidad'
 import { Route as AlmacenRouteImport } from './routes/almacen'
@@ -19,10 +20,12 @@ import { Route as AdministracionRouteImport } from './routes/administracion'
 
 const IndexLazyRouteImport = createFileRoute('/')()
 const TesoreriaIndexLazyRouteImport = createFileRoute('/tesoreria/')()
+const ProduccionIndexLazyRouteImport = createFileRoute('/produccion/')()
 const GerenciaIndexLazyRouteImport = createFileRoute('/gerencia/')()
 const ContabilidadIndexLazyRouteImport = createFileRoute('/contabilidad/')()
 const AlmacenIndexLazyRouteImport = createFileRoute('/almacen/')()
 const AdministracionIndexLazyRouteImport = createFileRoute('/administracion/')()
+const ProduccionStockLazyRouteImport = createFileRoute('/produccion/stock')()
 const GerenciaUsuariosLazyRouteImport = createFileRoute('/gerencia/usuarios')()
 const GerenciaOrdenesLazyRouteImport = createFileRoute('/gerencia/ordenes')()
 const GerenciaCotizacionesLazyRouteImport = createFileRoute(
@@ -69,6 +72,11 @@ const TesoreriaRoute = TesoreriaRouteImport.update({
   path: '/tesoreria',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProduccionRoute = ProduccionRouteImport.update({
+  id: '/produccion',
+  path: '/produccion',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GerenciaRoute = GerenciaRouteImport.update({
   id: '/gerencia',
   path: '/gerencia',
@@ -101,6 +109,13 @@ const TesoreriaIndexLazyRoute = TesoreriaIndexLazyRouteImport.update({
 } as any).lazy(() =>
   import('./routes/tesoreria/index.lazy').then((d) => d.Route),
 )
+const ProduccionIndexLazyRoute = ProduccionIndexLazyRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProduccionRoute,
+} as any).lazy(() =>
+  import('./routes/produccion/index.lazy').then((d) => d.Route),
+)
 const GerenciaIndexLazyRoute = GerenciaIndexLazyRouteImport.update({
   id: '/',
   path: '/',
@@ -126,6 +141,13 @@ const AdministracionIndexLazyRoute = AdministracionIndexLazyRouteImport.update({
   getParentRoute: () => AdministracionRoute,
 } as any).lazy(() =>
   import('./routes/administracion/index.lazy').then((d) => d.Route),
+)
+const ProduccionStockLazyRoute = ProduccionStockLazyRouteImport.update({
+  id: '/stock',
+  path: '/stock',
+  getParentRoute: () => ProduccionRoute,
+} as any).lazy(() =>
+  import('./routes/produccion/stock.lazy').then((d) => d.Route),
 )
 const GerenciaUsuariosLazyRoute = GerenciaUsuariosLazyRouteImport.update({
   id: '/usuarios',
@@ -276,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/almacen': typeof AlmacenRouteWithChildren
   '/contabilidad': typeof ContabilidadRouteWithChildren
   '/gerencia': typeof GerenciaRouteWithChildren
+  '/produccion': typeof ProduccionRouteWithChildren
   '/tesoreria': typeof TesoreriaRouteWithChildren
   '/almacen/catalogos': typeof AlmacenCatalogosLazyRoute
   '/almacen/ingresos': typeof AlmacenIngresosLazyRoute
@@ -286,10 +309,12 @@ export interface FileRoutesByFullPath {
   '/gerencia/cotizaciones': typeof GerenciaCotizacionesLazyRoute
   '/gerencia/ordenes': typeof GerenciaOrdenesLazyRoute
   '/gerencia/usuarios': typeof GerenciaUsuariosLazyRoute
+  '/produccion/stock': typeof ProduccionStockLazyRoute
   '/administracion/': typeof AdministracionIndexLazyRoute
   '/almacen/': typeof AlmacenIndexLazyRoute
   '/contabilidad/': typeof ContabilidadIndexLazyRoute
   '/gerencia/': typeof GerenciaIndexLazyRoute
+  '/produccion/': typeof ProduccionIndexLazyRoute
   '/tesoreria/': typeof TesoreriaIndexLazyRoute
   '/administracion/lista/clientes': typeof AdministracionListaClientesLazyRoute
   '/administracion/lista/proveedores': typeof AdministracionListaProveedoresLazyRoute
@@ -312,10 +337,12 @@ export interface FileRoutesByTo {
   '/gerencia/cotizaciones': typeof GerenciaCotizacionesLazyRoute
   '/gerencia/ordenes': typeof GerenciaOrdenesLazyRoute
   '/gerencia/usuarios': typeof GerenciaUsuariosLazyRoute
+  '/produccion/stock': typeof ProduccionStockLazyRoute
   '/administracion': typeof AdministracionIndexLazyRoute
   '/almacen': typeof AlmacenIndexLazyRoute
   '/contabilidad': typeof ContabilidadIndexLazyRoute
   '/gerencia': typeof GerenciaIndexLazyRoute
+  '/produccion': typeof ProduccionIndexLazyRoute
   '/tesoreria': typeof TesoreriaIndexLazyRoute
   '/administracion/lista/clientes': typeof AdministracionListaClientesLazyRoute
   '/administracion/lista/proveedores': typeof AdministracionListaProveedoresLazyRoute
@@ -334,6 +361,7 @@ export interface FileRoutesById {
   '/almacen': typeof AlmacenRouteWithChildren
   '/contabilidad': typeof ContabilidadRouteWithChildren
   '/gerencia': typeof GerenciaRouteWithChildren
+  '/produccion': typeof ProduccionRouteWithChildren
   '/tesoreria': typeof TesoreriaRouteWithChildren
   '/almacen/catalogos': typeof AlmacenCatalogosLazyRoute
   '/almacen/ingresos': typeof AlmacenIngresosLazyRoute
@@ -344,10 +372,12 @@ export interface FileRoutesById {
   '/gerencia/cotizaciones': typeof GerenciaCotizacionesLazyRoute
   '/gerencia/ordenes': typeof GerenciaOrdenesLazyRoute
   '/gerencia/usuarios': typeof GerenciaUsuariosLazyRoute
+  '/produccion/stock': typeof ProduccionStockLazyRoute
   '/administracion/': typeof AdministracionIndexLazyRoute
   '/almacen/': typeof AlmacenIndexLazyRoute
   '/contabilidad/': typeof ContabilidadIndexLazyRoute
   '/gerencia/': typeof GerenciaIndexLazyRoute
+  '/produccion/': typeof ProduccionIndexLazyRoute
   '/tesoreria/': typeof TesoreriaIndexLazyRoute
   '/administracion/lista/clientes': typeof AdministracionListaClientesLazyRoute
   '/administracion/lista/proveedores': typeof AdministracionListaProveedoresLazyRoute
@@ -367,6 +397,7 @@ export interface FileRouteTypes {
     | '/almacen'
     | '/contabilidad'
     | '/gerencia'
+    | '/produccion'
     | '/tesoreria'
     | '/almacen/catalogos'
     | '/almacen/ingresos'
@@ -377,10 +408,12 @@ export interface FileRouteTypes {
     | '/gerencia/cotizaciones'
     | '/gerencia/ordenes'
     | '/gerencia/usuarios'
+    | '/produccion/stock'
     | '/administracion/'
     | '/almacen/'
     | '/contabilidad/'
     | '/gerencia/'
+    | '/produccion/'
     | '/tesoreria/'
     | '/administracion/lista/clientes'
     | '/administracion/lista/proveedores'
@@ -403,10 +436,12 @@ export interface FileRouteTypes {
     | '/gerencia/cotizaciones'
     | '/gerencia/ordenes'
     | '/gerencia/usuarios'
+    | '/produccion/stock'
     | '/administracion'
     | '/almacen'
     | '/contabilidad'
     | '/gerencia'
+    | '/produccion'
     | '/tesoreria'
     | '/administracion/lista/clientes'
     | '/administracion/lista/proveedores'
@@ -424,6 +459,7 @@ export interface FileRouteTypes {
     | '/almacen'
     | '/contabilidad'
     | '/gerencia'
+    | '/produccion'
     | '/tesoreria'
     | '/almacen/catalogos'
     | '/almacen/ingresos'
@@ -434,10 +470,12 @@ export interface FileRouteTypes {
     | '/gerencia/cotizaciones'
     | '/gerencia/ordenes'
     | '/gerencia/usuarios'
+    | '/produccion/stock'
     | '/administracion/'
     | '/almacen/'
     | '/contabilidad/'
     | '/gerencia/'
+    | '/produccion/'
     | '/tesoreria/'
     | '/administracion/lista/clientes'
     | '/administracion/lista/proveedores'
@@ -456,6 +494,7 @@ export interface RootRouteChildren {
   AlmacenRoute: typeof AlmacenRouteWithChildren
   ContabilidadRoute: typeof ContabilidadRouteWithChildren
   GerenciaRoute: typeof GerenciaRouteWithChildren
+  ProduccionRoute: typeof ProduccionRouteWithChildren
   TesoreriaRoute: typeof TesoreriaRouteWithChildren
 }
 
@@ -466,6 +505,13 @@ declare module '@tanstack/react-router' {
       path: '/tesoreria'
       fullPath: '/tesoreria'
       preLoaderRoute: typeof TesoreriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/produccion': {
+      id: '/produccion'
+      path: '/produccion'
+      fullPath: '/produccion'
+      preLoaderRoute: typeof ProduccionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gerencia': {
@@ -510,6 +556,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TesoreriaIndexLazyRouteImport
       parentRoute: typeof TesoreriaRoute
     }
+    '/produccion/': {
+      id: '/produccion/'
+      path: '/'
+      fullPath: '/produccion/'
+      preLoaderRoute: typeof ProduccionIndexLazyRouteImport
+      parentRoute: typeof ProduccionRoute
+    }
     '/gerencia/': {
       id: '/gerencia/'
       path: '/'
@@ -537,6 +590,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/administracion/'
       preLoaderRoute: typeof AdministracionIndexLazyRouteImport
       parentRoute: typeof AdministracionRoute
+    }
+    '/produccion/stock': {
+      id: '/produccion/stock'
+      path: '/stock'
+      fullPath: '/produccion/stock'
+      preLoaderRoute: typeof ProduccionStockLazyRouteImport
+      parentRoute: typeof ProduccionRoute
     }
     '/gerencia/usuarios': {
       id: '/gerencia/usuarios'
@@ -754,6 +814,20 @@ const GerenciaRouteWithChildren = GerenciaRoute._addFileChildren(
   GerenciaRouteChildren,
 )
 
+interface ProduccionRouteChildren {
+  ProduccionStockLazyRoute: typeof ProduccionStockLazyRoute
+  ProduccionIndexLazyRoute: typeof ProduccionIndexLazyRoute
+}
+
+const ProduccionRouteChildren: ProduccionRouteChildren = {
+  ProduccionStockLazyRoute: ProduccionStockLazyRoute,
+  ProduccionIndexLazyRoute: ProduccionIndexLazyRoute,
+}
+
+const ProduccionRouteWithChildren = ProduccionRoute._addFileChildren(
+  ProduccionRouteChildren,
+)
+
 interface TesoreriaRouteChildren {
   TesoreriaIndexLazyRoute: typeof TesoreriaIndexLazyRoute
 }
@@ -772,6 +846,7 @@ const rootRouteChildren: RootRouteChildren = {
   AlmacenRoute: AlmacenRouteWithChildren,
   ContabilidadRoute: ContabilidadRouteWithChildren,
   GerenciaRoute: GerenciaRouteWithChildren,
+  ProduccionRoute: ProduccionRouteWithChildren,
   TesoreriaRoute: TesoreriaRouteWithChildren,
 }
 export const routeTree = rootRouteImport

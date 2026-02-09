@@ -10,8 +10,9 @@ import {
   Row,
   Col,
 } from "antd";
+import { useCallback, useMemo, useState, useRef, useEffect } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
-import { useCallback, useMemo, useState } from "react";
 import CarrucelImagenes from "../../../../components/molecules/carrucel/Carucel";
 import { defaultImage } from "../../../../assets/images";
 import { ordenarPorFecha } from "../../../../helpers/OrdenacionAscDscPorFechasISO";
@@ -45,7 +46,6 @@ interface ServicioMcData {
   ubicacion: string;
 }
 
-// --- Constantes y Helpers
 const SEARCH_OPTIONS = [
   { label: "Nombre", value: "name" },
   { label: "Marca", value: "marca" },
@@ -63,26 +63,21 @@ const SEARCH_OPTIONS = [
 function MostrarStockMaterial() {
   const { data, isLoading, isError } = useCatalogoStockDetalladoMaterialList();
   const screens = useBreakpoint();
+  const parentRef = useRef<HTMLDivElement>(null);
 
   const [searchParams, setSearchParams] = useState({
     field: "name",
     value: "",
   });
 
-  const handleSearch = useCallback(
-    (params: { field: string; value: string }) => {
-      setSearchParams(params);
-    },
-    [],
-  );
+  const handleSearch = useCallback((params: { field: string; value: string }) => {
+    setSearchParams(params);
+  }, []);
 
   const dataSource = useMemo(() => {
     if (!data) return [];
     const mapped = data.map(
-      (
-        item: StockActualDetalladoMaterialType,
-        index: number,
-      ): ServicioMcData => ({
+      (item: StockActualDetalladoMaterialType, index: number): ServicioMcData => ({
         id: index,
         codigo: item.codigo ?? "",
         name: item.name.toUpperCase() ?? "",
@@ -100,38 +95,56 @@ function MostrarStockMaterial() {
         fecha_ingreso: item.fecha_ingreso ?? "",
         image_byte: getBase64WithPrefix(item.image_byte) ?? "",
         ubicacion: item.ubicacion.toUpperCase() ?? "",
-      }),
+      })
     );
 
-    // 2. Ordenar
     const sorted = ordenarPorFecha(mapped, "fecha_ingreso", "desc");
 
-    // 3. Filtrar
     if (!searchParams.value) return sorted;
     const term = searchParams.value.toLowerCase();
     return sorted.filter((item) =>
       String(item[searchParams.field as keyof ServicioMcData] ?? "")
         .toLowerCase()
-        .includes(term),
+        .includes(term)
     );
   }, [data, searchParams]);
 
-  const cardStyle = useMemo(
-    () => ({
-      flex: screens.md ? "0 0 calc(50% - 12px)" : "1 1 100%",
-      minWidth: screens.md ? "650px" : "100%",
-    }),
-    [screens],
-  );
+  // --- Virtualización ---
+  const itemsPerRow = screens.md ? 2 : 1;
+  const rows = useMemo(() => {
+    const result = [];
+    for (let i = 0; i < dataSource.length; i += itemsPerRow) {
+      result.push(dataSource.slice(i, i + itemsPerRow));
+    }
+    return result;
+  }, [dataSource, itemsPerRow]);
 
-  if (isLoading) return <Skeleton active paragraph={{ rows: 10 }} />;
-  if (isError)
-    return <Alert type="error" title="Error al cargar datos" showIcon />;
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: useCallback(() => (screens.md ? 230 : 460), [screens.md]),
+    overscan: 5,
+  });
+
+  useEffect(() => {
+    rowVirtualizer.measure();
+  }, [itemsPerRow, rowVirtualizer]);
+
+  if (isLoading) return <Skeleton active paragraph={{ rows: 10 }} className="p-6" />;
+  if (isError) return <Alert type="error" message="Error al cargar datos de materiales" showIcon />;
 
   return (
-    <>
-      <div className="sticky top-0 z-10 backdrop-blur-sm pt-2 px-6 shadow-sm mb-2">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+    <div
+      ref={parentRef}
+      style={{
+        height: "calc(100vh - 120px)",
+        overflowY: "auto",
+        padding: "0 16px",
+      }}
+    >
+      {/* Buscador Sticky */}
+      <div className="sticky top-0 z-20 backdrop-blur-md pt-2 mb-4 border-b">
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-4">
           <div className="flex-1 min-w-[300px]">
             <SearchBar
               options={SEARCH_OPTIONS}
@@ -142,99 +155,116 @@ function MostrarStockMaterial() {
         </div>
       </div>
 
-      <Flex justify="start" wrap="wrap" gap={12} style={{ padding: "16px" }}>
-        {dataSource.length === 0 ? (
-          <Empty description="No hay registros" />
-        ) : (
-          dataSource.map((item) => (
-            <Card
-              key={item.id}
-              hoverable
-              style={cardStyle}
-              styles={{
-                body: {
-                  padding: "10px",
-                },
+      {dataSource.length === 0 ? (
+        <Empty description="No hay registros de materiales" />
+      ) : (
+        <div
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: "100%",
+            position: "relative",
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => (
+            <div
+              key={virtualRow.key}
+              data-index={virtualRow.index}
+              ref={rowVirtualizer.measureElement}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${virtualRow.start}px)`,
+                display: "flex",
+                gap: "12px",
+                paddingBottom: "12px",
               }}
             >
-              <Row gutter={16}>
-                <Col xs={24} md={8}>
-                  <CarrucelImagenes
-                    autoplay={true}
-                    height={160}
-                    fallback={defaultImage}
-                    preview={true}
-                    images={item.image_byte ? [item.image_byte] : []}
-                  />
-                </Col>
-                <Col xs={24} md={16}>
-                  <Flex vertical style={{ flex: 1 }} gap={2}>
-                    <Title
-                      style={{ margin: 0, fontSize: "14px", width: "90%" }}
-                    >
-                      {item.name}
-                    </Title>
-                    <Badge
-                        count={item.tipo}
-                        style={{ backgroundColor: "#7A753B", fontSize: "8px" }}
+              {rows[virtualRow.index].map((item) => (
+                <Card
+                  key={item.id}
+                  hoverable
+                  style={{ flex: 1, minWidth: 0 }}
+                  styles={{ body: { padding: "12px" } }}
+                >
+                  <Row gutter={16} align="middle">
+                    <Col xs={24} md={8}>
+                      <CarrucelImagenes
+                        autoplay={false}
+                        height={160}
+                        fallback={defaultImage}
+                        preview={true}
+                        images={item.image_byte ? [item.image_byte] : []}
                       />
-                      <div style={{ display: "block" }}>
-                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                          [{item.codigo}]
-                        </Text>
-                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                          • {item.medida}
-                        </Text>
-                      </div>
-                    <div>
-                      <Text strong style={{ fontSize: "12px" }}>
-                        {item.marca}
-                      </Text>
-                      <Text type="secondary" style={{ fontSize: "12px" }}>
-                        {" "}
-                        / {item.modelo}
-                      </Text>
-                    </div>
-                    <Text style={{ fontSize: "12px" }}>
-                      <Text strong>Dimensión: </Text> {item.dimension}
-                    </Text>
+                    </Col>
+                    <Col xs={24} md={16}>
+                      <Flex vertical gap={2}>
+                        <Title level={5} style={{ margin: 0, fontSize: "14px", width: "95%" }} ellipsis>
+                          {item.name}
+                        </Title>
+                        
+                        <Badge
+                          count={item.tipo}
+                          style={{ backgroundColor: "#7A753B", fontSize: "10px" }}
+                        />
 
-                    <Flex gap={8}>
-                      <Text style={{ fontSize: "12px" }}>
-                        <Text strong>En stock: </Text> {item.stock_actual}
-                      </Text>
-                      <Text style={{ fontSize: "12px" }}>
-                        <Text strong>- V.U: </Text> {item.moneda}{" "}
-                        {item.valor.toFixed(2)}
-                      </Text>
-                      <Text style={{ fontSize: "12px" }}>
-                        <Text strong>- Total: </Text> {item.moneda}{" "}
-                        {item.total.toFixed(2)}
-                      </Text>
-                    </Flex>
-                    <Flex gap={8}>
-                      <Text style={{ fontSize: "12px" }}>
-                        <Text strong>Stock mínimo: </Text> {item.plimit}
-                      </Text>
-                      <Text style={{ fontSize: "12px" }}>
-                        <Text strong>Fecha de ingreso: </Text>{" "}
-                        {isoToDDMMYYYY(item.fecha_ingreso)}
-                      </Text>
-                    </Flex>
-                    <Text style={{ fontSize: "12px" }}>
-                      <Text strong>Serie o codigo único: </Text> {item.serie}
-                    </Text>
-                    <Text style={{ fontSize: "12px" }}>
-                      <Text strong>Ubicación: </Text> {item.ubicacion}
-                    </Text>
-                  </Flex>
-                </Col>
-              </Row>
-            </Card>
-          ))
-        )}
-      </Flex>
-    </>
+                        <div className="mt-1">
+                          <Text type="secondary" className="text-xs">
+                            [{item.codigo}] • {item.medida}
+                          </Text>
+                        </div>
+
+                        <div>
+                          <Text strong className="text-xs">{item.marca}</Text>
+                          <Text type="secondary" className="text-xs"> / {item.modelo}</Text>
+                        </div>
+
+                        <Text className="text-xs">
+                          <Text strong>Dimensión: </Text> {item.dimension || '-'}
+                        </Text>
+
+                        {/* Fila de Stock y Valores */}
+                        <Flex gap={8} wrap="wrap" className="p-1 rounded mt-1">
+                          <Text className="text-xs">
+                            <Text strong>Stock: </Text> 
+                            <span className={item.stock_actual <= item.plimit ? "text-red-500 font-bold" : ""}>
+                              {item.stock_actual}
+                            </span>
+                          </Text>
+                          <Text className="text-xs">
+                            <Text strong>V.U: </Text> {item.moneda} {item.valor.toFixed(2)}
+                          </Text>
+                          <Text className="text-xs">
+                            <Text strong>Total: </Text> {item.moneda} {item.total.toFixed(2)}
+                          </Text>
+                        </Flex>
+
+                        {/* Información secundaria */}
+                        <div className="mt-1">
+                          <Text className="block text-xs">
+                            <Text strong>Stock Mín: </Text> {item.plimit} • 
+                            <Text strong> Ingreso: </Text> {isoToDDMMYYYY(item.fecha_ingreso)}
+                          </Text>
+                          <Text className="block text-xs truncate">
+                            <Text strong>Serie: </Text> {item.serie || 'S/S'}
+                          </Text>
+                          <Text className="block text-xs italic text-blue-600">
+                            <Text strong>Ubicación: </Text> {item.ubicacion}
+                          </Text>
+                        </div>
+                      </Flex>
+                    </Col>
+                  </Row>
+                </Card>
+              ))}
+              {/* Espaciador para filas con un solo elemento */}
+              {rows[virtualRow.index].length < itemsPerRow && <div style={{ flex: 1 }} />}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

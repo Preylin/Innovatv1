@@ -34,11 +34,12 @@ export function useDatabaseWatcher() {
       socket.onmessage = (event) => {
         if (event.data === "invalidate_all") {
           notification.info({
-            message: "Datos actualizados",
-            description: "Se han sincronizado cambios recientes.",
-            placement: "topRight",
+            message: "Se han sincronizado cambios recientes.",
+            placement: "bottomRight",
+            duration: 2,
             showProgress: true,
             pauseOnHover: true,
+            
           });
           queryClient.invalidateQueries({
             predicate: (query) => query.state.status === "success",

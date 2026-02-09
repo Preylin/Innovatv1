@@ -18,10 +18,10 @@ import { defaultImage } from "../../../../assets/images";
 import { ordenarPorFecha } from "../../../../helpers/OrdenacionAscDscPorFechasISO";
 import { SearchBar } from "../../../../components/molecules/input/SearchBar";
 
-import { useCatalogoStockDetalladoMercaderiaList } from "../../../../api/queries/modulos/almacen/ingresos/mercaderia.api";
-import type { StockActualDetalladoType } from "../../../../api/queries/modulos/almacen/ingresos/mercaderia.api.schema";
 import getBase64WithPrefix from "../../../../helpers/ImagesBase64";
 import isoToDDMMYYYY from "../../../../helpers/Fechas";
+import { useCatalogoStockDetalladoMaterialList } from "../../../../api/queries/modulos/almacen/ingresos/material.api";
+import type { StockActualDetalladoMaterialType } from "../../../../api/queries/modulos/almacen/ingresos/material.api.schema";
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -34,7 +34,7 @@ interface ServicioMcData {
   modelo: string;
   medida: string;
   dimension: string;
-  categoria: string;
+  tipo: string;
   plimit: number;
   serie: string;
   stock_actual: number;
@@ -52,16 +52,15 @@ const SEARCH_OPTIONS = [
   { label: "Modelo", value: "modelo" },
   { label: "Medida", value: "medida" },
   { label: "Dimensión", value: "dimension" },
-  { label: "Categoría", value: "categoria" },
+  { label: "Stock", value: "stock_actual" },
+  { label: "Tipo", value: "tipo" },
   { label: "Serie", value: "serie" },
   { label: "Código", value: "codigo" },
-  { label: "Stock actual", value: "stock_actual" },
-  { label: "Valor unitario", value: "valor" },
   { label: "Ubicación", value: "ubicacion" },
 ];
 
-function MostrarStockMercaderias() {
-  const { data, isLoading, isError } = useCatalogoStockDetalladoMercaderiaList();
+function MostrarStockMaterial() {
+  const { data, isLoading, isError } = useCatalogoStockDetalladoMaterialList();
   const screens = useBreakpoint();
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -77,7 +76,7 @@ function MostrarStockMercaderias() {
   const dataSource = useMemo(() => {
     if (!data) return [];
     const mapped = data.map(
-      (item: StockActualDetalladoType, index: number): ServicioMcData => ({
+      (item: StockActualDetalladoMaterialType, index: number): ServicioMcData => ({
         id: index,
         codigo: item.codigo ?? "",
         name: item.name.toUpperCase() ?? "",
@@ -85,7 +84,7 @@ function MostrarStockMercaderias() {
         modelo: item.modelo.toUpperCase() ?? "",
         medida: item.medida.toUpperCase() ?? "",
         dimension: item.dimension.toUpperCase() ?? "",
-        categoria: item.categoria.toUpperCase() ?? "",
+        tipo: item.tipo.toUpperCase() ?? "",
         plimit: item.plimit ?? 0,
         serie: item.serie ?? "",
         stock_actual: item.stock_actual ?? 0,
@@ -109,7 +108,7 @@ function MostrarStockMercaderias() {
     );
   }, [data, searchParams]);
 
-  // --- Lógica de Virtualización ---
+  // --- Virtualización ---
   const itemsPerRow = screens.md ? 2 : 1;
   const rows = useMemo(() => {
     const result = [];
@@ -122,7 +121,7 @@ function MostrarStockMercaderias() {
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: useCallback(() => (screens.md ? 220 : 450), [screens.md]),
+    estimateSize: useCallback(() => (screens.md ? 230 : 460), [screens.md]),
     overscan: 5,
   });
 
@@ -131,7 +130,7 @@ function MostrarStockMercaderias() {
   }, [itemsPerRow, rowVirtualizer]);
 
   if (isLoading) return <Skeleton active paragraph={{ rows: 10 }} className="p-6" />;
-  if (isError) return <Alert type="error" message="Error al cargar datos de stock" showIcon />;
+  if (isError) return <Alert type="error" message="Error al cargar datos de materiales" showIcon />;
 
   return (
     <div
@@ -142,6 +141,7 @@ function MostrarStockMercaderias() {
         padding: "0 16px",
       }}
     >
+      {/* Buscador Sticky */}
       <div className="sticky top-0 z-20 backdrop-blur-md pt-2 mb-4 border-b">
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4">
           <div className="flex-1 min-w-[300px]">
@@ -155,7 +155,7 @@ function MostrarStockMercaderias() {
       </div>
 
       {dataSource.length === 0 ? (
-        <Empty description="No hay registros de stock" />
+        <Empty description="No hay registros de materiales" />
       ) : (
         <div
           style={{
@@ -199,17 +199,13 @@ function MostrarStockMercaderias() {
                     </Col>
                     <Col xs={24} md={16}>
                       <Flex vertical gap={2}>
-                        <Title
-                          level={5}
-                          style={{ margin: 0, fontSize: "14px", width: "95%" }}
-                          ellipsis
-                        >
+                        <Title level={5} style={{ margin: 0, fontSize: "14px", width: "95%" }} ellipsis>
                           {item.name}
                         </Title>
                         
                         <Badge
-                          count={item.categoria}
-                          style={{ backgroundColor: "#853C66", fontSize: "10px" }}
+                          count={item.tipo}
+                          style={{ backgroundColor: "#7A753B", fontSize: "10px" }}
                         />
 
                         <div className="mt-1">
@@ -218,7 +214,7 @@ function MostrarStockMercaderias() {
                           </Text>
                         </div>
 
-                        <div className="truncate">
+                        <div>
                           <Text strong className="text-xs">{item.marca}</Text>
                           <Text type="secondary" className="text-xs"> / {item.modelo}</Text>
                         </div>
@@ -235,18 +231,11 @@ function MostrarStockMercaderias() {
                               {item.stock_actual}
                             </span>
                           </Text>
-                          <Text className="text-xs">
-                            <Text strong>V.U: </Text> {item.moneda} {item.valor.toFixed(2)}
-                          </Text>
-                          <Text className="text-xs">
-                            <Text strong>Total: </Text> {item.moneda} {item.total.toFixed(2)}
-                          </Text>
                         </Flex>
 
-                        {/* Fila de Tiempos y Ubicación */}
+                        {/* Información secundaria */}
                         <div className="mt-1">
                           <Text className="block text-xs">
-                            <Text strong>Stock Mín: </Text> {item.plimit} • 
                             <Text strong> Ingreso: </Text> {isoToDDMMYYYY(item.fecha_ingreso)}
                           </Text>
                           <Text className="block text-xs truncate">
@@ -261,9 +250,8 @@ function MostrarStockMercaderias() {
                   </Row>
                 </Card>
               ))}
-              {rows[virtualRow.index].length < itemsPerRow && (
-                <div style={{ flex: 1 }} />
-              )}
+              {/* Espaciador para filas con un solo elemento */}
+              {rows[virtualRow.index].length < itemsPerRow && <div style={{ flex: 1 }} />}
             </div>
           ))}
         </div>
@@ -272,4 +260,4 @@ function MostrarStockMercaderias() {
   );
 }
 
-export default MostrarStockMercaderias;
+export default MostrarStockMaterial;
