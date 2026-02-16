@@ -18,6 +18,8 @@ from app.api.v1.routes.modulos.almacen.catalogos.RouterAlmacenIngresoMaterial im
 from app.api.v1.routes.modulos.almacen.catalogos.RouterAlmacenSalidaMercaderia import router_salidaMercaderia
 from app.api.v1.routes.modulos.almacen.catalogos.RouterAlmacenSalidaMaterial import router_salidaMaterial
 from app.api.v1.routes.modulos.gerencia.inicio.RouterGerenciaInicioProvClient import router_clientesGerenciaInicio, router_proveedoresGerenciaInicio
+from app.api.v1.routes.modulos.administracion.ventas.RouterHistorialVentas import router_historialVentas
+from app.api.v1.routes.modulos.administracion.ventas.RouterHistorialCompras import router_historialCompras
 
 
 # CONFIGURACIÓN GLOBAL DE LOGGING
@@ -118,3 +120,5 @@ app.include_router(router_salidaMercaderia)
 app.include_router(router_salidaMaterial)
 app.include_router(router_clientesGerenciaInicio)
 app.include_router(router_proveedoresGerenciaInicio)
+app.include_router(router_historialVentas)
+app.include_router(router_historialCompras)

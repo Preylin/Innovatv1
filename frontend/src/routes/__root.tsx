@@ -13,10 +13,10 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 });
 
 function RouteComponent() {
-  const { isDark } = useTheme(); 
+  const { isDark } = useTheme();
   return (
     <AntdProvider dark={isDark}>
-          <Outlet />
+      <Outlet />
     </AntdProvider>
   );
 }

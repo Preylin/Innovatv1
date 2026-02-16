@@ -9,3 +9,5 @@ from app.models.modulos.almacen.catalogos.ModelsAlmacenIngresoMercaderia import 
 from app.models.modulos.almacen.catalogos.ModelsAlmacenSalidaMaterial import SalidaMaterial
 from app.models.modulos.almacen.catalogos.ModelsAlmacenSalidaMercaderia import SalidaMercaderia
 from app.models.modulos.gerencia.inicio.ModelsGerenciaInicioProvClient import ClienteInicio, ProveedorInicio
+from app.models.modulos.administracion.ventas.ModelHistorialCompras import HistorialCompras
+from app.models.modulos.administracion.ventas.ModelHistorialVentas import HistorialVentas

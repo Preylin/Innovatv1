@@ -4,28 +4,34 @@ import { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Upload, Button, Alert, Typography, Space, App, Modal, Progress } from "antd";
 import { UploadOutlined, LoadingOutlined } from "@ant-design/icons";
-import type { ApiError } from "../../../../api/normalizeError";
-import api from "../../../../api/client";
-
+import type { ApiError } from "../../../api/normalizeError";
+import api from "../../../api/client";
 
 const { Text } = Typography;
 
-/* ====================================================== 
-   1️⃣ Esquema de Validación
-   ====================================================== */
 
-const ChipImportSchema = z.object({
-  ruc: z.string().min(3, "minimo 3 caracteres").max(11, "ruc inválido"),
-  cliente: z.string().min(3, "cliente requerido"),
+
+// --- Esquema de Validación ---
+const HistorialVentasImportSchema = z.object({
+  fecha: z.union([z.date(), z.string().transform((v) => new Date(v))]).pipe(z.date()),
+  descripcion: z.string().min(1, "Descripción requerida"),
+  ruc: z.coerce.string().min(3).max(11),
+  proveedor: z.string().min(1, "Proveedor requerido"),
+  tipo: z.number().min(1, "Tipo de venta requerido"),
+  serie: z.coerce.string().min(1),
+  numero: z.coerce.number().int().positive(),
+  subtotal: z.coerce.number(),
+  igv: z.coerce.number(),
+  nograbada: z.coerce.number(),
+  otros: z.coerce.number(),
+  total: z.coerce.number(),
+  tc: z.coerce.number().nonnegative(),
 });
 
-type ChipImport = z.infer<typeof ChipImportSchema>;
-const EXPECTED_HEADERS = ["ruc", "cliente"];
+type HistorialVentasImport = z.infer<typeof HistorialVentasImportSchema>;
+const EXPECTED_HEADERS = ["fecha", "descripcion", "ruc", "proveedor", "tipo", "serie", "numero", "subtotal", "igv", "nograbada", "otros", "total", "tc"];
 
-/* ====================================================== 
-   2️⃣ Componente UI
-   ====================================================== */
-export default function ClienteListImportMasiva({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function HistorialComprasImportMasiva({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [rowsCount, setRowsCount] = useState(0);
   const [errors, setErrors] = useState<{ row: number; messages: string[] }[]>([]);
@@ -35,7 +41,6 @@ export default function ClienteListImportMasiva({ open, onClose }: { open: boole
   const { message } = App.useApp();
   const qc = useQueryClient();
 
-  // Reset de estados: Limpia todo para la próxima vez que se abra
   const reset = useCallback(() => {
     setFile(null);
     setRowsCount(0);
@@ -45,17 +50,14 @@ export default function ClienteListImportMasiva({ open, onClose }: { open: boole
   }, []);
 
   const handleClose = useCallback(() => {
-    // Evitar que el usuario cierre el modal mientras hay procesos críticos
     if (status === "uploading" || status === "parsing") return;
-    
-    onClose(); // Primero notificamos al padre para cerrar
-    setTimeout(reset, 300); // Limpiamos después de que la animación de cierre termine
+    onClose();
+    setTimeout(reset, 300);
   }, [status, onClose, reset]);
 
-  /* ---- Lógica de parseo ---- */
   const parseFile = async (file: File) => {
     setStatus("parsing");
-    setErrors([]); // Limpiar errores previos si intentan subir otro archivo
+    setErrors([]);
     setParsingProgress(0);
     
     try {
@@ -72,9 +74,8 @@ export default function ClienteListImportMasiva({ open, onClose }: { open: boole
       const missing = EXPECTED_HEADERS.filter(h => !headers.includes(h));
       if (missing.length > 0) throw new Error(`Columnas faltantes: ${missing.join(", ")}`);
 
-      const validRows: ChipImport[] = [];
+      const validRows: HistorialVentasImport[] = [];
       const rowErrors: { row: number; messages: string[] }[] = [];
-      const seenruc = new Set();
       const totalRows = worksheet.rowCount - 1;
 
       worksheet.eachRow((row, rowNumber) => {
@@ -83,30 +84,38 @@ export default function ClienteListImportMasiva({ open, onClose }: { open: boole
         const rowData: any = {};
         row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           const h = headers[colNumber - 1];
-          if (h) rowData[h] = cell.value;
+          if (h) {
+            // Manejo de celdas con fórmulas o valores enriquecidos
+            const rawValue = cell.value;
+            rowData[h] = (rawValue && typeof rawValue === 'object' && 'result' in rawValue) 
+              ? rawValue.result 
+              : rawValue;
+          }
         });
 
-        const result = ChipImportSchema.safeParse(rowData);
+        const result = HistorialVentasImportSchema.safeParse(rowData);
         if (!result.success) {
-          rowErrors.push({ row: rowNumber, messages: result.error.issues.map(e => e.message) });
+          rowErrors.push({ 
+            row: rowNumber, 
+            messages: result.error.issues.map(e => `${e.path.join('.')}: ${e.message}`) 
+          });
         } else {
-          if (seenruc.has(result.data.ruc)) {
-            rowErrors.push({ row: rowNumber, messages: ["ruc duplicado en el archivo"] });
-          } else {
-            seenruc.add(result.data.ruc);
-            validRows.push(result.data);
-          }
+          validRows.push(result.data);
         }
 
-        if (rowNumber % 50 === 0 || rowNumber === worksheet.rowCount) {
+        if (rowNumber % 20 === 0 || rowNumber === worksheet.rowCount) {
           setParsingProgress(Math.round(((rowNumber - 1) / totalRows) * 100));
         }
       });
 
-      setRowsCount(validRows.length);
-      setErrors(rowErrors);
-      setStatus(rowErrors.length > 0 ? "error" : "ready");
-      setFile(file);
+      if (rowErrors.length > 0) {
+        setErrors(rowErrors);
+        setStatus("error");
+      } else {
+        setRowsCount(validRows.length);
+        setFile(file);
+        setStatus("ready");
+      }
 
     } catch (err: any) {
       setErrors([{ row: 0, messages: [err.message] }]);
@@ -114,20 +123,18 @@ export default function ClienteListImportMasiva({ open, onClose }: { open: boole
     }
   };
 
-  /* ---- Mutación de subida ---- */
   const mutation = useMutation<void, ApiError, FormData>({
-    mutationFn: (fd) => api.post("/clientesGerenciaInicio/import", fd, {
+    mutationFn: (fd) => api.post("/historialCompras/import", fd, {
       headers: { "Content-Type": "multipart/form-data" }
     }),
     onMutate: () => setStatus("uploading"),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["clientesLista"] });
+      qc.invalidateQueries({ queryKey: ["historialVentas"] });
       message.success("Importación completada correctamente");
-      onClose();
     },
     onError: (err) => {
       setStatus("error");
-      message.error(err.message || "Error en el servidor al procesar el Excel");
+      message.error(err.message || "Error en el servidor");
     }
   });
 
@@ -136,12 +143,12 @@ export default function ClienteListImportMasiva({ open, onClose }: { open: boole
     const fd = new FormData();
     fd.append("file", file);
     mutation.mutate(fd);
-    
+    onClose();
   };
 
   return (
     <Modal
-      title="Importación Masiva de Clientes"
+      title="Importación Masiva de Compras"
       open={open}
       onCancel={handleClose}
       closable={status !== "uploading"}
@@ -156,11 +163,11 @@ export default function ClienteListImportMasiva({ open, onClose }: { open: boole
           loading={status === "uploading"}
           disabled={status !== "ready"}
         >
-          Confirmar e Importar
+          Confirmar e Importar {rowsCount > 0 && `(${rowsCount} filas)`}
         </Button>
       ]}
     >
-      <Space orientation="vertical" style={{ width: "100%" }} size="middle">
+      <Space direction="vertical" style={{ width: "100%" }} size="middle">
         <Upload.Dragger
           accept=".xlsx"
           beforeUpload={(file) => { parseFile(file); return false; }}
@@ -170,27 +177,20 @@ export default function ClienteListImportMasiva({ open, onClose }: { open: boole
           <p className="ant-upload-drag-icon">
             {status === "parsing" ? <LoadingOutlined /> : <UploadOutlined />}
           </p>
-          <p className="ant-upload-text">Haz clic o arrastra el archivo Excel aquí</p>
+          <p className="ant-upload-text">Haz clic o arrastra el Excel aquí</p>
         </Upload.Dragger>
 
         {status === "parsing" && (
           <div style={{ textAlign: 'center' }}>
-            <Text>Analizando registros del Excel...</Text>
+            <Text>Validando datos...</Text>
             <Progress percent={parsingProgress} status="active" />
-          </div>
-        )}
-
-        {status === "uploading" && (
-          <div style={{ textAlign: 'center' }}>
-            <Text strong>Guardando en base de datos...</Text>
-            <Progress percent={100} status="active" strokeColor="#52c41a" />
           </div>
         )}
 
         {status === "ready" && (
           <Alert
             message="Validación exitosa"
-            description={`Se han encontrado ${rowsCount} registros listos para importar.`}
+            description={`Se han procesado ${rowsCount} registros correctamente.`}
             type="success"
             showIcon
           />
@@ -199,12 +199,12 @@ export default function ClienteListImportMasiva({ open, onClose }: { open: boole
         {errors.length > 0 && (
           <Alert
             type="error"
-            message="No se puede procesar el archivo"
+            message="Errores encontrados"
             description={
-              <div style={{ maxHeight: 180, overflowY: 'auto', marginTop: 8 }}>
+              <div style={{ maxHeight: 180, overflowY: 'auto' }}>
                 {errors.map((e, i) => (
-                  <div key={i} style={{ marginBottom: 4 }}>
-                    <Text strong>Fila {e.row > 0 ? e.row : "General"}:</Text> {e.messages.join(", ")}
+                  <div key={i} style={{ fontSize: '12px' }}>
+                    <strong>Fila {e.row || "General"}:</strong> {e.messages.join(", ")}
                   </div>
                 ))}
               </div>

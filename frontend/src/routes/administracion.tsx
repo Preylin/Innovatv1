@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import SpinAtom from '../components/atoms/spin/Spin';
 import { UseBarAdministracionIcons } from '../components/atoms/icons/AntDesign/administracion/barAdmIcons';
 import { UseComercialesIconsLO } from '../components/atoms/icons/OtrasLibs/Comerciales';
+import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
 
 
 export const Route = createFileRoute('/administracion')({
@@ -171,9 +172,22 @@ function useSiderBarContent(): AppMenuItem[] {
     },
     {
       label: "Historial de ventas",
-      key: "/administracion/ventas",
+      key: "/administracion/historial",
       icon: <UseBarAdministracionIcons name="historial" />,
-      to: "/administracion/ventas",
+      children: [
+        {
+          label: "Ventas",
+          key: "/administracion/historial/ventas",
+          icon:  <GiReceiveMoney />,
+          to: "/administracion/historial/ventas",
+        },
+        {
+          label: "Compras",
+          key: "/administracion/historial/compras",
+          icon:  <GiPayMoney />,
+          to: "/administracion/historial/compras",
+        },
+      ],
     },
   ];
 

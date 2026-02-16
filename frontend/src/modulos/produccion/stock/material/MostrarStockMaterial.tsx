@@ -199,7 +199,7 @@ function MostrarStockMaterial() {
                     </Col>
                     <Col xs={24} md={16}>
                       <Flex vertical gap={2}>
-                        <Title level={5} style={{ margin: 0, fontSize: "14px", width: "95%" }} ellipsis>
+                        <Title level={5} style={{ margin: 0, fontSize: "14px", width: "95%" }}>
                           {item.name}
                         </Title>
                         

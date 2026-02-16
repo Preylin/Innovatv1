@@ -39,11 +39,17 @@ const AlmacenStockLazyRouteImport = createFileRoute('/almacen/stock')()
 const AlmacenSalidasLazyRouteImport = createFileRoute('/almacen/salidas')()
 const AlmacenIngresosLazyRouteImport = createFileRoute('/almacen/ingresos')()
 const AlmacenCatalogosLazyRouteImport = createFileRoute('/almacen/catalogos')()
+const GerenciaCotizacionesIndexLazyRouteImport = createFileRoute(
+  '/gerencia/cotizaciones/',
+)()
 const AdministracionMonitoreoIndexLazyRouteImport = createFileRoute(
   '/administracion/monitoreo/',
 )()
 const AdministracionListaIndexLazyRouteImport = createFileRoute(
   '/administracion/lista/',
+)()
+const GerenciaCotizacionesCrearLazyRouteImport = createFileRoute(
+  '/gerencia/cotizaciones/crear',
 )()
 const AdministracionMonitoreoWeatherLazyRouteImport = createFileRoute(
   '/administracion/monitoreo/weather',
@@ -65,6 +71,15 @@ const AdministracionListaProveedoresLazyRouteImport = createFileRoute(
 )()
 const AdministracionListaClientesLazyRouteImport = createFileRoute(
   '/administracion/lista/clientes',
+)()
+const AdministracionHistorialVentasLazyRouteImport = createFileRoute(
+  '/administracion/historial/ventas',
+)()
+const AdministracionHistorialIndezLazyRouteImport = createFileRoute(
+  '/administracion/historial/indez',
+)()
+const AdministracionHistorialComprasLazyRouteImport = createFileRoute(
+  '/administracion/historial/compras',
 )()
 
 const TesoreriaRoute = TesoreriaRouteImport.update({
@@ -211,6 +226,14 @@ const AlmacenCatalogosLazyRoute = AlmacenCatalogosLazyRouteImport.update({
 } as any).lazy(() =>
   import('./routes/almacen/catalogos.lazy').then((d) => d.Route),
 )
+const GerenciaCotizacionesIndexLazyRoute =
+  GerenciaCotizacionesIndexLazyRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => GerenciaCotizacionesLazyRoute,
+  } as any).lazy(() =>
+    import('./routes/gerencia/cotizaciones/index.lazy').then((d) => d.Route),
+  )
 const AdministracionMonitoreoIndexLazyRoute =
   AdministracionMonitoreoIndexLazyRouteImport.update({
     id: '/monitoreo/',
@@ -226,6 +249,14 @@ const AdministracionListaIndexLazyRoute =
     getParentRoute: () => AdministracionRoute,
   } as any).lazy(() =>
     import('./routes/administracion/lista/index.lazy').then((d) => d.Route),
+  )
+const GerenciaCotizacionesCrearLazyRoute =
+  GerenciaCotizacionesCrearLazyRouteImport.update({
+    id: '/crear',
+    path: '/crear',
+    getParentRoute: () => GerenciaCotizacionesLazyRoute,
+  } as any).lazy(() =>
+    import('./routes/gerencia/cotizaciones/crear.lazy').then((d) => d.Route),
   )
 const AdministracionMonitoreoWeatherLazyRoute =
   AdministracionMonitoreoWeatherLazyRouteImport.update({
@@ -291,6 +322,34 @@ const AdministracionListaClientesLazyRoute =
   } as any).lazy(() =>
     import('./routes/administracion/lista/clientes.lazy').then((d) => d.Route),
   )
+const AdministracionHistorialVentasLazyRoute =
+  AdministracionHistorialVentasLazyRouteImport.update({
+    id: '/historial/ventas',
+    path: '/historial/ventas',
+    getParentRoute: () => AdministracionRoute,
+  } as any).lazy(() =>
+    import('./routes/administracion/historial/ventas.lazy').then(
+      (d) => d.Route,
+    ),
+  )
+const AdministracionHistorialIndezLazyRoute =
+  AdministracionHistorialIndezLazyRouteImport.update({
+    id: '/historial/indez',
+    path: '/historial/indez',
+    getParentRoute: () => AdministracionRoute,
+  } as any).lazy(() =>
+    import('./routes/administracion/historial/indez.lazy').then((d) => d.Route),
+  )
+const AdministracionHistorialComprasLazyRoute =
+  AdministracionHistorialComprasLazyRouteImport.update({
+    id: '/historial/compras',
+    path: '/historial/compras',
+    getParentRoute: () => AdministracionRoute,
+  } as any).lazy(() =>
+    import('./routes/administracion/historial/compras.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexLazyRoute
@@ -306,7 +365,7 @@ export interface FileRoutesByFullPath {
   '/almacen/stock': typeof AlmacenStockLazyRoute
   '/gerencia/actividades': typeof GerenciaActividadesLazyRoute
   '/gerencia/activos': typeof GerenciaActivosLazyRoute
-  '/gerencia/cotizaciones': typeof GerenciaCotizacionesLazyRoute
+  '/gerencia/cotizaciones': typeof GerenciaCotizacionesLazyRouteWithChildren
   '/gerencia/ordenes': typeof GerenciaOrdenesLazyRoute
   '/gerencia/usuarios': typeof GerenciaUsuariosLazyRoute
   '/produccion/stock': typeof ProduccionStockLazyRoute
@@ -316,6 +375,9 @@ export interface FileRoutesByFullPath {
   '/gerencia/': typeof GerenciaIndexLazyRoute
   '/produccion/': typeof ProduccionIndexLazyRoute
   '/tesoreria/': typeof TesoreriaIndexLazyRoute
+  '/administracion/historial/compras': typeof AdministracionHistorialComprasLazyRoute
+  '/administracion/historial/indez': typeof AdministracionHistorialIndezLazyRoute
+  '/administracion/historial/ventas': typeof AdministracionHistorialVentasLazyRoute
   '/administracion/lista/clientes': typeof AdministracionListaClientesLazyRoute
   '/administracion/lista/proveedores': typeof AdministracionListaProveedoresLazyRoute
   '/administracion/monitoreo/chips': typeof AdministracionMonitoreoChipsLazyRoute
@@ -323,8 +385,10 @@ export interface FileRoutesByFullPath {
   '/administracion/monitoreo/pro': typeof AdministracionMonitoreoProLazyRoute
   '/administracion/monitoreo/servicios': typeof AdministracionMonitoreoServiciosLazyRoute
   '/administracion/monitoreo/weather': typeof AdministracionMonitoreoWeatherLazyRoute
+  '/gerencia/cotizaciones/crear': typeof GerenciaCotizacionesCrearLazyRoute
   '/administracion/lista': typeof AdministracionListaIndexLazyRoute
   '/administracion/monitoreo': typeof AdministracionMonitoreoIndexLazyRoute
+  '/gerencia/cotizaciones/': typeof GerenciaCotizacionesIndexLazyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexLazyRoute
@@ -334,7 +398,6 @@ export interface FileRoutesByTo {
   '/almacen/stock': typeof AlmacenStockLazyRoute
   '/gerencia/actividades': typeof GerenciaActividadesLazyRoute
   '/gerencia/activos': typeof GerenciaActivosLazyRoute
-  '/gerencia/cotizaciones': typeof GerenciaCotizacionesLazyRoute
   '/gerencia/ordenes': typeof GerenciaOrdenesLazyRoute
   '/gerencia/usuarios': typeof GerenciaUsuariosLazyRoute
   '/produccion/stock': typeof ProduccionStockLazyRoute
@@ -344,6 +407,9 @@ export interface FileRoutesByTo {
   '/gerencia': typeof GerenciaIndexLazyRoute
   '/produccion': typeof ProduccionIndexLazyRoute
   '/tesoreria': typeof TesoreriaIndexLazyRoute
+  '/administracion/historial/compras': typeof AdministracionHistorialComprasLazyRoute
+  '/administracion/historial/indez': typeof AdministracionHistorialIndezLazyRoute
+  '/administracion/historial/ventas': typeof AdministracionHistorialVentasLazyRoute
   '/administracion/lista/clientes': typeof AdministracionListaClientesLazyRoute
   '/administracion/lista/proveedores': typeof AdministracionListaProveedoresLazyRoute
   '/administracion/monitoreo/chips': typeof AdministracionMonitoreoChipsLazyRoute
@@ -351,8 +417,10 @@ export interface FileRoutesByTo {
   '/administracion/monitoreo/pro': typeof AdministracionMonitoreoProLazyRoute
   '/administracion/monitoreo/servicios': typeof AdministracionMonitoreoServiciosLazyRoute
   '/administracion/monitoreo/weather': typeof AdministracionMonitoreoWeatherLazyRoute
+  '/gerencia/cotizaciones/crear': typeof GerenciaCotizacionesCrearLazyRoute
   '/administracion/lista': typeof AdministracionListaIndexLazyRoute
   '/administracion/monitoreo': typeof AdministracionMonitoreoIndexLazyRoute
+  '/gerencia/cotizaciones': typeof GerenciaCotizacionesIndexLazyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -369,7 +437,7 @@ export interface FileRoutesById {
   '/almacen/stock': typeof AlmacenStockLazyRoute
   '/gerencia/actividades': typeof GerenciaActividadesLazyRoute
   '/gerencia/activos': typeof GerenciaActivosLazyRoute
-  '/gerencia/cotizaciones': typeof GerenciaCotizacionesLazyRoute
+  '/gerencia/cotizaciones': typeof GerenciaCotizacionesLazyRouteWithChildren
   '/gerencia/ordenes': typeof GerenciaOrdenesLazyRoute
   '/gerencia/usuarios': typeof GerenciaUsuariosLazyRoute
   '/produccion/stock': typeof ProduccionStockLazyRoute
@@ -379,6 +447,9 @@ export interface FileRoutesById {
   '/gerencia/': typeof GerenciaIndexLazyRoute
   '/produccion/': typeof ProduccionIndexLazyRoute
   '/tesoreria/': typeof TesoreriaIndexLazyRoute
+  '/administracion/historial/compras': typeof AdministracionHistorialComprasLazyRoute
+  '/administracion/historial/indez': typeof AdministracionHistorialIndezLazyRoute
+  '/administracion/historial/ventas': typeof AdministracionHistorialVentasLazyRoute
   '/administracion/lista/clientes': typeof AdministracionListaClientesLazyRoute
   '/administracion/lista/proveedores': typeof AdministracionListaProveedoresLazyRoute
   '/administracion/monitoreo/chips': typeof AdministracionMonitoreoChipsLazyRoute
@@ -386,8 +457,10 @@ export interface FileRoutesById {
   '/administracion/monitoreo/pro': typeof AdministracionMonitoreoProLazyRoute
   '/administracion/monitoreo/servicios': typeof AdministracionMonitoreoServiciosLazyRoute
   '/administracion/monitoreo/weather': typeof AdministracionMonitoreoWeatherLazyRoute
+  '/gerencia/cotizaciones/crear': typeof GerenciaCotizacionesCrearLazyRoute
   '/administracion/lista/': typeof AdministracionListaIndexLazyRoute
   '/administracion/monitoreo/': typeof AdministracionMonitoreoIndexLazyRoute
+  '/gerencia/cotizaciones/': typeof GerenciaCotizacionesIndexLazyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -415,6 +488,9 @@ export interface FileRouteTypes {
     | '/gerencia/'
     | '/produccion/'
     | '/tesoreria/'
+    | '/administracion/historial/compras'
+    | '/administracion/historial/indez'
+    | '/administracion/historial/ventas'
     | '/administracion/lista/clientes'
     | '/administracion/lista/proveedores'
     | '/administracion/monitoreo/chips'
@@ -422,8 +498,10 @@ export interface FileRouteTypes {
     | '/administracion/monitoreo/pro'
     | '/administracion/monitoreo/servicios'
     | '/administracion/monitoreo/weather'
+    | '/gerencia/cotizaciones/crear'
     | '/administracion/lista'
     | '/administracion/monitoreo'
+    | '/gerencia/cotizaciones/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -433,7 +511,6 @@ export interface FileRouteTypes {
     | '/almacen/stock'
     | '/gerencia/actividades'
     | '/gerencia/activos'
-    | '/gerencia/cotizaciones'
     | '/gerencia/ordenes'
     | '/gerencia/usuarios'
     | '/produccion/stock'
@@ -443,6 +520,9 @@ export interface FileRouteTypes {
     | '/gerencia'
     | '/produccion'
     | '/tesoreria'
+    | '/administracion/historial/compras'
+    | '/administracion/historial/indez'
+    | '/administracion/historial/ventas'
     | '/administracion/lista/clientes'
     | '/administracion/lista/proveedores'
     | '/administracion/monitoreo/chips'
@@ -450,8 +530,10 @@ export interface FileRouteTypes {
     | '/administracion/monitoreo/pro'
     | '/administracion/monitoreo/servicios'
     | '/administracion/monitoreo/weather'
+    | '/gerencia/cotizaciones/crear'
     | '/administracion/lista'
     | '/administracion/monitoreo'
+    | '/gerencia/cotizaciones'
   id:
     | '__root__'
     | '/'
@@ -477,6 +559,9 @@ export interface FileRouteTypes {
     | '/gerencia/'
     | '/produccion/'
     | '/tesoreria/'
+    | '/administracion/historial/compras'
+    | '/administracion/historial/indez'
+    | '/administracion/historial/ventas'
     | '/administracion/lista/clientes'
     | '/administracion/lista/proveedores'
     | '/administracion/monitoreo/chips'
@@ -484,8 +569,10 @@ export interface FileRouteTypes {
     | '/administracion/monitoreo/pro'
     | '/administracion/monitoreo/servicios'
     | '/administracion/monitoreo/weather'
+    | '/gerencia/cotizaciones/crear'
     | '/administracion/lista/'
     | '/administracion/monitoreo/'
+    | '/gerencia/cotizaciones/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -661,6 +748,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AlmacenCatalogosLazyRouteImport
       parentRoute: typeof AlmacenRoute
     }
+    '/gerencia/cotizaciones/': {
+      id: '/gerencia/cotizaciones/'
+      path: '/'
+      fullPath: '/gerencia/cotizaciones/'
+      preLoaderRoute: typeof GerenciaCotizacionesIndexLazyRouteImport
+      parentRoute: typeof GerenciaCotizacionesLazyRoute
+    }
     '/administracion/monitoreo/': {
       id: '/administracion/monitoreo/'
       path: '/monitoreo'
@@ -674,6 +768,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/administracion/lista'
       preLoaderRoute: typeof AdministracionListaIndexLazyRouteImport
       parentRoute: typeof AdministracionRoute
+    }
+    '/gerencia/cotizaciones/crear': {
+      id: '/gerencia/cotizaciones/crear'
+      path: '/crear'
+      fullPath: '/gerencia/cotizaciones/crear'
+      preLoaderRoute: typeof GerenciaCotizacionesCrearLazyRouteImport
+      parentRoute: typeof GerenciaCotizacionesLazyRoute
     }
     '/administracion/monitoreo/weather': {
       id: '/administracion/monitoreo/weather'
@@ -724,11 +825,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdministracionListaClientesLazyRouteImport
       parentRoute: typeof AdministracionRoute
     }
+    '/administracion/historial/ventas': {
+      id: '/administracion/historial/ventas'
+      path: '/historial/ventas'
+      fullPath: '/administracion/historial/ventas'
+      preLoaderRoute: typeof AdministracionHistorialVentasLazyRouteImport
+      parentRoute: typeof AdministracionRoute
+    }
+    '/administracion/historial/indez': {
+      id: '/administracion/historial/indez'
+      path: '/historial/indez'
+      fullPath: '/administracion/historial/indez'
+      preLoaderRoute: typeof AdministracionHistorialIndezLazyRouteImport
+      parentRoute: typeof AdministracionRoute
+    }
+    '/administracion/historial/compras': {
+      id: '/administracion/historial/compras'
+      path: '/historial/compras'
+      fullPath: '/administracion/historial/compras'
+      preLoaderRoute: typeof AdministracionHistorialComprasLazyRouteImport
+      parentRoute: typeof AdministracionRoute
+    }
   }
 }
 
 interface AdministracionRouteChildren {
   AdministracionIndexLazyRoute: typeof AdministracionIndexLazyRoute
+  AdministracionHistorialComprasLazyRoute: typeof AdministracionHistorialComprasLazyRoute
+  AdministracionHistorialIndezLazyRoute: typeof AdministracionHistorialIndezLazyRoute
+  AdministracionHistorialVentasLazyRoute: typeof AdministracionHistorialVentasLazyRoute
   AdministracionListaClientesLazyRoute: typeof AdministracionListaClientesLazyRoute
   AdministracionListaProveedoresLazyRoute: typeof AdministracionListaProveedoresLazyRoute
   AdministracionMonitoreoChipsLazyRoute: typeof AdministracionMonitoreoChipsLazyRoute
@@ -742,6 +867,11 @@ interface AdministracionRouteChildren {
 
 const AdministracionRouteChildren: AdministracionRouteChildren = {
   AdministracionIndexLazyRoute: AdministracionIndexLazyRoute,
+  AdministracionHistorialComprasLazyRoute:
+    AdministracionHistorialComprasLazyRoute,
+  AdministracionHistorialIndezLazyRoute: AdministracionHistorialIndezLazyRoute,
+  AdministracionHistorialVentasLazyRoute:
+    AdministracionHistorialVentasLazyRoute,
   AdministracionListaClientesLazyRoute: AdministracionListaClientesLazyRoute,
   AdministracionListaProveedoresLazyRoute:
     AdministracionListaProveedoresLazyRoute,
@@ -792,10 +922,26 @@ const ContabilidadRouteWithChildren = ContabilidadRoute._addFileChildren(
   ContabilidadRouteChildren,
 )
 
+interface GerenciaCotizacionesLazyRouteChildren {
+  GerenciaCotizacionesCrearLazyRoute: typeof GerenciaCotizacionesCrearLazyRoute
+  GerenciaCotizacionesIndexLazyRoute: typeof GerenciaCotizacionesIndexLazyRoute
+}
+
+const GerenciaCotizacionesLazyRouteChildren: GerenciaCotizacionesLazyRouteChildren =
+  {
+    GerenciaCotizacionesCrearLazyRoute: GerenciaCotizacionesCrearLazyRoute,
+    GerenciaCotizacionesIndexLazyRoute: GerenciaCotizacionesIndexLazyRoute,
+  }
+
+const GerenciaCotizacionesLazyRouteWithChildren =
+  GerenciaCotizacionesLazyRoute._addFileChildren(
+    GerenciaCotizacionesLazyRouteChildren,
+  )
+
 interface GerenciaRouteChildren {
   GerenciaActividadesLazyRoute: typeof GerenciaActividadesLazyRoute
   GerenciaActivosLazyRoute: typeof GerenciaActivosLazyRoute
-  GerenciaCotizacionesLazyRoute: typeof GerenciaCotizacionesLazyRoute
+  GerenciaCotizacionesLazyRoute: typeof GerenciaCotizacionesLazyRouteWithChildren
   GerenciaOrdenesLazyRoute: typeof GerenciaOrdenesLazyRoute
   GerenciaUsuariosLazyRoute: typeof GerenciaUsuariosLazyRoute
   GerenciaIndexLazyRoute: typeof GerenciaIndexLazyRoute
@@ -804,7 +950,7 @@ interface GerenciaRouteChildren {
 const GerenciaRouteChildren: GerenciaRouteChildren = {
   GerenciaActividadesLazyRoute: GerenciaActividadesLazyRoute,
   GerenciaActivosLazyRoute: GerenciaActivosLazyRoute,
-  GerenciaCotizacionesLazyRoute: GerenciaCotizacionesLazyRoute,
+  GerenciaCotizacionesLazyRoute: GerenciaCotizacionesLazyRouteWithChildren,
   GerenciaOrdenesLazyRoute: GerenciaOrdenesLazyRoute,
   GerenciaUsuariosLazyRoute: GerenciaUsuariosLazyRoute,
   GerenciaIndexLazyRoute: GerenciaIndexLazyRoute,

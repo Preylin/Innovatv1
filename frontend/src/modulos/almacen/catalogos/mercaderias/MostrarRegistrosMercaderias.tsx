@@ -227,7 +227,7 @@ function MostrarRegistrosMercaderias() {
                       />
                     </Col>
                     <Col xs={24} md={16}>
-                      <Title level={5} style={{ margin: 0, fontSize: "14px", width: "85%" }} ellipsis>
+                      <Title level={5} style={{ margin: 0, fontSize: "14px", width: "85%" }}>
                         {item.name}
                       </Title>
                       

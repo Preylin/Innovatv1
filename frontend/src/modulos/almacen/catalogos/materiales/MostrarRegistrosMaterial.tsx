@@ -251,7 +251,6 @@ function MostrarRegistrosMateriales() {
                       <Title
                         level={5}
                         style={{ margin: 0, fontSize: "14px", width: "85%" }}
-                        ellipsis
                       >
                         {item.name}
                       </Title>
