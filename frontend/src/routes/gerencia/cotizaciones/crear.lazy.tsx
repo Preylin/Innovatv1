@@ -1,5 +1,4 @@
 import { createLazyFileRoute } from "@tanstack/react-router";
-import ExampleKit from "../../../components/tree/mainCom";
 
 export const Route = createLazyFileRoute("/gerencia/cotizaciones/crear")({
   component: RouteComponent,
@@ -8,7 +7,7 @@ export const Route = createLazyFileRoute("/gerencia/cotizaciones/crear")({
 function RouteComponent() {
   return (
     <div>
-      < ExampleKit />
+      desarrollo
     </div>
   );
 }
