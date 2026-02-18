@@ -129,7 +129,7 @@ export default function HistorialComprasImportMasiva({ open, onClose }: { open: 
     }),
     onMutate: () => setStatus("uploading"),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["historialVentas"] });
+      qc.invalidateQueries({ queryKey: ["historialCompras"] });
       message.success("Importación completada correctamente");
     },
     onError: (err) => {

@@ -17,7 +17,7 @@ import { Empty, Card, Typography, Skeleton } from "antd";
 import { useToggle } from "../../../hooks/Toggle";
 import ButtomNew from "../../../components/molecules/botons/BottomNew";
 import isoToDDMMYYYY from "../../../helpers/Fechas";
-import { useHistorialComprasListaList } from "../../../api/queries/modulos/administracion/ventas/compras/historialVentas.api";
+import { useHistorialComprasListaList } from "../../../api/queries/modulos/administracion/ventas/compras/historialCompras.api";
 import type { HistorialComprasOutApiType } from "../../../api/queries/modulos/administracion/ventas/compras/historialCompras.api.schema";
 import HistorialComprasImportMasiva from "./ModalImportacionMasivaHC";
 

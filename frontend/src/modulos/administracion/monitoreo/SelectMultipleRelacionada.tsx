@@ -65,6 +65,10 @@ export function DependentSelectOther({
       <Row gutter={8}>
         <Col span={12}>
           <Select
+          showSearch={{
+            filterOption: (input, option) =>
+              (option?.label ?? "").toLowerCase().includes(input.toLowerCase()),
+          }}
             value={parentValue || undefined}
             placeholder={parentPlaceholder}
             options={parentOptions}
@@ -85,6 +89,10 @@ export function DependentSelectOther({
         </Col>
         <Col span={12}>
           <Select
+            showSearch={{
+              filterOption: (input, option) =>
+              (option?.label ?? "").toLowerCase().includes(input.toLowerCase()),
+            }}
             value={childValue || undefined}
             placeholder={childPlaceholder}
             options={childOptions}

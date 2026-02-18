@@ -134,7 +134,9 @@ function ModalAddNewUser({
           password: value.password.trim(),
           cargo: value.cargo.trim(),
           estado: value.estado,
-          image_byte: value.image_byte[0]?.image_byte.split(",")[1] || "",
+          image_byte: value.image_byte.map((i) => ({
+              image_byte: i.image_byte.split(",")[1] || "",
+            })),
           permisos: value.permisos.map((p) => ({
             name_module: p.name_module,
           })),
