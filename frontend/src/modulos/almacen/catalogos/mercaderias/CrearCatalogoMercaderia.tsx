@@ -168,12 +168,14 @@ function CatalogoMercaderiaCreate({
           <Col span={24}>
             <form.Field name="imagen">
               {(field) => (
-                <Flex justify="center" align="center">
+                <Flex justify="center" align="center" style={{ marginBottom: 24 }}>
                   <FieldWrapper field={field}>
                     {(props) => (
-                    <Flex justify="center" align="center">
-                      <FormUploadImage {...props} field={field} maxFiles={4} />
-                    </Flex>
+                      <FormUploadImage 
+                        {...props} 
+                        field={field} 
+                        maxFiles={4} 
+                      />
                     )}
                   </FieldWrapper>
                 </Flex>
