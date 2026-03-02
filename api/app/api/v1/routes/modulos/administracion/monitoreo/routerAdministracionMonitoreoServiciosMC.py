@@ -1,7 +1,9 @@
 import logging
 from typing import List
+import pandas as pd
+import io
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,6 +32,42 @@ async def crear_serviciosmc(data: ServicioMCCreate, session: AsyncSession = Depe
     except IntegrityError:
         await session.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Error de integridad al crear")
+
+@router_serviciosmc.post("/import", status_code=status.HTTP_201_CREATED)
+async def import_serviciosmc(file: UploadFile = File(...), session: AsyncSession = Depends(get_session)):
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="El archivo debe ser un Excel")
+    
+    try:
+        contents = await file.read()
+        df = pd.read_excel(io.BytesIO(contents))
+        df.columns = [c.lower().strip() for c in df.columns]
+
+        required = ['empresa', 'ubicacion', 'inicio', 'fin', 'servicio', 'informe', 'certificado', 'encargado', 'tecnico', 'incidencia', 'status']
+        if not all(col in df.columns for col in required):
+            raise HTTPException(status_code=400, detail="Columnas faltantes")
+
+        df = df[required].copy()
+        
+        df = df.where(pd.notnull(df), None)
+
+        registros = df.to_dict(orient="records")
+
+        try:
+            validados = [ServicioMCCreate(**r).model_dump() for r in registros]
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error de validación en datos: {str(e)}")
+
+        await session.execute(ServicioMC.__table__.insert(), validados)
+        await session.commit()
+
+        return {"status": "success", "inserted": len(validados)}
+    
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
+
+
 
 @router_serviciosmc.get("", response_model=List[ServicioMCOut])
 async def listar_serviciosmc(session: AsyncSession = Depends(get_session)):

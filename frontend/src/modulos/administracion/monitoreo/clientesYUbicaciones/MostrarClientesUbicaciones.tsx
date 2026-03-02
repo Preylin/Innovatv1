@@ -85,7 +85,6 @@ function ShowClientes() {
   ];
 
   const cardFlexStyle = useMemo(() => {
-    if (screens.xl) return { flex: "0 0 calc(25% - 12px)", minWidth: "300px" };
     if (screens.lg)
       return { flex: "0 0 calc(33.33% - 12px)", minWidth: "300px" };
     if (screens.md) return { flex: "0 0 calc(50% - 12px)", minWidth: "300px" };

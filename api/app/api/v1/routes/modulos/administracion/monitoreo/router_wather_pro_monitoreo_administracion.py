@@ -1,7 +1,9 @@
 import logging
 from typing import List
+import pandas as pd
+import io
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -163,6 +165,40 @@ async def crear_chipservicio(data: ChipServicioCreate, session: AsyncSession = D
     except IntegrityError:
         await session.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Error de integridad al crear")
+
+@router_chipservicio.post("/import", status_code=status.HTTP_201_CREATED)
+async def import_chipservicio(file: UploadFile = File(...), session: AsyncSession = Depends(get_session)):
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="El archivo debe ser un Excel")
+
+    try:
+        contents = await file.read()
+        df = pd.read_excel(io.BytesIO(contents))
+        df.columns = [c.lower().strip() for c in df.columns]
+
+        required = ['name', 'ubicacion', 'numero', 'operador', 'plan', 'inicio', 'fin', 'fact_rel', 'adicional', 'status']
+        if not all(col in df.columns for col in required):
+            raise HTTPException(status_code=400, detail="Columnas faltantes")
+
+        df = df[required].copy()
+
+        df = df.where(pd.notnull(df), None)
+
+        registros = df.to_dict(orient="records")
+
+        try:
+            validados = [ChipServicioCreate(**r).model_dump() for r in registros]
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error de validación en datos: {str(e)}")
+
+        await session.execute(ChipServicio.__table__.insert(), validados)
+        await session.commit()
+
+        return {"status": "success", "inserted": len(validados)}
+    
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
 
 @router_chipservicio.get("", response_model=List[ChipServicioOut])
 async def listar_chipservicio(session: AsyncSession = Depends(get_session)):

@@ -2,6 +2,7 @@ import { useRef, useState, useMemo, useCallback } from "react";
 import { SearchOutlined } from "@ant-design/icons";
 import type { InputRef, TableColumnsType, TableColumnType } from "antd";
 import {
+  Button,
   Flex,
   Input,
   Modal,
@@ -28,6 +29,8 @@ import ModalCrearChipServicio from "./ModalCrearRegistroServicioChip";
 import ModalUpdateChipServicio from "./ActualizarRegistroChipServicio";
 import Showchips from "../inventario/MostrarRegistrosChips";
 import ButtonWatch from "../../../../../components/molecules/botons/BottonWatch";
+import { useToggle } from "../../../../../hooks/Toggle";
+import HistorialSerivicioChipsModal from "./ModalImportacionSerChips";
 
 const { Title, Text } = Typography;
 
@@ -83,6 +86,7 @@ function TablaMostrarRegistrosChipServicio() {
   const [openChipsRegistros, setOpenChipsRegistros] = useState(false);
   const handleOpen = () => setOpenChipsRegistros(true);
   const handleClose = () => setOpenChipsRegistros(false);
+  const ModalMasivoChips = useToggle();
 
   //Queries
   const { data, isLoading, isError, error } = useChipServicioList();
@@ -331,6 +335,11 @@ function TablaMostrarRegistrosChipServicio() {
                 name="Agregar registro"
                 onClick={() => setOpenCreateModal(true)}
               />
+              <Button
+                type="primary"
+                onClick={() => ModalMasivoChips.toggle()}
+                >Masivo</Button>
+              <HistorialSerivicioChipsModal open={ModalMasivoChips.isToggled} onClose={ModalMasivoChips.toggle}/>
               <ButtonWatch onClick={handleOpen}>
 
                 Ver chips
