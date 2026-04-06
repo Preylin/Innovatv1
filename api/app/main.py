@@ -39,7 +39,6 @@ app = FastAPI(title="ERP Innovat API")
 # configuracio cors
 origins = [
     "https://innovatv1.kittnight.com",
-    "http://66.94.108.125:8080", 
     "http://localhost:5173"
 ]
 
@@ -60,20 +59,33 @@ async def websocket_endpoint(websocket: WebSocket, token: str = None):
     if not token:
         await websocket.close(code=1008)
         return
+
     try:
         payload = decode_access_token(token)
-        user_id = payload.get("sub")
-        if not user_id: raise ValueError()
-    except Exception:
-        await websocket.close(code=1008)
-        return
+        user_id = str(payload.get("sub"))
+        await websocket.accept()
+        
+        from app.core.realtime import redis_client
+        online_key = f"user:online:{user_id}"
+        
+        # 1. Marcamos presencia
+        await redis_client.set(online_key, "1", ex=20) 
+        
+        # 2. Notificamos a todos que ALGUIEN ENTRÓ
+        await redis_client.publish("broadcast_channel", "refresh")
+        
+        logger.info(f"🔌 WebSocket: Cliente {user_id} conectado.")
+        
+        try:
+            await manager.broadcast_handler(websocket, user_id)
+        finally:
+            # 3. Notificamos a todos que ALGUIEN SALIÓ (o refrescó)
+            # Aunque la clave no se borre (por el TTL), al enviar "refresh",
+            # el frontend pedirá la lista /usuarios/online de nuevo.
+            await redis_client.publish("broadcast_channel", "refresh")
+            
+            logger.info(f"🔌 WebSocket: Cliente {user_id} desconectado (notificando refresh).")
 
-    await websocket.accept()
-    logger.info(f"🔌 WebSocket: Cliente {user_id} conectado.")
-    try:
-        await manager.broadcast_handler(websocket)
-    except WebSocketDisconnect:
-        logger.info(f"🔌 WebSocket: Cliente {user_id} desconectado.")
     except Exception as e:
         logger.error(f"❌ WebSocket Error: {e}")
 

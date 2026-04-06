@@ -18,7 +18,7 @@ const CatalogoMaterialesCreateUISchema = z.object({
   modelo: z.string().min(1, "El modelo es requerido"),
   medida: z.string().min(1, "La medida es requerida"),
   tipo: z.string().min(1, "La categoría es requerida"),
-  plimit: z.number().min(1, "Requerido"),
+  plimit: z.number().min(0, "Requerido"),
   dimension: z.string(),
   descripcion: z.string(),
   imagen: z
@@ -64,24 +64,32 @@ function CatalogoMaterialesCreate(
 
   const optionstipo = [
     {
-      value: "CABLES",
-      label: "Cables",
+      value: "CANALETAS Y ACCESORIOS",
+      label: "Canaletas y accesorios",
     },
     {
       value: "TUBERIAS",
       label: "Tuberías",
     },
     {
-      value: "TABLEROS",
-      label: "Tableros",
+      value: "CAJAS DE PASE Y SALIDA",
+      label: "Cajas de pase y salida",
     },
     {
-      value: "BATERIAS",
-      label: "Baterías",
+      value: "CABLES",
+      label: "Cables",
     },
     {
-      value: "PERNOS",
-      label: "Pernos",
+      value: "CABLEADO ESTRUCTURADO",
+      label: "Cableado estructurado",
+    },
+    {
+      value: "CONECTIVIDAD",
+      label: "Conectividad",
+    },
+    {
+      value: "CONSUMIBLES",
+      label: "Consumibles",
     },
   ];
 
@@ -93,7 +101,7 @@ function CatalogoMaterialesCreate(
       modelo: "",
       medida: "",
       tipo: "",
-      plimit: undefined as number | undefined,
+      plimit: 1,
       descripcion: "",
       dimension: "",
       imagen: [] as { image_byte: string }[],
@@ -111,7 +119,7 @@ function CatalogoMaterialesCreate(
           modelo: value.modelo.trim(),
           medida: value.medida.trim(),
           tipo: value.tipo,
-          plimit: value.plimit ?? 1,
+          plimit: value.plimit,
           dimension: value.dimension.trim() || null,
           descripcion: value.descripcion.trim() || null,
           imagen1: value.imagen[0]?.image_byte ?? null,
@@ -271,7 +279,7 @@ function CatalogoMaterialesCreate(
                     <InputNumber
                       {...props}
                       placeholder="Cantidad mínima en stock"
-                      min={1}
+                      min={0}
                       style={{width: '100%'}}
                     />
                   )}

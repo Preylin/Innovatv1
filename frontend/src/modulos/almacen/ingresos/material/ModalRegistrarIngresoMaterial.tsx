@@ -47,8 +47,8 @@ const ProductoSchema = z.object({
   dimension: z.string().min(3, "Requerido"),
   tipo: z.string().min(3, "Requerido"),
   serie: z.string().min(3, "Requerido"),
-  cantidad: z.number().min(1, "Requerido"),
-  valor: z.number().min(1, "Requerido"),
+  cantidad: z.number().min(0, "Requerido"),
+  valor: z.number().min(0, "Requerido"),
   image: z
     .array(
       z.object({

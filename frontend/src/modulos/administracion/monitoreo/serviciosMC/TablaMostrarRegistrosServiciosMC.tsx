@@ -165,12 +165,11 @@ function TablaMostrarRegistrosMc() {
         key: "empresa",
         ...getColumnSearchProps("empresa"),
         render: (text) => (
-          <Text style={{ fontSize: "12px" }}>
+          <Text ellipsis={{ tooltip: true }} style={{ fontSize: "12px" }}>
             {renderText(text, "empresa")}
           </Text>
         ),
         width: 100,
-        ellipsis: true,
       },
       {
         title: "Ubicación",
@@ -178,12 +177,11 @@ function TablaMostrarRegistrosMc() {
         key: "ubicacion",
         ...getColumnSearchProps("ubicacion"),
         render: (text) => (
-          <Text style={{ fontSize: "12px" }}>
+          <Text ellipsis={{ tooltip: true }} style={{ fontSize: "12px" }}>
             {renderText(text, "ubicacion")}
           </Text>
         ),
         width: 150,
-        ellipsis: true,
       },
       {
         title: "Inicio",

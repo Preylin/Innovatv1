@@ -2,11 +2,9 @@ import { useMemo } from "react";
 import {
   Avatar,
   Badge,
-  Col,
   Flex,
   Grid,
   Image,
-  Row,
   Skeleton,
   Space,
   type MenuProps,
@@ -28,6 +26,8 @@ import CustomDropdown from "../molecules/dropdown/CustomDropdown";
 import ThemeToggle from "../../Theme/ThemeToggle";
 import { UseSpinnersIcons } from "../atoms/icons/OtrasLibs/Spinners";
 import getBase64WithPrefix from "../../helpers/ImagesBase64";
+import { ShowMessage } from "../organisms/showMessage";
+import UsuariosOnline from "./MostrarUsuariosOnline";
 
 const { useBreakpoint } = Grid;
 
@@ -41,38 +41,6 @@ const MODULE_LABELS: Record<string, string> = {
   tesoreria: "Tesorería",
   contabilidad: "Contabilidad",
   ventas: "Ventas",
-};
-
-// Estilos mejorados para adaptabilidad
-const STYLES = {
-  row: { width: "100%", height: "48px", margin: 0 },
-  logoCol: { height: "48px", display: "flex", alignItems: "center", padding: "0 10px"},
-  logoImg: { height: "35px", width: "100%",marginLeft: "2px"},
-  titleCol: {
-    height: "48px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "bold",
-    color: "black",
-  },
-  iconsCol: {
-    height: "48px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    paddingRight: "15px",
-  },
-  avatarCol: {
-    background: "#00695C",
-    height: "48px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    borderTopLeftRadius: "6px",
-    borderBottomLeftRadius: "6px",
-    cursor: "pointer",
-  },
 };
 
 interface TopPanelProps {
@@ -139,22 +107,17 @@ export function PanelSuperior({ title, MenuItems }: TopPanelProps) {
   );
 
   return (
-    <Row style={STYLES.row} align="middle" wrap={false}>
-      <Col xs={6} sm={4} md={3} style={STYLES.logoCol}>
+    <nav className="flex h-12 w-full items-center justify-between shadow-sm pl-3">
+      {/* SECCIÓN IZQUIERDA: Menu y Logo */}
+      <Flex align="center" gap={screens.md ? 16 : 8} className="shrink-0">
         {isLoading ? (
           <Skeleton.Avatar active size="small" shape="square" />
         ) : (
-          <Flex align="center" justify="center" gap={8}>
+          <>
             <CustomDropdown
               placement="bottomLeft"
               triggerElement={
-                <MenuOutlined
-                  style={{
-                    fontSize: screens.md ? "18px" : "14px",
-                    color: "black",
-                    cursor: "pointer",
-                  }}
-                />
+                <MenuOutlined className="cursor-pointer text-lg" style={{color: "#F7F7F7"}}/>
               }
               items={MenuItems}
             />
@@ -162,67 +125,58 @@ export function PanelSuperior({ title, MenuItems }: TopPanelProps) {
               src={logoInnovatImg}
               alt="logo"
               preview={false}
-              style={STYLES.logoImg}
+              className="max-h-8 w-auto object-contain"
+              style={{ height: screens.md ? "32px" : "24px" }}
             />
-          </Flex>
+          </>
         )}
-      </Col>
+      </Flex>
 
-      {/* Título: Ocupa el espacio restante. Ajusta fuente según pantalla */}
-      <Col
-        flex="auto"
-        style={{ ...STYLES.titleCol, fontSize: screens.md ? "18px" : "14px" }}
-        className="select-none"
-      >
-        {title}
-      </Col>
+      {/* SECCIÓN CENTRAL: Mensajes y Título (Oculto en móviles muy pequeños o truncado) */}
+      <div className="relative flex flex-1 items-center justify-center overflow-hidden ">
+          <ShowMessage />
+        <div className="flex items-center gap-2 overflow-hidden">
+          <span className="truncate font-bold md:text-lg" style={{color: "#F7F7F7"}}>
+            {title}
+          </span>
+        </div>
+        <UsuariosOnline />
 
-      {/* Iconos de Notificación: Se ven a partir de 'sm' (tablets/móviles grandes) */}
-      <Col style={STYLES.iconsCol}>
-        <Space size="small">
-          <Badge
-            size="small"
-            count={1}
-            overflowCount={9}
-            styles={{ indicator: { borderRadius: "4px", padding: "0 2px" } }}
-          >
-            <MessageOutlined
-              style={{
-                fontSize: screens.md ? "18px" : "14px",
-                color: "black",
-                cursor: "pointer",
-              }}
-            />
-          </Badge>
-          <Badge
-            size="small"
-            count={12}
-            overflowCount={9}
-            styles={{ indicator: { borderRadius: "4px", padding: "0 2px" } }}
-          >
-            <BellOutlined
-              style={{
-                fontSize: screens.md ? "18px" : "14px",
-                color: "black",
-                cursor: "pointer",
-              }}
-            />
-          </Badge>
-        </Space>
-      </Col>
+      </div>
 
-      {/* Avatar / Dropdown */}
-      <Col xs={3} sm={3} md={2} lg={1} style={STYLES.avatarCol}>
-        {isLoading ? (
-          <Skeleton.Avatar active />
-        ) : (
-          <CustomDropdown
-            placement="bottomLeft"
-            triggerElement={<Avatar src={avatarSrc} size={42} />}
-            items={cascadingMenuItems}
-          />
+      {/* SECCIÓN DERECHA: Iconos y Perfil */}
+      <Flex align="center" gap={screens.md ? 16 : 8} className="shrink-0">
+        {/* Iconos: Se ocultan en XS para no apretar el header */}
+        {screens.sm && (
+          <Space size={screens.md ? "middle" : "small"}>
+            <Badge size="small" count={1} overflowCount={9}>
+              <MessageOutlined className="cursor-pointer text-lg" style={{color: "#F7F7F7"}}/>
+            </Badge>
+            <Badge size="small" count={12} overflowCount={9}>
+              <BellOutlined className="cursor-pointer text-lg" style={{color: "#F7F7F7"}}/>
+            </Badge>
+          </Space>
         )}
-      </Col>
-    </Row>
+
+        {/* Avatar Container */}
+        <div className="flex h-12 items-center justify-center rounded-l-md bg-[#00695C] px-3 transition-all hover:bg-[#004D40]">
+          {isLoading ? (
+            <Skeleton.Avatar active size="small" />
+          ) : (
+            <CustomDropdown
+              placement="bottomRight"
+              triggerElement={
+                <Avatar
+                  src={avatarSrc}
+                  size={screens.md ? 36 : 32}
+                  className="cursor-pointer border-2 border-white/20"
+                />
+              }
+              items={cascadingMenuItems}
+            />
+          )}
+        </div>
+      </Flex>
+    </nav>
   );
 }

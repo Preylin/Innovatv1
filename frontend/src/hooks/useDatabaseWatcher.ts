@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getToken } from "../api/token";
 import { API_URL } from "../api/client";
-import { notification } from "antd";
 
 export function useDatabaseWatcher() {
   const queryClient = useQueryClient();
@@ -12,6 +11,7 @@ export function useDatabaseWatcher() {
   );
 
   useEffect(() => {
+    
     let isComponentMounted = true; // Control para evitar reconexiones en componentes desmontados
 
     const connect = () => {
@@ -33,17 +33,24 @@ export function useDatabaseWatcher() {
 
       socket.onmessage = (event) => {
         if (event.data === "invalidate_all") {
-          notification.info({
-            message: "Se han sincronizado cambios recientes.",
-            placement: "bottomRight",
-            duration: 2,
-            showProgress: true,
-            pauseOnHover: true,
-            
+          // 1. Seteamos un estado de "sincronizando" en el cache
+          queryClient.setQueryData(["sync-status"], {
+            isSyncing: true,
+            lastUpdate: Date.now(),
           });
+          queryClient.refetchQueries({ queryKey: ["usuarios-online"] });
+          
           queryClient.invalidateQueries({
             predicate: (query) => query.state.status === "success",
           });
+
+          // 2. Después de 2 segundos, lo volvemos a false
+          setTimeout(() => {
+            queryClient.setQueryData(["sync-status"], {
+              isSyncing: false,
+              lastUpdate: Date.now(),
+            });
+          }, 2000);
         }
       };
 

@@ -86,7 +86,8 @@ function MainLayout(props: MainLayoutProps) {
           alignItems: "center",
         }}
       >
-        <Flex style={{width: '100%', height: '48px', background: '#CCCCCC'}}>
+        
+        <Flex style={{width: '100%', height: '48px'}}>
           {props.header}
         </Flex>
       </Header>
@@ -99,7 +100,6 @@ function MainLayout(props: MainLayoutProps) {
           <Content
             style={{
               margin: 0,
-              padding: 4,
               overflowY: "auto",
               background: colorBgContainer,
               borderRadius: borderRadiusLG,

@@ -2,6 +2,7 @@ import base64
 import binascii
 import logging
 from typing import List, Optional, Union
+from app.core.realtime import redis_client
 
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlalchemy import delete, select
@@ -169,3 +170,43 @@ async def eliminar_usuario(usuario_id: int, session: AsyncSession = Depends(get_
         await session.rollback()
         logger.exception(f"Error eliminando usuario {usuario_id}")
         raise HTTPException(status_code=500, detail="Error interno al eliminar")
+
+@router.get("/online", response_model=List[UsuarioOut])
+async def obtener_usuarios_online(
+    session: AsyncSession = Depends(get_session)
+):
+    cursor = 0
+    online_ids = set() # Usar un set evita IDs duplicados si el SCAN repite alguno
+
+    try:
+        while True:
+            # El count=100 le dice a Redis que devuelva aproximadamente 100 llaves por paso
+            cursor, keys = await redis_client.scan(cursor, match="user:online:*", count=100)
+            for k in keys:
+                # Si redis_client no tiene decode_responses=True, k será bytes
+                key_str = k.decode("utf-8") if isinstance(k, bytes) else k
+                try:
+                    user_id = int(key_str.split(":")[-1])
+                    online_ids.add(user_id)
+                except (ValueError, IndexError):
+                    continue
+            
+            if cursor == 0:
+                break
+
+        if not online_ids:
+            return []
+
+        # Consulta a la DB
+        stmt = (
+            select(Usuario)
+            .where(Usuario.id.in_(list(online_ids)))
+            .options(selectinload(Usuario.permisos))
+            .order_by(Usuario.name) # Opcional: ordenar alfabéticamente
+        )
+        result = await session.execute(stmt)
+        return result.scalars().all()
+
+    except Exception as e:
+        logger.error(f"Error al obtener usuarios online: {e}")
+        return []

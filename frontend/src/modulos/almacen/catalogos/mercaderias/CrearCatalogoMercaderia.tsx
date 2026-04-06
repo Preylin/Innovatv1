@@ -17,7 +17,7 @@ const CatalogoMercaderiaCreateUISchema = z.object({
   modelo: z.string().min(1, "El modelo es requerido"),
   medida: z.string().min(1, "La medida es requerida"),
   categoria: z.string().min(1, "La categoría es requerida"),
-  plimit: z.number().min(1, "Límite 1 es requerido"),
+  plimit: z.number().min(0, "Límite 0 es requerido"),
   dimension: z.string(),
   descripcion: z.string(),
   imagen: z
@@ -104,7 +104,7 @@ function CatalogoMercaderiaCreate({
       modelo: "",
       medida: "",
       categoria: "",
-      plimit: undefined as number | undefined,
+      plimit: 1,
       descripcion: "",
       dimension: "",
       imagen: [] as { image_byte: string }[],
@@ -122,7 +122,7 @@ function CatalogoMercaderiaCreate({
           modelo: value.modelo.trim(),
           medida: value.medida.trim(),
           categoria: value.categoria,
-          plimit: value.plimit ?? 1,
+          plimit: value.plimit,
           dimension: value.dimension.trim() || null,
           descripcion: value.descripcion.trim() || null,
           imagen1: value.imagen[0]?.image_byte ?? null,
@@ -281,7 +281,7 @@ function CatalogoMercaderiaCreate({
                     <InputNumber
                       {...props}
                       placeholder="Cantidad mínima en stock"
-                      min={1}
+                      min={0}
                       style={{width: '100%'}}
                     />
                   )}

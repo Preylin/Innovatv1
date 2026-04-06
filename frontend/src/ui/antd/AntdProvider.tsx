@@ -16,8 +16,8 @@ export const AntdProvider: FC<AntdProviderProps> = ({ children, dark = false}) =
       theme={{
         algorithm: dark ? darkAlgorithm : defaultAlgorithm,
         token: {
-          colorPrimary: "#00695C",
-          borderRadius: 4,
+          colorPrimary: "#335C67",
+          borderRadius: 5,
           fontSize: 14,
           fontFamily: "Roboto, sans-serif",
           colorBgContainer: dark ? "#1A1919" : "#F7F7F7", // color de fondo de layout
@@ -28,9 +28,6 @@ export const AntdProvider: FC<AntdProviderProps> = ({ children, dark = false}) =
           Card: {
             colorBorderSecondary: dark ? "#393939" : "#B0B0B0",
             colorBgContainer: dark ? "#2B2B2B" : "#FCFCFC",
-          },
-          Table: {
-            headerBg: dark ? "#333333" : "#E5E7D0",
           },
 
         }

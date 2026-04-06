@@ -86,24 +86,32 @@ function CatalogoMaterialUpdate({
 
   const optionstipo = [
     {
-      value: "CABLES",
-      label: "Cables",
+      value: "CANALETAS Y ACCESORIOS",
+      label: "Canaletas y accesorios",
     },
     {
       value: "TUBERIAS",
       label: "Tuberías",
     },
     {
-      value: "TABLEROS",
-      label: "Tableros",
+      value: "CAJAS DE PASE Y SALIDA",
+      label: "Cajas de pase y salida",
     },
     {
-      value: "BATERIAS",
-      label: "Baterías",
+      value: "CABLES",
+      label: "Cables",
     },
     {
-      value: "PERNOS",
-      label: "Pernos",
+      value: "CABLEADO ESTRUCTURADO",
+      label: "Cableado estructurado",
+    },
+    {
+      value: "CONECTIVIDAD",
+      label: "Conectividad",
+    },
+    {
+      value: "CONSUMIBLES",
+      label: "Consumibles",
     },
   ];
 

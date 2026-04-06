@@ -132,10 +132,9 @@ function TablaConsultasWProChips() {
         title: "Cliente",
         dataIndex: "name",
         width: 100,
-        ellipsis: true,
         ...getColumnSearchProps("name"),
         render: (text) => (
-          <Text style={{ fontSize: "11px" }}>
+          <Text ellipsis={{ tooltip: true }} style={{ fontSize: "11px" }}>
             {renderHighlightedText(text, "name")}
           </Text>
         ),
@@ -143,11 +142,10 @@ function TablaConsultasWProChips() {
       {
         title: "Ubicación",
         dataIndex: "ubicacion",
-        ellipsis: true,
         width: 120,
         ...getColumnSearchProps("ubicacion"),
         render: (text) => (
-          <Text style={{ fontSize: "11px" }}>
+          <Text ellipsis={{ tooltip: true }} style={{ fontSize: "11px" }}>
             {renderHighlightedText(text, "ubicacion")}
           </Text>
         ),

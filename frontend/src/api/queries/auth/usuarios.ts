@@ -101,3 +101,14 @@ export function useDeleteUsuario() {
     },
   });
 }
+
+
+export function useUsuariosListOnline() {
+  return useQuery({
+    queryKey: ["usuarios-online"],
+    queryFn: createQuery({
+      request: () => api.get("/usuarios/online"),
+      schema: UsuarioOutSchema.array(),
+    }),
+  });
+}

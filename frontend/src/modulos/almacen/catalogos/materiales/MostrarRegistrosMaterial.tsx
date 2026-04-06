@@ -165,7 +165,7 @@ function MostrarRegistrosMateriales() {
   }, [itemsPerRow, rowVirtualizer]);
 
   if (isLoading) return <Skeleton active className="p-6" />;
-  if (isError) return <Alert type="error" message="Error al cargar datos" showIcon />;
+  if (isError) return <Alert type="error" title="Error al cargar datos" showIcon />;
 
   return (
     <div

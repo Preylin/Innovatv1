@@ -171,10 +171,9 @@ function TablaMostrarRegistrosChipServicio() {
         key: "name",
         ...getColumnSearchProps("name"),
         render: (text) => (
-          <Text style={{ fontSize: "12px" }}>{renderText(text, "name")}</Text>
+          <Text ellipsis={{ tooltip: true }} style={{ fontSize: "12px" }}>{renderText(text, "name")}</Text>
         ),
         width: 200,
-        ellipsis: true,
       },
       {
         title: "Ubicación",
@@ -182,10 +181,9 @@ function TablaMostrarRegistrosChipServicio() {
         key: "ubicacion",
         ...getColumnSearchProps("ubicacion"),
         render: (text) => (
-          <Text style={{ fontSize: "12px" }}>{renderText(text, "ubicacion")}</Text>
+          <Text ellipsis={{ tooltip: true }} style={{ fontSize: "12px" }}>{renderText(text, "ubicacion")}</Text>
         ),
         width: 250,
-        ellipsis: true,
       },
       {
         title: "Número",

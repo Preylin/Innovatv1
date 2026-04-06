@@ -13,7 +13,7 @@ import {
   type ColumnFiltersState,
   type FilterFn,
 } from "@tanstack/react-table";
-import { Empty, Card, Typography, Skeleton } from "antd";
+import { Empty, Card, Typography, Skeleton, Input, Select } from "antd";
 import { useHistorialVentasListaList } from "../../../api/queries/modulos/administracion/ventas/historialVentas.api";
 import type { HistorialVentasOutApiType } from "../../../api/queries/modulos/administracion/ventas/historialVentas.api.schema";
 import { useToggle } from "../../../hooks/Toggle";
@@ -315,29 +315,33 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 
   if (filterVariant === "select") {
     return (
-      <select
-        onChange={(e) => column.setFilterValue(e.target.value)}
+      <Select
+        onChange={(value) => column.setFilterValue(value)}
         value={columnFilterValue?.toString() || ""}
         className={inputStyle}
+        options={[
+          { value: "", label: "TODOS" },
+          ...sortedUniqueValues.map((value: any) => ({
+            value: value,
+            label: String(value).toUpperCase(),
+          })),
+        ]}
+        size="small"
       >
-        <option value="">TODOS</option>
-        {sortedUniqueValues.map((value: any) => (
-          <option value={value} key={value?.toString() ?? "null"}>
-            {String(value).toUpperCase()}
-          </option>
-        ))}
-      </select>
+      </Select>
     );
   }
 
   // Para números usamos texto para facilitar la escritura de decimales y el filtrado por "contains"
   return (
-    <input
+    <Input
       type="text"
       value={(columnFilterValue ?? "") as string}
       onChange={(e) => column.setFilterValue(e.target.value)}
-      placeholder="FILTRAR..."
       className={inputStyle}
+      allowClear
+      size="small"
+      placeholder="Buscar"
     />
   );
 }

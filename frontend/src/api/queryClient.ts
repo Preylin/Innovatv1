@@ -1,5 +1,7 @@
 // src/api/queryClient.ts
+
 import { QueryClient } from "@tanstack/react-query";
+
 /**
  * @description
  * Instancia del cliente de React Query con configuración por defecto para toda la aplicación.
@@ -12,22 +14,23 @@ import { QueryClient } from "@tanstack/react-query";
  * @property {boolean} defaultOptions.queries.refetchOnWindowFocus - Deshabilitado. Evita que se vuelvan a solicitar datos automáticamente cuando la ventana del navegador recupera el foco.
  * @property {boolean} defaultOptions.queries.refetchOnReconnect - Habilitado. Vuelve a solicitar datos automáticamente si se recupera la conexión de red.
  *@property {boolean} defaultOptions.queries.retryOnMount - Desabilitado. Por defecto no refetchear solo por montar (evita refetches innecesarios)
-
  * @property {object} defaultOptions.mutations - Opciones para las mutaciones (mutations).
  * @property {number} defaultOptions.mutations.retry - Deshabilitado. Las mutaciones fallidas no se reintentarán.
  */
+
 export const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-        staleTime: 3 * 60 * 1000,
-        gcTime: 30 * 60 * 1000,
-        retry: 1,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: true,
-        retryOnMount: false,
-        },
-        mutations: {
-        retry: 0,
-        },
+  defaultOptions: {
+    queries: {
+      staleTime: 3 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      retryOnMount: false,
     },
+
+    mutations: {
+      retry: 0,
+    },
+  },
 });

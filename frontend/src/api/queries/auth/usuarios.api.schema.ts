@@ -75,3 +75,24 @@ const PermisoOutSchema = z.object({
 });
 
 export type PermisoOutType = z.infer<typeof PermisoOutSchema>;
+
+const UsuariosOnlineSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  last_name: z.string(),
+  email: z.email(),
+  cargo: z.string(),
+  estado: z.enum(["activo", "bloqueado"]),
+  image_base64: z.string(),
+  permisos: z.array(
+    z.object({
+      name_module: z.string(),
+      id: z.number(),
+      usuario_id: z.number(),
+      created_at: z.iso.datetime(),
+    }),
+  ),
+  created_at: z.iso.datetime(),
+});
+
+export type UsuariosOnlineType = z.infer<typeof UsuariosOnlineSchema>;
