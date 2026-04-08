@@ -7,6 +7,8 @@ import CarrucelImagenes from "../../../../../components/molecules/carrucel/Caruc
 import { defaultImage } from "../../../../../assets/images";
 import getBase64WithPrefix from "../../../../../helpers/ImagesBase64";
 import InfiniteCarousel from "../../../../../components/molecules/carrucel/CarrucelInfinito";
+import { RiAlarmWarningFill } from "react-icons/ri";
+
 
 const { Title, Text } = Typography;
 
@@ -100,15 +102,15 @@ const ProductCard = memo(({ item }: { item: ServicioMcData }) => (
       <div style={{ flex: 1, minWidth: 0 }}>
         <Title
           level={5}
-          style={{ fontSize: "14px", margin: 0 }}
+          style={{ fontSize: "12px", margin: 0 }}
           ellipsis={{ rows: 2, tooltip: item.name }}
         >
           {item.name}
         </Title>
-        <Text type="secondary" className="block text-xs">
+        <Text type="secondary" className="block text-xs" style={{fontSize: "0.7rem"}}>
           Código: {item.codigo}
         </Text>
-        <Text strong className="block text-xs">
+        <Text strong className="block text-xs" style={{fontSize: "0.7rem"}}>
           Stock actual: {item.stock_actual}
         </Text>
         <div className="flex justify-between">
@@ -162,7 +164,7 @@ export function CarrucelProductos() {
       {dataSource.length === 0 ? (
         <Empty description="No hay registros" />
       ) : (
-        <InfiniteCarousel speed={30} gap={6} height="100%">
+        <InfiniteCarousel speed={100} gap={6} height="100%">
           {dataSource.map((item) => (
             <ProductCard key={item.codigo} item={item} />
           ))}
@@ -174,7 +176,10 @@ export function CarrucelProductos() {
 export function PanelCarucelProductosTerminarStock() {
   return (
     <div className="md:col-span-2 md:col-start-5 flex flex-col gap-4 overflow-hidden min-h-[600px]">
-      <h1 style={{ fontSize: "1.2rem" }}>Recordatorio</h1>
+      <div className="flex flex-row gap-4 justify-center items-center">
+        <RiAlarmWarningFill  style={{color:"red", fontSize: "1.3rem"}} className="animate-pulse"/>
+        <h1 style={{ fontSize: "1.2rem", fontWeight: "bold"}}>Recordatorio </h1>
+      </div>
       <div className="overflow-auto scroll-auto w-full">
         <CarrucelProductos />
       </div>

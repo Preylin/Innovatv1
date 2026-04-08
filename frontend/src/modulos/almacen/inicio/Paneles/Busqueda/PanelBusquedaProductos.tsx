@@ -72,6 +72,7 @@ const BadgeStatus = memo(({ status, plimit }: { status: string, plimit: number})
         backgroundColor: config.color,
         fontSize: "10px",
         width: "100%",
+        color: "#4D4D4D",
       }}
     />
     </Tooltip>
@@ -104,8 +105,7 @@ function MercaderiaSearch() {
         stock_actual: item.stock_actual ?? 0,
         plimit: item.plimit ?? 0,
         status: Status({stock_actual: item.stock_actual, plimit: item.plimit})
-      }),
-    );
+      })).filter((item) => item.stock_actual > 0);
 
     if (!searchParams.value) return mapped;
     const term = searchParams.value.toLowerCase();
@@ -174,10 +174,10 @@ function MercaderiaSearch() {
                   </Title>
                   <div className="flex flex-row gap-2 justify-between">
                     <div className="flex gap-2">
-                  <Text className="block px-1 rounded-md" style={{fontSize:"0.7rem", background: "#E2928D", color: "#000", fontWeight: "bold"}}>
+                  <Text className="block px-1 rounded-md" style={{fontSize:"0.7rem", background: "#E2928D", color: "#4D4D4D", fontWeight: "bold"}}>
                     Código: {item.codigo}
                   </Text>
-                  <Text  className="block px-1 rounded-md" style={{fontSize:"0.7rem", background: "#F4CAAB", color: "#000", fontWeight: "bold"}}>
+                  <Text  className="block px-1 rounded-md" style={{fontSize:"0.7rem", background: "#F4CAAB", color: "#4D4D4D", fontWeight: "bold"}}>
                     En stock: {item.stock_actual}
                   </Text>
                   </div>
@@ -220,8 +220,7 @@ function MaterialSearch() {
         stock_actual: item.stock_actual ?? 0,
         plimit: item.plimit ?? 0,
         status: Status({stock_actual: item.stock_actual, plimit: item.plimit})
-      }),
-    );
+      })).filter((item) => item.stock_actual > 0);
 
     if (!searchParams.value) return mapped;
     const term = searchParams.value.toLowerCase();
@@ -289,10 +288,10 @@ function MaterialSearch() {
                   </Title>
                   <div className="flex flex-row gap-2 justify-between">
                     <div className="flex gap-2">
-                  <Text className="block px-1 rounded-md" style={{fontSize:"0.7rem", background: "#E2928D", color: "#000", fontWeight: "bold"}}>
+                  <Text className="block px-1 rounded-md" style={{fontSize:"0.7rem", background: "#E2928D", color: "#4D4D4D", fontWeight: "bold"}}>
                     Código: {item.codigo}
                   </Text>
-                  <Text  className="block px-1 rounded-md" style={{fontSize:"0.7rem", background: "#F4CAAB", color: "#000", fontWeight: "bold"}}>
+                  <Text  className="block px-1 rounded-md" style={{fontSize:"0.7rem", background: "#F4CAAB", color: "#4D4D4D", fontWeight: "bold"}}>
                     En stock: {item.stock_actual}
                   </Text>
                   </div>

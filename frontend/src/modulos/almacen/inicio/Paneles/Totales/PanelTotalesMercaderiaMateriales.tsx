@@ -54,7 +54,7 @@ function TotalesMercaderia() {
 
   return (
     <div className="grid grid-cols-1 gap-2">
-      <h1 className="flex items-center justify-center font-bold text-xl">MERCADERÍA</h1>
+      <h1 className="flex items-center justify-center font-bold text-xs md:text-lg">MERCADERÍA</h1>
       <div className="grid grid-cols-1 gap-3">
         <Card
         hoverable
@@ -63,7 +63,7 @@ function TotalesMercaderia() {
             title={<div className="font-bold">Soles</div>}
             value={solesMercaderia}
             precision={2}
-            styles={{ content: { color: "#3f8600" } }}
+            styles={{ content: { color: "#3f8600", fontSize: "1.2rem" } }}
             prefix={"S/."}
           />
         </Card>
@@ -75,7 +75,7 @@ function TotalesMercaderia() {
             title={<div className="font-bold">Dólares</div>}
             value={dolaresMercaderia}
             precision={2}
-            styles={{ content: { color: "#cf1322" } }}
+            styles={{ content: { color: "#cf1322", fontSize: "1.2rem"} }}
             prefix={"$"}
           />
         </Card>
@@ -125,7 +125,7 @@ function TotalesMaterial() {
 
   return (
     <div className="grid grid-cols-1 gap-2">
-      <h1 className="flex items-center justify-center font-bold text-xl">MATERIALES</h1>
+      <h1 className="flex items-center justify-center font-bold text-xs md:text-lg">MATERIALES</h1>
       <div className="grid grid-cols-1 gap-3">
         <Card
         hoverable
@@ -134,7 +134,7 @@ function TotalesMaterial() {
             title={<div className="font-bold">Soles</div>}
             value={solesMaterial}
             precision={2}
-            styles={{ content: { color: "#3f8600" } }}
+            styles={{ content: { color: "#3f8600", fontSize: "1.2rem" } }}
             prefix={"S/."}
           />
         </Card>
@@ -146,7 +146,7 @@ function TotalesMaterial() {
             title={<div className="font-bold">Dólares</div>}
             value={dolaresMaterial}
             precision={2}
-            styles={{ content: { color: "#cf1322" } }}
+            styles={{ content: { color: "#cf1322", fontSize: "1.2rem"} }}
             prefix={"$"}
           />
         </Card>
