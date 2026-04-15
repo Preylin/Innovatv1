@@ -101,7 +101,7 @@ function CatalogoMaterialesCreate(
       modelo: "",
       medida: "",
       tipo: "",
-      plimit: 1,
+      plimit: 0,
       descripcion: "",
       dimension: "",
       imagen: [] as { image_byte: string }[],

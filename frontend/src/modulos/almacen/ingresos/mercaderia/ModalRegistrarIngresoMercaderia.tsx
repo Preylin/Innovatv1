@@ -35,6 +35,7 @@ import { useCatalogoMercaderiaList } from "../../../../api/queries/modulos/almac
 import TextArea from "antd/es/input/TextArea";
 import { useProveedoresListaList } from "../../../../api/queries/modulos/administracion/lista/proveedores/proveedoresLista.api";
 import ModalCreateProveedoresLista from "../../../administracion/lista/proveedores/ModalListaCreateListaProv";
+import getBase64WithPrefix from "../../../../helpers/ImagesBase64";
 const { Text } = Typography;
 
 const ProductoSchema = z.object({
@@ -126,7 +127,7 @@ function ModalProducto({ open, onClose, onSave, initialValues }: ModalProps) {
       cantidad: 0,
       valor: 0,
       image: [] as { image_byte: string }[],
-      ubicacion: "",
+      ubicacion: "Almacén",
     },
     validators: { onSubmit: ProductoSchema },
     onSubmit: async ({ value }) => {
@@ -199,8 +200,19 @@ function ModalProducto({ open, onClose, onSave, initialValues }: ModalProps) {
                         const producSelect = dataMercaderia?.find(
                           (c) => c.name === stringVal,
                         );
-
                         if (producSelect) {
+                          field.form.setFieldValue(
+                            "image",
+                            producSelect.imagen1
+                              ? [
+                                  {
+                                    image_byte: getBase64WithPrefix(
+                                      producSelect.imagen1,
+                                    ),
+                                  },
+                                ]
+                              : [],
+                          );
                           field.form.setFieldValue(
                             "codigo",
                             producSelect.codigo || "",
@@ -390,6 +402,7 @@ function ModalProducto({ open, onClose, onSave, initialValues }: ModalProps) {
                     <TextArea
                       {...props}
                       placeholder="Ubicación de almacenaje"
+                      allowClear
                     />
                   )}
                 </FieldWrapper>
@@ -498,7 +511,6 @@ function ComponenteRegistrarProductosFinal({
           })),
         };
         await mutateAsync(payload);
-        // console.log(payload);
         message.success("Registro exitoso");
         formApi.reset();
         itemModal.setOff();

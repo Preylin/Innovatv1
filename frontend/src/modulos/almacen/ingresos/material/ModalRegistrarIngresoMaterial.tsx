@@ -35,6 +35,7 @@ import { useCatalogoMaterialList } from "../../../../api/queries/modulos/almacen
 import TextArea from "antd/es/input/TextArea";
 import { useProveedoresListaList } from "../../../../api/queries/modulos/administracion/lista/proveedores/proveedoresLista.api";
 import ModalCreateProveedoresLista from "../../../administracion/lista/proveedores/ModalListaCreateListaProv";
+import getBase64WithPrefix from "../../../../helpers/ImagesBase64";
 const { Text } = Typography;
 
 const ProductoSchema = z.object({
@@ -131,7 +132,7 @@ function ModalProductoMaterial({
       cantidad: 0,
       valor: 0,
       image: [] as { image_byte: string }[],
-      ubicacion: "",
+      ubicacion: "Almacén",
     },
     validators: { onSubmit: ProductoSchema },
     onSubmit: async ({ value }) => {
@@ -207,6 +208,19 @@ function ModalProductoMaterial({
 
                         if (producSelect) {
                           field.form.setFieldValue(
+                            "image",
+                            producSelect.imagen1
+                              ? [
+                                  {
+                                    image_byte: getBase64WithPrefix(
+                                      producSelect.imagen1,
+                                    ),
+                                  },
+                                ]
+                              : [],
+                          );
+
+                          field.form.setFieldValue(
                             "codigo",
                             producSelect.codigo || "",
                           );
@@ -229,6 +243,10 @@ function ModalProductoMaterial({
                           field.form.setFieldValue(
                             "tipo",
                             producSelect.tipo || "",
+                          );
+                          field.form.setFieldValue(
+                            "serie",
+                            producSelect.codigo || "",
                           );
                         }
                       }}
@@ -534,7 +552,10 @@ function ModalRegistrarIngresoMaterial({
       width={"90%"}
       maskClosable={false}
     >
-      <ModalCreateProveedoresLista open={ModalProveedor.isToggled} onClose={() => ModalProveedor.setOff()}/>
+      <ModalCreateProveedoresLista
+        open={ModalProveedor.isToggled}
+        onClose={() => ModalProveedor.setOff()}
+      />
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -650,7 +671,10 @@ function ModalRegistrarIngresoMaterial({
                         <>
                           {menu}
                           <Flex wrap justify="end" align="center">
-                            <Button type="primary" onClick={() => ModalProveedor.toggle()}>
+                            <Button
+                              type="primary"
+                              onClick={() => ModalProveedor.toggle()}
+                            >
                               Nuevo Proveedor
                             </Button>
                           </Flex>

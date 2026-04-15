@@ -104,7 +104,7 @@ function CatalogoMercaderiaCreate({
       modelo: "",
       medida: "",
       categoria: "",
-      plimit: 1,
+      plimit: 0,
       descripcion: "",
       dimension: "",
       imagen: [] as { image_byte: string }[],
