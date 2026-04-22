@@ -1,5 +1,16 @@
 import z from "zod";
 
+
+const ItemsSeries = z.object({
+  codigo: z.string(),
+  image: z
+    .array(
+      z.object({
+        image_byte: z.string()
+      }),
+    )
+});
+
 const ProductoSchema = z.object({
   uuid_mercaderia: z.string(),
   codigo: z.string(),
@@ -9,14 +20,9 @@ const ProductoSchema = z.object({
   medida: z.string(),
   dimension: z.string(),
   categoria: z.string(),
-  serie: z.string(),
+  serie: z.array(ItemsSeries),
   cantidad: z.number(),
   valor: z.number(),
-  image: z.array(
-    z.object({
-      image_byte: z.string(),
-    }),
-  ),
   ubicacion: z.string(),
 });
 

@@ -222,7 +222,7 @@ export function HistorialVentasTable() {
     <div className="flex flex-col gap-2">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-bold">Historial de Ventas 2018 - 2025</h2>
+          <h2 className="text-xl font-bold dark:text-white">Historial de Ventas 2018 - 2025</h2>
           <p className="text-[10px] text-gray-400 font-medium uppercase">Total: {dataSource.length}</p>
         </div>
         <div className="flex gap-2">
@@ -232,7 +232,7 @@ export function HistorialVentasTable() {
       </div>
 
       <div className="overflow-x-auto rounded-lg border shadow-sm">
-        <table className="w-full border-collapse text-sm table-fixed min-w-[1100px]">
+        <table className="w-full border-collapse text-sm table-fixed min-w-275">
           <thead className="bg-gray-50 text-gray-900 uppercase text-[10px]">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>

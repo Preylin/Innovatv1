@@ -11,13 +11,16 @@ interface FormUploadImageProps {
   maxFiles?: number;
   maxSizeMB?: number; // Nueva prop
   allowedTypes?: string[]; // Nueva prop (ej: ['image/jpeg', 'image/png'])
+  style?: React.CSSProperties;
+
 }
 
 const FormUploadImage: FC<FormUploadImageProps> = ({ 
   field, 
   maxFiles = 1, 
   maxSizeMB = 20, // Por defecto 20MB
-  allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+  allowedTypes = ['image/jpeg', 'image/png', 'image/webp'],
+  style={fontSize: '12px'}
 }) => {
   const { message } = App.useApp();
 
@@ -92,7 +95,7 @@ const FormUploadImage: FC<FormUploadImageProps> = ({
         beforeUpload={beforeUpload} // Validación aquí
         onChange={onChange}
         accept={allowedTypes.join(',')} // Filtra archivos en el selector del sistema
-        style={{fontSize: '12px'}}
+        style={style}
       >
         {fileList.length < maxFiles && '+ Subir imagen'}
       </Upload>

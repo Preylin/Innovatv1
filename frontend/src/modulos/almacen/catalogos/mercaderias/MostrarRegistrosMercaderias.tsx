@@ -169,7 +169,7 @@ function MostrarRegistrosMercaderias() {
       {/* Header Sticky */}
       <div className="sticky top-0 z-20 backdrop-blur-md pt-2 mb-4">
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b">
-          <div className="flex-1 min-w-[300px]">
+          <div className="flex-1 min-w-75">
             <SearchBar options={SEARCH_OPTIONS} onSearch={handleSearch} defaultField="name" />
           </div>
           <ButtomNew name="Nuevo registro" onClick={() => createModal.toggle()} />

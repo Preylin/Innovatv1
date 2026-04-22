@@ -282,7 +282,7 @@ export function HistorialComprasTable() {
     <div className="flex flex-col gap-2">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-bold">Historial de Compras 2023 - 2025</h2>
+          <h2 className="text-xl font-bold dark:text-white">Historial de Compras 2023 - 2025</h2>
           <p className="text-[10px] text-gray-400 font-medium uppercase">
             Total: {dataSource.length}
           </p>
@@ -297,7 +297,7 @@ export function HistorialComprasTable() {
       </div>
 
       <div className="overflow-x-auto rounded-lg border shadow-sm">
-        <table className="w-full border-collapse text-sm table-fixed min-w-[1100px]">
+        <table className="w-full border-collapse text-sm table-fixed min-w-275">
           <thead className="bg-gray-50 text-gray-900 uppercase text-[10px]">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>

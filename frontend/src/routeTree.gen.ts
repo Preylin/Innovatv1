@@ -39,6 +39,9 @@ const AlmacenStockLazyRouteImport = createFileRoute('/almacen/stock')()
 const AlmacenSalidasLazyRouteImport = createFileRoute('/almacen/salidas')()
 const AlmacenIngresosLazyRouteImport = createFileRoute('/almacen/ingresos')()
 const AlmacenCatalogosLazyRouteImport = createFileRoute('/almacen/catalogos')()
+const AdministracionActivosLazyRouteImport = createFileRoute(
+  '/administracion/activos',
+)()
 const GerenciaCotizacionesIndexLazyRouteImport = createFileRoute(
   '/gerencia/cotizaciones/',
 )()
@@ -226,6 +229,14 @@ const AlmacenCatalogosLazyRoute = AlmacenCatalogosLazyRouteImport.update({
 } as any).lazy(() =>
   import('./routes/almacen/catalogos.lazy').then((d) => d.Route),
 )
+const AdministracionActivosLazyRoute =
+  AdministracionActivosLazyRouteImport.update({
+    id: '/activos',
+    path: '/activos',
+    getParentRoute: () => AdministracionRoute,
+  } as any).lazy(() =>
+    import('./routes/administracion/activos.lazy').then((d) => d.Route),
+  )
 const GerenciaCotizacionesIndexLazyRoute =
   GerenciaCotizacionesIndexLazyRouteImport.update({
     id: '/',
@@ -359,6 +370,7 @@ export interface FileRoutesByFullPath {
   '/gerencia': typeof GerenciaRouteWithChildren
   '/produccion': typeof ProduccionRouteWithChildren
   '/tesoreria': typeof TesoreriaRouteWithChildren
+  '/administracion/activos': typeof AdministracionActivosLazyRoute
   '/almacen/catalogos': typeof AlmacenCatalogosLazyRoute
   '/almacen/ingresos': typeof AlmacenIngresosLazyRoute
   '/almacen/salidas': typeof AlmacenSalidasLazyRoute
@@ -392,6 +404,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexLazyRoute
+  '/administracion/activos': typeof AdministracionActivosLazyRoute
   '/almacen/catalogos': typeof AlmacenCatalogosLazyRoute
   '/almacen/ingresos': typeof AlmacenIngresosLazyRoute
   '/almacen/salidas': typeof AlmacenSalidasLazyRoute
@@ -431,6 +444,7 @@ export interface FileRoutesById {
   '/gerencia': typeof GerenciaRouteWithChildren
   '/produccion': typeof ProduccionRouteWithChildren
   '/tesoreria': typeof TesoreriaRouteWithChildren
+  '/administracion/activos': typeof AdministracionActivosLazyRoute
   '/almacen/catalogos': typeof AlmacenCatalogosLazyRoute
   '/almacen/ingresos': typeof AlmacenIngresosLazyRoute
   '/almacen/salidas': typeof AlmacenSalidasLazyRoute
@@ -472,6 +486,7 @@ export interface FileRouteTypes {
     | '/gerencia'
     | '/produccion'
     | '/tesoreria'
+    | '/administracion/activos'
     | '/almacen/catalogos'
     | '/almacen/ingresos'
     | '/almacen/salidas'
@@ -505,6 +520,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/administracion/activos'
     | '/almacen/catalogos'
     | '/almacen/ingresos'
     | '/almacen/salidas'
@@ -543,6 +559,7 @@ export interface FileRouteTypes {
     | '/gerencia'
     | '/produccion'
     | '/tesoreria'
+    | '/administracion/activos'
     | '/almacen/catalogos'
     | '/almacen/ingresos'
     | '/almacen/salidas'
@@ -748,6 +765,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AlmacenCatalogosLazyRouteImport
       parentRoute: typeof AlmacenRoute
     }
+    '/administracion/activos': {
+      id: '/administracion/activos'
+      path: '/activos'
+      fullPath: '/administracion/activos'
+      preLoaderRoute: typeof AdministracionActivosLazyRouteImport
+      parentRoute: typeof AdministracionRoute
+    }
     '/gerencia/cotizaciones/': {
       id: '/gerencia/cotizaciones/'
       path: '/'
@@ -850,6 +874,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdministracionRouteChildren {
+  AdministracionActivosLazyRoute: typeof AdministracionActivosLazyRoute
   AdministracionIndexLazyRoute: typeof AdministracionIndexLazyRoute
   AdministracionHistorialComprasLazyRoute: typeof AdministracionHistorialComprasLazyRoute
   AdministracionHistorialIndezLazyRoute: typeof AdministracionHistorialIndezLazyRoute
@@ -866,6 +891,7 @@ interface AdministracionRouteChildren {
 }
 
 const AdministracionRouteChildren: AdministracionRouteChildren = {
+  AdministracionActivosLazyRoute: AdministracionActivosLazyRoute,
   AdministracionIndexLazyRoute: AdministracionIndexLazyRoute,
   AdministracionHistorialComprasLazyRoute:
     AdministracionHistorialComprasLazyRoute,

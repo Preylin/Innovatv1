@@ -1,4 +1,4 @@
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import {
   App,
   Button,
@@ -6,6 +6,7 @@ import {
   DatePicker,
   Divider,
   Flex,
+  Form,
   Image,
   Input,
   InputNumber,
@@ -16,15 +17,13 @@ import {
   Typography,
 } from "antd";
 import dayjs from "dayjs";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import z from "zod";
 import ButtonUpdate from "../../../../components/molecules/botons/BottonUpdate";
 import ButtonDelete from "../../../../components/molecules/botons/BottonDelete";
-import FormUploadImage from "../../../../components/molecules/upload/UploadImage";
 import { FieldWrapper } from "../../../../helpers/FieldWrapperForm";
 import InputSearch from "../../../../components/molecules/input/InputSearch";
 import { useToggle } from "../../../../hooks/Toggle";
-import CatalogoMercaderiaCreate from "../../catalogos/mercaderias/CrearCatalogoMercaderia";
 import FormSelectCreatable from "../../../../components/molecules/select/SelectAddItem";
 import type { RegistrarIngresoMercaderiaCreateApiType } from "../../../../api/queries/modulos/almacen/ingresos/mercaderia.api.schema";
 import { useCreateIngresoMercaderia } from "../../../../api/queries/modulos/almacen/ingresos/mercaderia.api";
@@ -32,24 +31,15 @@ import { ApiError } from "../../../../api/normalizeError";
 import { setFormErrors } from "../../../../helpers/formHelpers";
 import { v4 as uuidv4 } from "uuid";
 import { useCatalogoMercaderiaList } from "../../../../api/queries/modulos/almacen/catalogos/mercaderias/mercaderia.api";
-import TextArea from "antd/es/input/TextArea";
 import { useProveedoresListaList } from "../../../../api/queries/modulos/administracion/lista/proveedores/proveedoresLista.api";
 import ModalCreateProveedoresLista from "../../../administracion/lista/proveedores/ModalListaCreateListaProv";
 import getBase64WithPrefix from "../../../../helpers/ImagesBase64";
+import { SerieItem } from "../../../../components/molecules/upload/arrayCompuestoImagen";
+
 const { Text } = Typography;
 
-const ProductoSchema = z.object({
-  uuid_mercaderia: z.string(),
+const ItemsSeries = z.object({
   codigo: z.string().min(3, "Requerido"),
-  name: z.string().min(3, "Requerido"),
-  marca: z.string().min(3, "Requerido"),
-  modelo: z.string().min(3, "Requerido"),
-  medida: z.string().min(3, "Requerido"),
-  dimension: z.string().min(3, "Requerido"),
-  categoria: z.string().min(3, "Requerido"),
-  serie: z.string().min(3, "Requerido"),
-  cantidad: z.number().min(0, "Requerido"),
-  valor: z.number().min(0, "Requerido"),
   image: z
     .array(
       z.object({
@@ -59,6 +49,25 @@ const ProductoSchema = z.object({
       }),
     )
     .min(1, "Requerido"),
+});
+
+const ProductoSchema = z.object({
+  uuid_mercaderia: z.string(),
+  codigo: z.string().min(3, "Requerido"),
+  name: z.string().min(3, "Requerido"),
+  marca: z.string().min(2, "Requerido"),
+  modelo: z.string().min(2, "Requerido"),
+  medida: z.string().min(2, "Requerido"),
+  dimension: z.string().min(3, "Requerido"),
+  categoria: z.string().min(3, "Requerido"),
+  serie: z.array(ItemsSeries).min(1, "Requerido"),
+  cantidad: z.number().min(0, "Requerido"),
+  valor: z.number().min(0, "Requerido"),
+  image: z.array(
+    z.object({
+      image_byte: z.string(),
+    }),
+  ),
   ubicacion: z.string().min(3, "Requerido"),
 });
 
@@ -91,27 +100,34 @@ interface ModalProps {
   initialValues?: ProductoType | null; // Null para creación
 }
 
-function ModalProducto({ open, onClose, onSave, initialValues }: ModalProps) {
-  const createMercaderia = useToggle();
+// Función helper para convertir base64 a Blob
+const dataURLtoBlob = (dataurl: string) => {
+  const arr = dataurl.split(",");
+  const mime = arr[0].match(/:(.*?);/)?.[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new Blob([u8arr], { type: mime });
+};
 
+export function ModalProducto({
+  open,
+  onClose,
+  onSave,
+  initialValues,
+}: ModalProps) {
+  const createMercaderia = useToggle();
   const { data: dataMercaderia } = useCatalogoMercaderiaList();
 
-  const mercaderias = useMemo(() => {
-    return (
-      dataMercaderia?.map((cat) => ({
-        value: cat.name,
-        label: cat.name,
-      })) ?? []
-    );
-  }, [dataMercaderia]);
-
-  const optionsdimension = [
-    {
-      value: "...",
-      label: "Agregar otra dimensión",
-      disabled: true,
-    },
-  ];
+  const mercaderias = useMemo(
+    () =>
+      dataMercaderia?.map((cat) => ({ value: cat.name, label: cat.name })) ??
+      [],
+    [dataMercaderia],
+  );
 
   const form = useForm({
     defaultValues: initialValues || {
@@ -123,7 +139,7 @@ function ModalProducto({ open, onClose, onSave, initialValues }: ModalProps) {
       medida: "",
       dimension: "",
       categoria: "",
-      serie: "",
+      serie: [] as any[],
       cantidad: 0,
       valor: 0,
       image: [] as { image_byte: string }[],
@@ -133,303 +149,285 @@ function ModalProducto({ open, onClose, onSave, initialValues }: ModalProps) {
     onSubmit: async ({ value }) => {
       onSave(value);
       form.reset();
+      onClose();
     },
   });
 
+  // 1. Obtenemos el valor de cantidad suscribiéndonos solo a ese campo
+  const cantidadActual = useStore(form.store, (state) => state.values.cantidad); // 2. Efecto para ajustar el array de series
+  useEffect(() => {
+    const currentSeries = form.getFieldValue("serie") || [];
+    const targetCount = Number(cantidadActual) || 0;
+
+    if (currentSeries.length === targetCount) return;
+
+    if (currentSeries.length < targetCount) {
+      const diff = targetCount - currentSeries.length;
+      for (let i = 0; i < diff; i++) {
+        form.pushFieldValue("serie", { codigo: "", image: [] });
+      }
+    } else {
+      const diff = currentSeries.length - targetCount;
+      for (let i = 0; i < diff; i++) {
+        // Eliminamos desde el final
+        form.removeFieldValue("serie", form.getFieldValue("serie").length - 1);
+      }
+    }
+  }, [cantidadActual, form]);
+
   return (
     <Modal
-      title={initialValues ? "Editar Mercadería" : "Nueva Mercadería"}
+      title={
+        <span className="text-xl font-bold text-gray-800 dark:text-mist-300">
+          {initialValues ? "📦 Editar" : "📦 Nueva Mercadería"}
+        </span>
+      }
       open={open}
-      onOk={onClose}
       onCancel={onClose}
       footer={null}
-      destroyOnHidden
-      forceRender
-      width={{ xs: "90%", sm: "80%", lg: "50%" }}
+      width={1100}
+      centered
+      keyboard={false}
       maskClosable={false}
+      destroyOnHidden
     >
-      <CatalogoMercaderiaCreate
-        open={createMercaderia.isToggled}
-        onClose={() => createMercaderia.setOff()}
-      />
       <form
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
           form.handleSubmit();
         }}
+        className="mt-4"
       >
-        <Row>
-          <Col span={24}>
-            <form.Field name="image">
-              {(field) => (
-                <Flex justify="center" align="center">
-                  <FieldWrapper field={field}>
-                    {(props) => (
-                      <Flex justify="center" align="center">
-                        <FormUploadImage
-                          {...props}
-                          field={field}
-                          maxFiles={1}
-                        />
-                      </Flex>
-                    )}
-                  </FieldWrapper>
-                </Flex>
-              )}
-            </form.Field>
-          </Col>
-        </Row>
-        <Row gutter={6}>
-          <Col xs={24} md={12}>
-            <form.Field name="name">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <InputSearch
-                      {...props}
-                      handleOpen={createMercaderia.toggle}
-                      ButtonName="Crear Mercadería"
-                      placeholder="Descripción del producto"
-                      options={mercaderias}
-                      onChange={(val) => {
-                        const stringVal = val ? String(val) : "";
-
-                        field.handleChange(stringVal);
-
-                        const producSelect = dataMercaderia?.find(
-                          (c) => c.name === stringVal,
-                        );
-                        if (producSelect) {
-                          field.form.setFieldValue(
-                            "image",
-                            producSelect.imagen1
-                              ? [
-                                  {
-                                    image_byte: getBase64WithPrefix(
-                                      producSelect.imagen1,
-                                    ),
-                                  },
-                                ]
-                              : [],
+        <div className="flex flex-col lg:flex-row gap-2">
+          {/* COLUMNA IZQUIERDA: DATOS GENERALES */}
+          <div className="w-full lg:w-2/3 space-y-2 bg-mist-100 p-4 rounded-xl border border-gray-200">
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <form.Field name="name">
+                  {(field) => (
+                    <Form.Item
+                      label={
+                        <span className="font-semibold dark:text-mist-900">
+                          Producto / Mercadería
+                        </span>
+                      }
+                      layout="vertical"
+                    >
+                      <InputSearch
+                        value={field.state.value}
+                        handleOpen={createMercaderia.toggle}
+                        ButtonName="Crear Nueva"
+                        placeholder="Buscar en catálogo..."
+                        options={mercaderias}
+                        onChange={(val) => {
+                          const stringVal = String(val || "");
+                          field.handleChange(stringVal);
+                          const select = dataMercaderia?.find(
+                            (c) => c.name === stringVal,
                           );
-                          field.form.setFieldValue(
-                            "codigo",
-                            producSelect.codigo || "",
-                          );
-                          field.form.setFieldValue(
-                            "marca",
-                            producSelect.marca || "",
-                          );
-                          field.form.setFieldValue(
-                            "modelo",
-                            producSelect.modelo || "",
-                          );
-                          field.form.setFieldValue(
-                            "medida",
-                            producSelect.medida || "",
-                          );
-                          field.form.setFieldValue(
-                            "dimension",
-                            producSelect.dimension || "",
-                          );
-                          field.form.setFieldValue(
-                            "categoria",
-                            producSelect.categoria || "",
-                          );
+                          if (select) {
+                            // Autocompletado masivo
+                            form.setFieldValue("codigo", select.codigo || "");
+                            form.setFieldValue("marca", select.marca || "");
+                            form.setFieldValue("modelo", select.modelo || "");
+                            form.setFieldValue("medida", select.medida || "");
+                            form.setFieldValue(
+                              "dimension",
+                              select.dimension || "",
+                            );
+                            form.setFieldValue(
+                              "categoria",
+                              select.categoria || "",
+                            );
+                            if (select.imagen1) {
+                              form.setFieldValue("image", [
+                                {
+                                  image_byte: getBase64WithPrefix(
+                                    select.imagen1,
+                                  ),
+                                },
+                              ]);
+                            }
+                          }
+                        }}
+                      />
+                    </Form.Item>
+                  )}
+                </form.Field>
+                <div className="grid grid-cols-3 gap-4">
+                  <form.Field name="cantidad">
+                    {(field) => (
+                      <Form.Item
+                        label={
+                          <span className="font-semibold dark:text-mist-900">
+                            Cantidad
+                          </span>
                         }
-                      }}
+                        layout="vertical"
+                      >
+                        <FieldWrapper field={field}>
+                          {(props) => (
+                            <InputNumber
+                              {...props}
+                              placeholder="Cantidad"
+                              type={"number"}
+                              min={0}
+                              maxLength={20}
+                              style={{ width: "100%" }}
+                            />
+                          )}
+                        </FieldWrapper>
+                      </Form.Item>
+                    )}
+                  </form.Field>
+
+                  <form.Field name="valor">
+                    {(field) => (
+                      <Form.Item label={
+                          <span className="font-semibold dark:text-mist-900">
+                            Valor
+                          </span>
+                        } layout="vertical">
+                        <FieldWrapper field={field}>
+                          {(props) => (
+                            <InputNumber
+                              {...props}
+                              placeholder="Valor unitario"
+                              type={"number"}
+                              min={0}
+                              maxLength={20}
+                              style={{ width: "100%" }}
+                            />
+                          )}
+                        </FieldWrapper>
+                      </Form.Item>
+                    )}
+                  </form.Field>
+                  <form.Field name="ubicacion">
+                    {(field) => (
+                      <Form.Item label={
+                          <span className="font-semibold dark:text-mist-900">
+                            Ubicación
+                          </span>
+                        } layout="vertical">
+                        <FieldWrapper field={field}>
+                          {(props) => (
+                            <Input
+                              {...props}
+                              placeholder="Ubicación del producto"
+                              allowClear
+                            />
+                          )}
+                        </FieldWrapper>
+                      </Form.Item>
+                    )}
+                  </form.Field>
+                </div>
+              </div>
+
+              {/* Imagen Principal Previsualización */}
+              <form.Field name="image">
+                {(field) => (
+                  <div className="mt-8">
+                    <Image
+                      className="rounded-lg shadow-sm border bg-white"
+                      width={110}
+                      height={110}
+                      src={field.state.value[0]?.image_byte}
+                      fallback="https://placehold.co/110x110?text=Sin+Imagen"
                     />
+                  </div>
+                )}
+              </form.Field>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              {/* Campos de solo lectura o informativos que vienen del catálogo */}
+              {[
+                { n: "codigo", l: "Código" },
+                { n: "medida", l: "Medida" },
+                { n: "dimension", l: "Dimensión" },
+                { n: "marca", l: "Marca" },
+                { n: "modelo", l: "Modelo" },
+                { n: "categoria", l: "Categoría" },
+              ].map((item) => (
+                <form.Field key={item.n} name={item.n as any}>
+                  {(field) => (
+                    <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+                      <p className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">
+                        {item.l}
+                      </p>
+                      <p className="text-gray-700 font-medium truncate">
+                        {field.state.value || "—"}
+                      </p>
+                    </div>
                   )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="codigo">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <Input
-                      {...props}
-                      placeholder="Código"
-                      allowClear
-                      maxLength={20}
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="marca">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <Input
-                      {...props}
-                      placeholder="Marca"
-                      allowClear
-                      maxLength={100}
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="modelo">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <Input
-                      {...props}
-                      placeholder="Modelo"
-                      allowClear
-                      maxLength={100}
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="medida">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <Input
-                      {...props}
-                      placeholder="Medida"
-                      allowClear
-                      maxLength={20}
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="dimension">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <FormSelectCreatable
-                      {...props}
-                      options={optionsdimension}
-                      placeholder="Dimensión"
-                      allowClear
-                      maxLength={100}
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="categoria">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <Input
-                      {...props}
-                      placeholder="Categoría"
-                      allowClear
-                      maxLength={100}
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="serie">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <Input
-                      {...props}
-                      placeholder="Serie o código único"
-                      allowClear
-                      maxLength={100}
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="cantidad">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <InputNumber
-                      {...props}
-                      placeholder="Cantidad"
-                      type={"number"}
-                      min={0}
-                      maxLength={20}
-                      style={{ width: "100%" }}
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="valor">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <InputNumber
-                      {...props}
-                      placeholder="Valor unitario"
-                      type={"number"}
-                      min={0}
-                      maxLength={20}
-                      style={{ width: "100%" }}
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col span={24}>
-            <form.Field name="ubicacion">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <TextArea
-                      {...props}
-                      placeholder="Ubicación de almacenaje"
-                      allowClear
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-        </Row>
-        <Flex justify="end" align="center">
-          <form.Subscribe
-            selector={(state) => [
-              state.isValid,
-              state.isDirty,
-              state.isSubmitting,
-            ]}
-          >
-            {([isValid, isDirty, isSubmitting]) => (
+                </form.Field>
+              ))}
+            </div>
+          </div>
+
+          {/* COLUMNA DERECHA: LISTA DE SERIES */}
+          <div className="w-full lg:w-1/3 flex flex-col bg-gray-50 p-2 rounded-xl border border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-gray-800 px-1">
+                Series Requeridas
+              </h3>
+              <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                {cantidadActual || 0} unidades
+              </span>
+            </div>
+
+            <div className="flex-1 overflow-auto scroll-auto max-h-70">
+              <form.Field name="serie" mode="array">
+                {(field) => (
+                  <>
+                    {field.state.value.map((_, i) => (
+                      <div
+                        key={i}
+                        className="flex flex-col gap-1 border-l-2 border-cyan-950 pl-1"
+                      >
+                        <span className="text-[10px] font-bold text-rose-950 uppercase">
+                          Serie #{i + 1}
+                        </span>
+                        <SerieItem index={i} form={form} />
+                      </div>
+                    ))}
+
+                    {(!cantidadActual || cantidadActual === 0) && (
+                      <div className="text-center py-20 text-gray-400 border-2 border-dashed rounded-xl">
+                        <p className="text-sm">
+                          Define una cantidad para
+                          <br />
+                          generar las series.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </form.Field>
+            </div>
+          </div>
+        </div>
+
+        <Divider />
+
+        <div className="flex justify-end gap-3">
+          <form.Subscribe selector={(s) => [s.canSubmit, s.isSubmitting]}>
+            {([canSubmit, isSubmitting]) => (
               <Button
                 type="primary"
                 htmlType="submit"
-                disabled={!isValid || !isDirty}
                 loading={isSubmitting}
+                disabled={!canSubmit}
+                className="rounded-lg px-8 bg-indigo-600 hover:bg-indigo-700"
               >
                 Agregar
               </Button>
             )}
           </form.Subscribe>
-        </Flex>
+        </div>
       </form>
     </Modal>
   );
@@ -498,30 +496,61 @@ function ComponenteRegistrarProductosFinal({
     },
     validators: { onSubmit: RegistrarProductosProveedorSchema },
     onSubmit: async ({ value, formApi }) => {
+      const formData = new FormData();
+
       try {
-        const payload: RegistrarIngresoMercaderiaCreateApiType = {
-          ...value,
-          serieNumCP: value.serieNumCP.trim() || null,
-          serieNumGR: value.serieNumGR.trim() || null,
-          productos: value.productos.map((p) => ({
-            ...p,
-            image: p.image.map((i) => ({
-              image_byte: i.image_byte.split(",")[1] || "",
-            })),
-          })),
+        // 1. Construimos el objeto JSON siguiendo estrictamente el tipo de la API
+        // Usamos el tipo para asegurar que no falten campos ni sobren (como el 'image' del producto)
+        // ... dentro del onSubmit ...
+
+        const jsonData: RegistrarIngresoMercaderiaCreateApiType = {
+          ruc: value.ruc,
+          proveedor: value.proveedor,
+          serieNumCP: value.serieNumCP.trim().toUpperCase() || null,
+          serieNumGR: value.serieNumGR.trim().toUpperCase() || null,
+          condicion: value.condicion,
+          fecha: value.fecha,
+          moneda: value.moneda,
+          productos: value.productos.map((p, pIdx) => {
+            // 1. Extraemos 'image' del nivel producto (catálogo) para ignorarla
+            const { image, ...datosProducto } = p;
+
+            return {
+              ...datosProducto,
+              serie: p.serie.map((s, sIdx) => {
+                // 2. Adjuntamos al FormData si existe la imagen
+                if (s.image?.[0]?.image_byte) {
+                  const blob = dataURLtoBlob(s.image[0].image_byte);
+                  formData.append("files", blob, `image_${pIdx}_${sIdx}.jpg`);
+                }
+
+                // 3. RETORNO CORREGIDO:
+                // Enviamos el código y un array de imagen vacío para satisfacer al Tipo/Zod
+                return {
+                  codigo: s.codigo,
+                  image: [], // <-- Esto soluciona el error de TypeScript
+                };
+              }),
+            };
+          }),
         };
-        await mutateAsync(payload);
+
+        // 2. Adjuntamos el JSON como un string
+        formData.append("data", JSON.stringify(jsonData));
+
+        // 3. Enviamos usando la mutación
+        // Nota: mutateAsync ahora debe recibir el FormData
+        await mutateAsync(formData as any);
+
         message.success("Registro exitoso");
         formApi.reset();
-        itemModal.setOff();
-        setEditingIndex(null);
         onClose();
       } catch (err) {
         if (err instanceof ApiError) {
           setFormErrors(err, formApi, isUsuarioField);
           if (err.kind !== "validation") message.error(err.message);
         } else {
-          message.error("Error inesperado");
+          message.error("Error inesperado al procesar el formulario");
         }
       }
     },
@@ -543,6 +572,7 @@ function ComponenteRegistrarProductosFinal({
       destroyOnHidden
       width={"90%"}
       maskClosable={false}
+      keyboard={false}
     >
       <ModalCreateProveedoresLista
         open={ModalProveedor.isToggled}
@@ -737,7 +767,6 @@ function ComponenteRegistrarProductosFinal({
         <Divider>Listado de Productos</Divider>
         <div className="overflow-auto mb-4" style={{ maxHeight: "350px" }}>
           <Row gutter={1} style={{ minWidth: "1200px", margin: "auto" }}>
-            <Col span={1}>Imagen</Col>
             <Col span={5}>Descripción</Col>
             <Col span={2}>Marca</Col>
             <Col span={2}>Modelo</Col>
@@ -747,6 +776,7 @@ function ComponenteRegistrarProductosFinal({
             <Col span={2}>Serie</Col>
             <Col span={2}>Cantidad</Col>
             <Col span={2}>Precio</Col>
+            <Col span={1}>Series</Col>
             <Col span={2} style={{ display: "flex", justifyContent: "center" }}>
               Acciones
             </Col>
@@ -767,19 +797,6 @@ function ComponenteRegistrarProductosFinal({
                         marginBottom: 10,
                       }}
                     >
-                      <Col span={1}>
-                        <Flex align="center" justify="center">
-                          {p.image.map((img, index) => (
-                            <Image
-                              key={index}
-                              src={img.image_byte}
-                              style={{ borderRadius: "10%" }}
-                              width={20}
-                              height={20}
-                            />
-                          ))}
-                        </Flex>
-                      </Col>
                       <Col span={5}>
                         <Text ellipsis={{ tooltip: p.name }}>{p.name}</Text>
                       </Col>
@@ -803,10 +820,11 @@ function ComponenteRegistrarProductosFinal({
                         </Text>
                       </Col>
                       <Col span={2}>
-                        <Text ellipsis={{ tooltip: p.serie }}>{p.serie}</Text>
+                        {/* <Text ellipsis={{ tooltip: p.serie }}>{p.serie}</Text> */}
                       </Col>
                       <Col span={2}>{p.cantidad}</Col>
                       <Col span={2}>{p.valor}</Col>
+                      <Col span={1}>{p.serie.length}</Col>
                       <Col span={2}>
                         <Row justify={"center"} gutter={2}>
                           <Space size="small">

@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createQuery } from "../../../../query/createQuery";
 import api from "../../../../client";
-import { RegistrarIngresoMercaderiaCreateApiSchema, RegistrarIngresoMercaderiaOutApiSchema, StockActualDetalladoOutApiSchema, StockActualLimite, type RegistrarIngresoMercaderiaCreateApiType, type RegistrarIngresoMercaderiaOutApiType } from "./mercaderia.api.schema";
+import { RegistrarIngresoMercaderiaOutApiSchema, StockActualDetalladoOutApiSchema, StockActualLimite, type RegistrarIngresoMercaderiaOutApiType } from "./mercaderia.api.schema";
 import type { ApiError } from "../../../../normalizeError";
-import { createMutation } from "../../../../query/createMutation";
 import { createDeleteMutation } from "../../../../query/createDeleteMutation";
 
 
@@ -43,13 +42,20 @@ export function useCreateIngresoMercaderia() {
   return useMutation<
     RegistrarIngresoMercaderiaOutApiType[],
     ApiError,
-    RegistrarIngresoMercaderiaCreateApiType
+    FormData // <-- Cambiamos el tipo de entrada de la mutación a FormData
   >({
-    mutationFn: createMutation({
-      request: (payload) => api.post("/ingresoMercaderia", payload),
-      inputSchema: RegistrarIngresoMercaderiaCreateApiSchema,
-      outputSchema: RegistrarIngresoMercaderiaOutApiSchema.array(),
-    }),
+    mutationFn: async (formData: FormData) => {
+      // Nota: Aquí no usamos 'createMutation' tradicional si este no soporta FormData 
+      // internamente con validación. Lo enviamos directo vía 'api'.
+      const response = await api.post("/ingresoMercaderia", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      
+      // Si quieres mantener la validación de salida (outputSchema):
+      return RegistrarIngresoMercaderiaOutApiSchema.array().parse(response.data);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["ingresoMercaderia"] });
     },

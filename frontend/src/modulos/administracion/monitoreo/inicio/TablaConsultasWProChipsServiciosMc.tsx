@@ -235,7 +235,7 @@ function TablaConsultasWProChips() {
           <Flex justify="space-between">
             <Title
             level={2}
-            style={{ marginBottom: '1px', fontSize: 'clamp(1rem, 2vw + 0.5rem, 2rem)'}}
+            style={{ marginBottom: '1px', fontSize: 'clamp(1rem, 1.5vw + 0.5rem, 1.5rem)'}}
           >
             Consultas de servicios
           </Title>

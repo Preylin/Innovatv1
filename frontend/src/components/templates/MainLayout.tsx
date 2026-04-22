@@ -4,10 +4,8 @@ import {
   Outlet,
 } from "@tanstack/react-router";
 import type { MenuProps } from "antd";
-import { Flex, Layout, theme } from "antd";
 import type { ReactNode } from "react";
 
-const { Header, Content } = Layout;
 
 type MenuItem = Required<MenuProps>["items"][number];
 
@@ -67,49 +65,18 @@ interface MainLayoutProps {
 
 function MainLayout(props: MainLayoutProps) {
 
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
-
   return (
-    <Layout style={{ height: "100vh" }}>
-
-      <Header
-        style={{
-          position: "fixed",
-          top: 0,
-          width: "100%",
-          height: 48,
-          zIndex: 100,
-          padding: 0,
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        
-        <Flex style={{width: '100%', height: '48px'}}>
+    <div>
+        <div className="flex flex-col w-full h-dvh overflow-hidden"> 
+          <header className="bg-mist-950 dark:bg-mist-800 w-full h-12 flex items-center shrink-0 shadow-md z-50">
           {props.header}
-        </Flex>
-      </Header>
-
-      <Layout style={{ marginTop: 48}}>
-
-        
-        <Layout
-        >
-          <Content
-            style={{
-              margin: 0,
-              overflowY: "auto",
-              background: colorBgContainer,
-              borderRadius: borderRadiusLG,
-            }}
-          >
+          </header>
+          <section className="flex-1 p-1 overflow-auto relative bg-mist-100 dark:bg-mist-950">
             <Outlet />
-          </Content>
-        </Layout>
-      </Layout>
-    </Layout>
+          </section>
+        </div>
+    
+    </div>
   );
 }
 

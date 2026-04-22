@@ -107,9 +107,9 @@ export function PanelSuperior({ title, MenuItems }: TopPanelProps) {
   );
 
   return (
-    <nav className="flex h-12 w-full items-center justify-between shadow-sm pl-3">
+    <nav className="flex h-12 w-full items-center justify-between shadow-sm">
       {/* SECCIÓN IZQUIERDA: Menu y Logo */}
-      <Flex align="center" gap={screens.md ? 16 : 8} className="shrink-0">
+      <Flex align="center" gap={screens.md ? 16 : 8} className="shrink-0" style={{paddingLeft: "9px"}}>
         {isLoading ? (
           <Skeleton.Avatar active size="small" shape="square" />
         ) : (

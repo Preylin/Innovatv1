@@ -14,7 +14,7 @@ interface Props {
 function ButtonDelete(props: Props){
     return(
         <TooltipAtom content="Eliminar" placement="top">
-            <ButtonAtom color="danger" icon={ props.loading ? <LoadingOutlined /> : <DeleteOutlined />} {...props} />
+            <ButtonAtom size='small' color="danger" icon={ props.loading ? <LoadingOutlined /> : <DeleteOutlined />} {...props} />
         </TooltipAtom>
 
     )

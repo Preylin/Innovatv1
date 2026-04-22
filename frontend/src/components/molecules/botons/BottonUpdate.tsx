@@ -13,7 +13,7 @@ interface Props {
 function ButtonUpdate(props: Props){
     return(
         <TooltipAtom content="Actualizar" placement="top">
-            <ButtonAtom color='cyan' icon={props.disabled ? <LoadingOutlined /> : <EditOutlined />} {...props} />
+            <ButtonAtom size='small' color='cyan' icon={props.disabled ? <LoadingOutlined /> : <EditOutlined />} {...props} />
         </TooltipAtom>
 
     )

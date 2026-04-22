@@ -9,14 +9,17 @@ interface AntdProviderProps {
   dark?: boolean;
 }
 
-export const AntdProvider: FC<AntdProviderProps> = ({ children, dark = false}) => {
+export const AntdProvider: FC<AntdProviderProps> = ({
+  children,
+  dark = false,
+}) => {
   return (
     <ConfigProvider
       locale={esES}
       theme={{
         algorithm: dark ? darkAlgorithm : defaultAlgorithm,
         token: {
-          colorPrimary: "#335C67",
+          colorPrimary: dark ? "#394447" : "#22292b",
           borderRadius: 5,
           fontSize: 14,
           fontFamily: "Roboto, sans-serif",
@@ -26,15 +29,16 @@ export const AntdProvider: FC<AntdProviderProps> = ({ children, dark = false}) =
         },
         components: {
           Card: {
-            colorBorderSecondary: dark ? "#393939" : "#B0B0B0",
-            colorBgContainer: dark ? "#2B2B2B" : "#FCFCFC",
+            colorBorderSecondary: dark ? "#22292b" : "#9ca8ab",
+            colorBgContainer: dark ? "#161b1d" : "#e3e7e8",
           },
-
-        }
+          Collapse: {
+            colorBorder: "#9ca8ab",
+          },
+        },
       }}
     >
       {children}
     </ConfigProvider>
   );
 };
-

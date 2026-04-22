@@ -1,13 +1,15 @@
 import base64
 import binascii
+import json
 import logging
 from typing import List, Optional, Union
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.v1.schemas.modulos.almacen.catalogos.modelos import IngresoGlobalIn
 from app.models.modulos.almacen.catalogos.ModelsAlmacenIngresoMercaderia import IngresoMercaderia
 from app.api.v1.schemas.modulos.almacen.catalogos.SchemaAlmacenIngresoMercaderia import RegistrarProveedorRequestMercaderia, RegistroIngresoMercaderiaCreate, RegistroIngresoMercaderiaOut, StockActualDetallado, StockActualLimitMercaderia
 from app.core.db import get_session
@@ -17,89 +19,73 @@ logger = logging.getLogger("uvicorn.error")
 
 # ---------- HELPERS ----------
 
-def decode_base64_image(data: Union[str, list, None]) -> Optional[bytes]:
-    if not data: 
-        return None
-    
-    # Manejo de la lista que envía tu frontend
-    if isinstance(data, list) and data:
-        img_obj = data[0]
-        # Si es un objeto Pydantic o un dict
-        data = getattr(img_obj, "image_byte", img_obj.get("image_byte") if isinstance(img_obj, dict) else None)
-    
-    if not isinstance(data, str): 
-        return None
-
-    try:
-        if "base64," in data:
-            data = data.split("base64,")[1]
-        return base64.b64decode(data) # Esto retorna <bytes>
-    except (binascii.Error, ValueError):
-        return None
-    
-
-def transform_request_to_db_model_mercaderia(request_data: RegistrarProveedorRequestMercaderia) -> List[RegistroIngresoMercaderiaCreate]:
-    """
-    Convierte el request anidado en una lista de modelos planos 
-    compatibles con la tabla 'almacen.inventario'.
-    """
-    return [
-        RegistroIngresoMercaderiaCreate(
-            ruc=request_data.ruc,
-            proveedor=request_data.proveedor,
-            serieNumCP=request_data.serieNumCP,
-            serieNumGR=request_data.serieNumGR,
-            condicion=request_data.condicion,
-            fecha=request_data.fecha,
-            moneda=request_data.moneda,
-            codigo=p.codigo,
-            uuid_mercaderia=p.uuid_mercaderia,
-            name=p.name,
-            marca=p.marca,
-            modelo=p.modelo,
-            medida=p.medida,
-            dimension=p.dimension,
-            serie=p.serie,
-            cantidad=p.cantidad,
-            valor=p.valor,
-            image_byte=decode_base64_image(p.image),
-            categoria=p.categoria,
-            ubicacion=p.ubicacion
-        )
-        for p in request_data.productos
-    ]
-
 router_ingresoMercaderia = APIRouter(
     prefix="/ingresoMercaderia",
     tags=["ingresoMercaderia"],
     dependencies=[Depends(get_current_user)],
 )
 
-@router_ingresoMercaderia.post("", response_model=List[RegistroIngresoMercaderiaOut], status_code=status.HTTP_201_CREATED)
-async def crear_ingresoMercaderia(data: RegistrarProveedorRequestMercaderia, session: AsyncSession = Depends(get_session)):
+@router_ingresoMercaderia.post("", response_model=List[RegistroIngresoMercaderiaOut])
+async def crear_ingreso_mercaderia(
+    data: str = Form(...), # Recibe el JSON string
+    files: List[UploadFile] = File(None), # Recibe todos los archivos
+    session: AsyncSession = Depends(get_session)
+):
     try:
-        # 1. Transformar datos de Pydantic a lista de diccionarios o modelos de SQLAlchemy
-        productos_validados = transform_request_to_db_model_mercaderia(data)
+        # 1. Parsear el JSON manual
+        raw_json = json.loads(data)
+        validated_data = IngresoGlobalIn(**raw_json)
         
-        # 2. Convertir esquemas Pydantic a objetos de SQLAlchemy
-        nuevos_registros = [
-            IngresoMercaderia(**p.model_dump()) for p in productos_validados
-        ]
+        # 2. Mapear archivos por su nombre de campo (file_pIdx_sIdx)
+        files_map = {f.filename: await f.read() for f in (files or [])}
         
-        session.add_all(nuevos_registros)
+        resultado_db = []
+        
+        # 3. Aplanar la estructura (Tu "crear_estructura_de_datos" adaptada)
+        for p_idx, producto in enumerate(validated_data.productos):
+            for s_idx, serie_item in enumerate(producto.serie):
+                
+                # Buscamos si existe una imagen para esta combinación de producto/serie
+                filename_expected = f"image_{p_idx}_{s_idx}.jpg"
+                img_bytes = files_map.get(filename_expected)
+                
+                nuevo_registro = IngresoMercaderia(
+                    ruc=validated_data.ruc,
+                    proveedor=validated_data.proveedor,
+                    serieNumCP=validated_data.serieNumCP,
+                    serieNumGR=validated_data.serieNumGR,
+                    condicion=validated_data.condicion,
+                    fecha=validated_data.fecha,
+                    moneda=validated_data.moneda,
+                    # Datos del producto
+                    uuid_mercaderia=producto.uuid_mercaderia,
+                    codigo=producto.codigo,
+                    name=producto.name,
+                    marca=producto.marca,
+                    modelo=producto.modelo,
+                    medida=producto.medida,
+                    dimension=producto.dimension,
+                    categoria=producto.categoria,
+                    ubicacion=producto.ubicacion,
+                    valor=producto.valor,
+                    cantidad=1, # Al aplanar por serie, cada fila representa 1 unidad
+                    # Dato de la serie e imagen
+                    serie=serie_item.get("codigo"),
+                    image_byte=img_bytes
+                )
+                resultado_db.append(nuevo_registro)
+
+        # 4. Guardar en DB
+        session.add_all(resultado_db)
         await session.commit()
         
-        # Refrescar para obtener IDs y created_at
-        return nuevos_registros
-        
-    except IntegrityError as e:
-        await session.rollback()
-        logger.error(f"Error de integridad: {e}")
-        raise HTTPException(status_code=400, detail="Error de integridad en la base de datos (posible RUC o Serie duplicada)")
+        return resultado_db
+
     except Exception as e:
         await session.rollback()
-        logger.error(f"Error inesperado: {e}")
-        raise HTTPException(status_code=500, detail="Error interno del servidor")
+        logger.error(f"Error procesando ingreso: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
 
 @router_ingresoMercaderia.get("", response_model=List[RegistroIngresoMercaderiaOut])
 async def listar_ingresoMercaderia(session: AsyncSession = Depends(get_session)):

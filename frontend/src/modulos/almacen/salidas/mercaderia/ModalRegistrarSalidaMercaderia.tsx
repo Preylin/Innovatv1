@@ -1,10 +1,13 @@
 import { useForm } from "@tanstack/react-form";
 import {
   App,
+  Avatar,
   Button,
+  Checkbox,
   Col,
   DatePicker,
   Divider,
+  Empty,
   Flex,
   Image,
   Input,
@@ -12,15 +15,13 @@ import {
   Modal,
   Row,
   Select,
-  Space,
+  Tag,
   Typography,
 } from "antd";
 import dayjs from "dayjs";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import z from "zod";
-import ButtonUpdate from "../../../../components/molecules/botons/BottonUpdate";
 import ButtonDelete from "../../../../components/molecules/botons/BottonDelete";
-import FormUploadImage from "../../../../components/molecules/upload/UploadImage";
 import { FieldWrapper } from "../../../../helpers/FieldWrapperForm";
 import InputSearch from "../../../../components/molecules/input/InputSearch";
 import { useToggle } from "../../../../hooks/Toggle";
@@ -64,7 +65,7 @@ const ProductoSchema = z.object({
 export type ProductoType = z.infer<typeof ProductoSchema>;
 
 const RegistrarProductosClienteSchema = z.object({
-  ruc: z.string().min(1, "Requerido").max(11, "Máximo 11 números"),
+  ruc: z.string().min(1, "Requerido").max(50, "Máximo 11 números"),
   cliente: z.string().min(3, "Requerido"),
   serieNumGR: z.string(),
   condicion: z.string().min(1, "Requerido"),
@@ -82,96 +83,95 @@ const isUsuarioField = (field: string): field is UsuarioField => {
   return uiFields.includes(field as UsuarioField);
 };
 
-// 2. Interfaz del Detalle (Hijo)
-interface Detalle {
-  codigo: string;
+interface DetalleProductos {
   uuid_registro: string;
+  serie: string;
+  image_byte: string;
+  cantidad: number;
+  valor: number;
+  moneda: string;
+  fecha_ingreso: string;
+}
+
+interface Producto {
+  codigo: string;
+  name: string;
   marca: string;
   modelo: string;
   medida: string;
   dimension: string;
   categoria: string;
-  cantidad: number;
-  valor: number;
-  moneda: string;
-  fecha_ingreso: string;
-  image_byte: string;
-}
-
-// Representa el agrupamiento interno: la llave es el string de la serie
-type SeriesMap = Record<string, Detalle[]>;
-
-interface ProductoAgrupado {
-  name: string;
-  series: SeriesMap;
+  variantes: DetalleProductos[];
 }
 
 interface ModalProps {
   open: boolean;
   onClose: () => void;
   onSave: (producto: ProductoType) => void;
-  initialValues?: ProductoType | null; // Null para creación
+  dataStock: any[];
+  productosYaSeleccionados: any[];
 }
 
-function ModalProducto({ open, onClose, onSave, initialValues }: ModalProps) {
-  const [cantidadMax, setCantidadMax] = useState<number>(0);
+function ModalProducto({
+  open,
+  onClose,
+  onSave,
+  productosYaSeleccionados,
+  dataStock,
+}: ModalProps) {
   const createMercaderia = useToggle();
 
-  const { data: data2 } = useCatalogoStockDetalladoMercaderiaList();
+  const productosData = useMemo(() => {
+    const map = new Map<string, Producto>();
 
-  const productosAgrupados = useMemo(() => {
-    if (!data2) return {};
+    dataStock.forEach((item) => {
+      // CALCULAR CUÁNTO SE HA USADO YA DE ESTE UUID EN EL PADRE
+      const cantidadEnCarrito = productosYaSeleccionados
+        .filter((p) => p.uuid_mercaderia === item.uuid_registro)
+        .reduce((acc, curr) => acc + curr.cantidad, 0);
 
-    const inicial: Record<string, ProductoAgrupado> = {};
+      // El stock que mostraremos será la resta
+      const stockDisponible = item.stock_actual - cantidadEnCarrito;
 
-    return data2.reduce((acc, item) => {
-      const { codigo, name, serie } = item;
-
-      const nuevoDetalle: Detalle = {
-        codigo: item.codigo,
-        uuid_registro: item.uuid_registro,
-        marca: item.marca,
-        modelo: item.modelo,
-        medida: item.medida,
-        dimension: item.dimension,
-        categoria: item.categoria,
-        cantidad: item.stock_actual,
-        valor: item.valor,
-        moneda: item.moneda,
-        fecha_ingreso: item.fecha_ingreso,
-        image_byte: item.image_byte,
-      };
-
-      // 1. Inicializar el grupo por Nombre
-      if (!acc[codigo]) {
-        acc[codigo] = {
-          name: name,
-          series: {
-            [serie]: [nuevoDetalle],
-          },
-        };
-      } else {
-        // 2. Inicializar o agregar al grupo por Serie
-        if (!acc[codigo].series[serie]) {
-          acc[codigo].series[serie] = [nuevoDetalle];
-        } else {
-          acc[codigo].series[serie].push(nuevoDetalle);
-        }
+      if (!map.has(item.codigo)) {
+        map.set(item.codigo, {
+          codigo: item.codigo,
+          name: item.name,
+          marca: item.marca,
+          modelo: item.modelo,
+          medida: item.medida,
+          dimension: item.dimension,
+          categoria: item.categoria,
+          variantes: [],
+        });
       }
+      if (stockDisponible > 0) {
+        map.get(item.codigo)!.variantes.push({
+          uuid_registro: item.uuid_registro,
+          serie: item.serie,
+          image_byte: item.image_byte,
+          cantidad: stockDisponible, // <-- Stock real para este modal
+          valor: item.valor,
+          moneda: item.moneda,
+          fecha_ingreso: ""
+        });
+      }
+    });
+    return map;
+  }, [dataStock, productosYaSeleccionados]);
 
-      return acc;
-    }, inicial);
-  }, [data2]); // Solo se recalcula si data2 cambia
-
-  const opcionesProductos = useMemo(() => {
-    return Object.entries(productosAgrupados).map(([codigo, producto]) => ({
-      label: `${codigo} - ${producto.name}`, // Mostramos ambos para el usuario
-      value: codigo, // Usamos el código como valor único para TanStack Form
-    }));
-  }, [productosAgrupados]);
+  const opcionesAutocomplete = useMemo(
+    () =>
+      Array.from(productosData.entries()).map(([codigo, data], index) => ({
+        label: `${index + 1}. ${codigo} | ${data.name}`,
+        value: codigo,
+      })),
+    [productosData],
+  );
 
   const form = useForm({
-    defaultValues: initialValues || {
+    defaultValues: {
+      // Valores base por defecto
       n_serie: "",
       uuid_mercaderia: "",
       codigo: "",
@@ -186,33 +186,79 @@ function ModalProducto({ open, onClose, onSave, initialValues }: ModalProps) {
       valor: 0,
       moneda: "",
       image: [] as { image_byte: string }[],
+      seleccionadas: {} as Record<string, number>,
     },
-    validators: { onSubmit: ProductoSchema },
     onSubmit: async ({ value }) => {
-      onSave(value);
-      form.reset();
-      setCantidadMax(0);
+      const seleccionadas = value.seleccionadas || {};
+
+      const dataParaGuardar = Object.entries(seleccionadas)
+        .filter(([_, cant]) => (cant as number) > 0)
+        .map(([keyConIndice, cant]) => {
+          // Extraemos el UUID real (lo que está antes del último "_")
+          const parts = keyConIndice.split("_");
+          parts.pop(); // Quitamos el índice
+          const uuidReal = parts.join("_");
+
+          const producto = productosData.get(value.codigo);
+          const variante = producto?.variantes.find(
+            (v) => v.uuid_registro === uuidReal,
+          );
+
+          return {
+            // Datos del producto padre
+            codigo: value.codigo,
+            name: value.name,
+            marca: value.marca,
+            modelo: value.modelo,
+            // Datos de la variante específica
+            ...variante,
+            cantidad_seleccionada: cant,
+          };
+        });
+
+      if (dataParaGuardar.length === 0) {
+        // Podrías mostrar un mensaje: "Debe seleccionar al menos una serie"
+        return;
+      }
+
+      dataParaGuardar.forEach((item) => {
+        // 1. Preparamos la imagen correctamente
+        // Si item.image_byte ya es el base64, lo envolvemos en el formato que espera tu lista
+        const imagenFormateada = item.image_byte
+          ? [{ image_byte: getBase64WithPrefix(item.image_byte) }]
+          : [];
+
+        onSave({
+          n_serie: item.serie || "", // Usamos la serie del item actual
+          uuid_mercaderia: item.uuid_registro || "", // Usamos el UUID del item actual
+          codigo: value.codigo,
+          name: value.name,
+          marca: value.marca,
+          modelo: value.modelo,
+          medida: value.medida,
+          dimension: value.dimension,
+          categoria: value.categoria,
+          serie: item.serie || "",
+          cantidad: item.cantidad_seleccionada,
+          valor: item.valor || 0,
+          moneda: item.moneda || "",
+          image: imagenFormateada, // Enviamos el array con el formato correcto
+        });
+      });
+
+      form.reset(); // Limpia el formulario para la próxima vez
+      onClose();
     },
   });
 
   return (
     <Modal
-      title={
-        <Flex justify={"space-between"} style={{ marginRight: 25 }}>
-          <Text>
-            {initialValues ? "Editar Mercadería" : "Nueva Mercadería"}
-          </Text>
-          <Text style={{ color: "#B55989" }}>
-            {cantidadMax === 0 ? "" : `Stock disponible: ${cantidadMax}`}
-          </Text>
-        </Flex>
-      }
+      title={<Text>{"Salida de Mercadería"}</Text>}
       open={open}
-      onOk={onClose}
       onCancel={onClose}
       footer={null}
       destroyOnHidden
-      width={{ xs: "90%", sm: "80%", lg: "50%" }}
+      width={{ xs: "90%", sm: "80%", lg: "80%" }}
       maskClosable={false}
     >
       <CatalogoMercaderiaCreate
@@ -226,376 +272,241 @@ function ModalProducto({ open, onClose, onSave, initialValues }: ModalProps) {
           form.handleSubmit();
         }}
       >
-        <Row>
-          <Col span={24}>
-            <form.Field name="image">
-              {(field) => (
-                <Flex justify="center" align="center">
-                  <FieldWrapper field={field}>
-                    {(props) => (
-                      <Flex justify="center" align="center">
-                        <FormUploadImage
-                          {...props}
-                          field={field}
-                          maxFiles={1}
-                        />
-                      </Flex>
-                    )}
-                  </FieldWrapper>
-                </Flex>
-              )}
-            </form.Field>
-          </Col>
-        </Row>
-        <Row gutter={6}>
-          <Col xs={24} md={12}>
-            <form.Field name="name">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          {/* COLUMNA IZQUIERDA: Identificación y Detalles */}
+          <div className="p-4 border rounded-md">
+            <div className="">
+              <div className="font-semibold">Identificación del Producto:</div>
+              <form.Field name="codigo">
+                {(field) => (
+                  <div style={{ marginBottom: 16 }}>
+                    <Text type="secondary">Buscar por código o nombre:</Text>
                     <InputSearch
-                      {...props}
-                      handleOpen={createMercaderia.toggle}
-                      ButtonName="Crear Mercadería"
-                      placeholder="Descripción del producto"
-                      options={opcionesProductos} // value es el codigo
-                      onChange={(codigoSeleccionado) => {
-                        const codStr = codigoSeleccionado
-                          ? String(codigoSeleccionado)
-                          : "";
-                        const productoAgrupado = productosAgrupados[codStr];
+                      options={opcionesAutocomplete}
+                      value={field.state.value}
+                      placeholder="Escriba aquí..."
+                      onChange={(codigo) => {
+                        const val = codigo as string;
+                        field.handleChange(val);
 
-                        if (productoAgrupado) {
-                          // Seteamos solo lo básico del producto
-                          field.handleChange(productoAgrupado.name);
-                          field.form.setFieldValue("codigo", codStr);
+                        const producto = productosData.get(val);
+                        if (producto && producto.variantes.length > 0) {
+                          const seleccionado = producto.variantes[0];
+                          // Usamos validate: false para evitar el error 'onServer' al actualizar masivamente
 
-                          // IMPORTANTE: Limpiamos los campos dependientes de la serie
-                          field.form.setFieldValue("serie", "");
-                          field.form.setFieldValue("n_serie", "");
-                          field.form.setFieldValue("marca", "");
-                          field.form.setFieldValue("modelo", "");
-                          field.form.setFieldValue("medida", "");
-                          field.form.setFieldValue("dimension", "");
-                          field.form.setFieldValue("categoria", "");
-                          field.form.setFieldValue("valor", 0);
-                          field.form.setFieldValue("cantidad", 0);
-                          field.form.setFieldValue("moneda", "");
-                          field.form.setFieldValue("uuid_mercaderia", "");
-                          field.form.setFieldValue("image", []);
-                          setCantidadMax(0);
+                          form.setFieldValue("name", producto.name);
+                          form.setFieldValue("marca", producto.marca);
+                          form.setFieldValue("modelo", producto.modelo);
+                          form.setFieldValue("medida", producto.medida);
+                          form.setFieldValue("dimension", producto.dimension);
+                          form.setFieldValue("categoria", producto.categoria);
+                          form.setFieldValue("valor", seleccionado.valor);
+                          form.setFieldValue("moneda", seleccionado.moneda);
+                          form.setFieldValue(
+                            "uuid_mercaderia",
+                            seleccionado.uuid_registro,
+                          );
+                          form.setFieldValue("serie", seleccionado.serie);
+
+                          const imageVal = seleccionado.image_byte
+                            ? [
+                                {
+                                  image_byte: getBase64WithPrefix(
+                                    seleccionado.image_byte,
+                                  ),
+                                },
+                              ]
+                            : [];
+                          form.setFieldValue("image", imageVal);
                         }
                       }}
                     />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={14} md={7}>
-            {/* Suscribimos este bloque al valor de 'codigo' */}
-            <form.Subscribe selector={(state) => state.values.codigo}>
-              {(codigoActual) => (
-                <form.Field name="serie">
-                  {(field) => {
-                    const seriesDisponibles =
-                      productosAgrupados[codigoActual]?.series || {};
-                    const opcionesSeries = Object.keys(seriesDisponibles).map(
-                      (s) => ({
-                        label: s,
-                        value: s,
-                      }),
-                    );
+                  </div>
+                )}
+              </form.Field>
 
-                    return (
-                      <FieldWrapper field={field}>
-                        {(props) => (
-                          <Select
-                            {...props}
-                            placeholder="Serie"
-                            options={opcionesSeries}
-                            // Forzamos el valor del field para asegurar sincronía
-                            value={field.state.value || undefined}
-                            disabled={!codigoActual}
-                            onChange={(serieElegida) => {
-                              field.handleChange(serieElegida);
-                              // Limpiar hijos
-                              field.form.setFieldValue("n_serie", "");
-                              setCantidadMax(0);
-                            }}
-                          />
-                        )}
-                      </FieldWrapper>
-                    );
-                  }}
-                </form.Field>
-              )}
-            </form.Subscribe>
-          </Col>
+              {/* SECCIÓN DE DETALLES TÉCNICOS */}
+              <form.Subscribe
+                selector={(s) => [
+                  s.values.name,
+                  s.values.marca,
+                  s.values.modelo,
+                  s.values.medida,
+                  s.values.dimension,
+                  s.values.categoria,
+                ]}
+              >
+                {([name, marca, modelo, medida, dimension, categoria]) => {
+                  if (!name) return null; // No mostrar nada si no hay producto seleccionado
 
-          <Col xs={10} md={5}>
-            {/* Suscribimos este bloque a 'codigo' y 'serie' */}
-            <form.Subscribe
-              selector={(state) => [state.values.codigo, state.values.serie]}
-            >
-              {([codigoActual, serieActual]) => (
-                <form.Field name="n_serie">
-                  {(field) => {
-                    const variantes =
-                      productosAgrupados[codigoActual]?.series[serieActual] ||
-                      [];
-                    const opcionesVariantes = variantes.map((item, index) => ({
-                      label: `Stock: ${item.cantidad} - Precio: ${item.moneda}${item.valor}`,
-                      value: index,
-                    }));
+                  return (
+                    <div
+                      
+                      className="mt-4 p-3 border rounded shadow"
+                    >
+                      <Text
+                        strong
+                        style={{
+                          display: "block",
+                          marginBottom: 8,
+                          color: "#1890ff",
+                        }}
+                      >
+                        {name.toUpperCase()}
+                      </Text>
+                      <Row gutter={[8, 8]}>
+                        <Col span={12}>
+                          <Text type="secondary">Marca:</Text> <br />
+                          <Text>{marca || "-"}</Text>
+                        </Col>
+                        <Col span={12}>
+                          <Text type="secondary">Modelo:</Text> <br />
+                          <Text>{modelo || "-"}</Text>
+                        </Col>
+                        <Col span={12}>
+                          <Text type="secondary">Categoría:</Text> <br />
+                          <Tag color="orange">{categoria || "General"}</Tag>
+                        </Col>
+                        <Col span={12}>
+                          <Text type="secondary">Medida:</Text> <br />
+                          <Text>
+                            {medida} {dimension ? `(${dimension})` : ""}
+                          </Text>
+                        </Col>
+                      </Row>
+                    </div>
+                  );
+                }}
+              </form.Subscribe>
+            </div>
+          </div>
 
-                    return (
-                      <FieldWrapper field={field}>
-                        {(props) => (
-                          <Select
-                            {...props}
-                            placeholder="Mercadería"
-                            options={opcionesVariantes}
-                            // Sincronizamos el valor visual con el estado del form
-                            value={
-                              field.state.value === ""
-                                ? undefined
-                                : field.state.value
-                            }
-                            disabled={variantes.length === 0}
-                            onChange={(index) => {
-                              const seleccionado = variantes[Number(index)];
-                              if (seleccionado) {
-                                field.handleChange(`Lote ${Number(index) + 1}`);
+          {/* COLUMNA DERECHA: Visualización de Stock con Selección Múltiple */}
+          <div>
+            <div className="flex flex-col gap-2 border rounded-md p-4">
+              <h1 className="font-semibold">Series y Stock Disponible:</h1>
+              <form.Subscribe selector={(state) => state.values.codigo}>
+                {(codigo) => {
+                  const producto = productosData.get(codigo as string);
+                  if (!producto)
+                    return <Empty description="Busque un producto" />;
 
-                                // Actualización masiva
-                                field.form.setFieldValue(
-                                  "marca",
-                                  seleccionado.marca,
-                                );
-                                field.form.setFieldValue(
-                                  "modelo",
-                                  seleccionado.modelo,
-                                );
-                                field.form.setFieldValue(
-                                  "medida",
-                                  seleccionado.medida,
-                                );
-                                field.form.setFieldValue(
-                                  "dimension",
-                                  seleccionado.dimension,
-                                );
-                                field.form.setFieldValue(
-                                  "categoria",
-                                  seleccionado.categoria,
-                                );
-                                field.form.setFieldValue(
-                                  "valor",
-                                  seleccionado.valor,
-                                );
-                                field.form.setFieldValue(
-                                  "moneda",
-                                  seleccionado.moneda,
-                                );
-                                field.form.setFieldValue(
-                                  "uuid_mercaderia",
-                                  seleccionado.uuid_registro,
-                                );
+                  return (
+                    <div
+                      className="p-3 border rounded shadow overflow-auto scroll-auto max-h-60 flex flex-col gap-2"
+                    >
+                      {producto.variantes.map((v, index) => {
+                        // Generamos un identificador único para el estado del formulario
+                        const fieldName =
+                          `seleccionadas.${v.uuid_registro}_${index}` as any;
 
-                                field.form.setFieldValue(
-                                  "image",
-                                  seleccionado.image_byte
-                                    ? [
-                                        {
-                                          image_byte: getBase64WithPrefix(
-                                            seleccionado.image_byte,
-                                          ),
-                                        },
-                                      ]
-                                    : [],
+                        return (
+                          <div
+                            key={`${v.uuid_registro}-${index}`}
+                            className="p-3 rounded shadow bg-mist-200 hover:border hover:border-mist-400"
+                          >
+                            <form.Field name={fieldName}>
+                              {(field) => {
+                                const cantidadActual = field.state.value || 0;
+                                const isChecked = cantidadActual > 0;
+
+                                return (
+                                  <Row align="middle" gutter={[12, 12]}>
+                                    {/* CHECKBOX: Controla si la cantidad es > 0 */}
+                                    <Col span={2}>
+                                      <Checkbox
+                                        checked={isChecked}
+                                        onChange={(e) => {
+                                          // Si marca, ponemos 1 (o puedes poner v.cantidad si prefieres todo el stock)
+                                          // Si desmarca, ponemos 0
+                                          field.handleChange(
+                                            (e.target.checked ? 1 : 0) as any,
+                                          );
+                                        }}
+                                      />
+                                    </Col>
+
+                                    {/* INFO DE LA SERIE */}
+                                    <Col span={16}>
+                                      <Flex gap={12} align="center">
+                                        <Avatar
+                                          shape="square"
+                                          size={45}
+                                          src={
+                                            v.image_byte
+                                              ? getBase64WithPrefix(
+                                                  v.image_byte,
+                                                )
+                                              : undefined
+                                          }
+                                        />
+                                        <div className="flex flex-col gap-2">
+                                          <h1
+                                            className="font-semibold text-xs dark:text-mist-900"
+                                          >
+                                            S/N: {v.serie}
+                                          </h1>
+                                          <div className="flex flex-row gap-2">
+                                            <Tag color="blue">
+                                            Disp: {v.cantidad}
+                                          </Tag>
+                                          <Tag color="green">
+                                            {v.moneda} {v.valor}
+                                          </Tag>
+                                          </div>
+                                        </div>
+                                      </Flex>
+                                    </Col>
+
+                                    {/* INPUT DE CANTIDAD */}
+                                    <Col span={6}>
+                                      <div style={{ textAlign: "right"}}>
+                                        <InputNumber
+                                          min={0}
+                                          max={v.cantidad}
+                                          value={cantidadActual}
+                                          disabled={!isChecked} // Deshabilitado si el checkbox no está marcado
+                                          onChange={(val) =>
+                                            field.handleChange(
+                                              (val || 0) as any,
+                                            )
+                                          }
+                                          status={
+                                            cantidadActual > v.cantidad
+                                              ? "error"
+                                              : ""
+                                          }
+                                          style={{ width: "100%" }}
+                                          placeholder="Cant."
+                                        />
+                                        {cantidadActual > v.cantidad && (
+                                          <Text
+                                            type="danger"
+                                            style={{ fontSize: "10px" }}
+                                          >
+                                            Excede stock
+                                          </Text>
+                                        )}
+                                      </div>
+                                    </Col>
+                                  </Row>
                                 );
+                              }}
+                            </form.Field>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }}
+              </form.Subscribe>
+            </div>
+          </div>
+        </div>
 
-                                setCantidadMax(seleccionado.cantidad);
-                                field.form.setFieldValue("cantidad", 0);
-                              }
-                            }}
-                          />
-                        )}
-                      </FieldWrapper>
-                    );
-                  }}
-                </form.Field>
-              )}
-            </form.Subscribe>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="codigo">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <Input
-                      {...props}
-                      placeholder="Código"
-                      allowClear
-                      maxLength={20}
-                      disabled
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="marca">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <Input
-                      {...props}
-                      placeholder="Marca"
-                      allowClear
-                      maxLength={100}
-                      disabled
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="modelo">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <Input
-                      {...props}
-                      placeholder="Modelo"
-                      allowClear
-                      maxLength={100}
-                      disabled
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="medida">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <Input
-                      {...props}
-                      placeholder="Medida"
-                      allowClear
-                      maxLength={20}
-                      disabled
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="dimension">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <Input
-                      {...props}
-                      placeholder="Dimensión"
-                      allowClear
-                      maxLength={100}
-                      disabled
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="categoria">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <Input
-                      {...props}
-                      placeholder="Categoría"
-                      allowClear
-                      maxLength={100}
-                      disabled
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-
-          <Col xs={24} md={12}>
-            <form.Field name="cantidad">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <InputNumber
-                      {...props}
-                      placeholder="C.U"
-                      maxLength={20}
-                      style={{ width: "100%" }}
-                      min={0}
-                      max={cantidadMax}
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col xs={24} md={12}>
-            <form.Field name="valor">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <InputNumber
-                      {...props}
-                      placeholder="V.U"
-                      type={"number"}
-                      min={0}
-                      maxLength={20}
-                      style={{ width: "100%" }}
-                      disabled
-                    />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col span={0}>
-            <form.Field name="uuid_mercaderia">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => (
-                    <Input {...props} style={{ width: "100%" }} disabled />
-                  )}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-          <Col span={0}>
-            <form.Field name="moneda">
-              {(field) => (
-                <FieldWrapper field={field}>
-                  {(props) => <Input {...props} disabled />}
-                </FieldWrapper>
-              )}
-            </form.Field>
-          </Col>
-        </Row>
-        <Flex justify="end" align="center">
+        <Flex justify="end" style={{ marginTop: 24 }}>
           <form.Subscribe
-            selector={(state) => [
-              state.isValid,
-              state.isDirty,
-              state.isSubmitting,
-            ]}
+            selector={(s) => [s.isValid, s.isDirty, s.isSubmitting]}
           >
             {([isValid, isDirty, isSubmitting]) => (
               <Button
@@ -604,7 +515,7 @@ function ModalProducto({ open, onClose, onSave, initialValues }: ModalProps) {
                 disabled={!isValid || !isDirty}
                 loading={isSubmitting}
               >
-                Agregar
+                Agregar a la lista
               </Button>
             )}
           </form.Subscribe>
@@ -613,6 +524,19 @@ function ModalProducto({ open, onClose, onSave, initialValues }: ModalProps) {
     </Modal>
   );
 }
+
+// Función helper para convertir base64 a Blob
+const dataURLtoBlob = (dataurl: string) => {
+  const arr = dataurl.split(",");
+  const mime = arr[0].match(/:(.*?);/)?.[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new Blob([u8arr], { type: mime });
+};
 
 function ComponenteRegistrarProductosFinal({
   open,
@@ -626,6 +550,8 @@ function ComponenteRegistrarProductosFinal({
   const itemModal = useToggle();
   const ModalCliente = useToggle();
   const { data: dataCliente } = useClientesListaList();
+  const { data: stockData } =
+    useCatalogoStockDetalladoMercaderiaList();
 
   const opciones = useMemo(() => {
     return (
@@ -636,7 +562,6 @@ function ComponenteRegistrarProductosFinal({
     );
   }, [dataCliente]);
 
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const optioncondicion = [
     {
       value: "VENTA",
@@ -672,51 +597,54 @@ function ComponenteRegistrarProductosFinal({
     },
     validators: { onSubmit: RegistrarProductosClienteSchema },
     onSubmit: async ({ value, formApi }) => {
-      try {
-        const payload: RegistrarSalidaMercaderiaCreateApiType = {
-          ...value,
-          serieNumGR: value.serieNumGR.trim() || null,
-          adicional: value.adicional.trim() || null,
-          productos: value.productos.map((p) => ({
-            uuid_mercaderia: p.uuid_mercaderia,
-            codigo: p.codigo,
-            name: p.name,
-            marca: p.marca,
-            modelo: p.modelo,
-            medida: p.medida,
-            dimension: p.dimension,
-            categoria: p.categoria,
-            serie: p.serie,
-            cantidad: p.cantidad,
-            valor: p.valor,
-            moneda: p.moneda,
-            image: p.image.map((i) => ({
-              image_byte: i.image_byte.split(",")[1] || "",
-            })),
-          })),
-        };
-        await mutateAsync(payload);
-        message.success("Registro exitoso");
-        formApi.reset();
-        itemModal.setOff();
-        setEditingIndex(null);
-        onClose();
-      } catch (err) {
-        if (err instanceof ApiError) {
-          setFormErrors(err, formApi, isUsuarioField);
-          if (err.kind !== "validation") message.error(err.message);
-        } else {
-          message.error("Error inesperado");
-        }
-      }
-    },
-  });
+  const formData = new FormData();
 
-  // Helper para abrir el modal en modo edición
-  const handleEditClick = (index: number) => {
-    setEditingIndex(index);
-    itemModal.toggle();
-  };
+  try {
+    // 1. Preparamos el payload JSON (sin los bytes pesados de las imágenes)
+    const jsonData: RegistrarSalidaMercaderiaCreateApiType = {
+      ...value,
+      serieNumGR: value.serieNumGR?.trim().toUpperCase() || null,
+      adicional: value.adicional?.trim() || null,
+      productos: value.productos.map((p, pIdx) => {
+        return {
+          ...p,
+          // Mapeamos las series/productos para extraer las imágenes al FormData
+          image: p.image.map((i, iIdx) => {
+            if (i.image_byte) {
+              // Convertimos el base64 a Blob para enviarlo como archivo real
+              const blob = dataURLtoBlob(i.image_byte);
+              // Nombre único para identificarlo en el backend si es necesario
+              formData.append("files", blob, `prod_${pIdx}_img_${iIdx}.jpg`);
+            }
+            
+            // Devolvemos el objeto de imagen vacío de bytes para el JSON
+            // Esto mantiene la estructura que espera tu Tipo/Zod sin saturar el payload
+            return { image_byte: "" }; 
+          }),
+        };
+      }),
+    };
+
+    // 2. Empaquetamos todo en el FormData
+    formData.append("data", JSON.stringify(jsonData));
+
+    // 3. Enviamos la mutación (asegúrate que el backend espere multipart/form-data)
+    await mutateAsync(formData as any);
+
+    message.success("Registro exitoso");
+    formApi.reset();
+    itemModal.setOff();
+    onClose();
+  } catch (err) {
+    if (err instanceof ApiError) {
+      setFormErrors(err, formApi, isUsuarioField);
+      if (err.kind !== "validation") message.error(err.message);
+    } else {
+      message.error("Error inesperado al procesar la salida");
+    }
+  }
+},
+  });
 
   return (
     <Modal
@@ -881,7 +809,6 @@ function ComponenteRegistrarProductosFinal({
               block
               type="dashed"
               onClick={() => {
-                setEditingIndex(null);
                 itemModal.toggle();
               }}
             >
@@ -966,12 +893,7 @@ function ComponenteRegistrarProductosFinal({
                       </Col>
                       <Col span={2}>
                         <Row justify={"center"} gutter={2}>
-                          <Space size="small">
-                            <ButtonUpdate onClick={() => handleEditClick(i)} />
-                            <ButtonDelete
-                              onClick={() => field.removeValue(i)}
-                            />
-                          </Space>
+                          <ButtonDelete onClick={() => field.removeValue(i)} />
                         </Row>
                       </Col>
                     </Row>
@@ -981,26 +903,14 @@ function ComponenteRegistrarProductosFinal({
                 {/* INTEGRACIÓN DEL MODAL DUAL */}
                 <ModalProducto
                   open={itemModal.isToggled}
-                  initialValues={
-                    editingIndex !== null
-                      ? field.state.value[editingIndex]
-                      : null
-                  }
+                  dataStock={stockData || []}
+                  productosYaSeleccionados={field.state.value}
                   onClose={() => {
                     itemModal.setOff();
-                    setEditingIndex(null);
                   }}
-                  onSave={(data) => {
-                    if (editingIndex !== null) {
-                      // MODO EDICIÓN: Reemplaza el valor en la posición específica
-                      field.insertValue(editingIndex, data);
-                      field.removeValue(editingIndex + 1);
-                    } else {
-                      // MODO CREACIÓN
-                      field.pushValue(data);
-                    }
+                  onSave={(nuevoProd) => {
+                    field.pushValue(nuevoProd);
                     itemModal.setOff();
-                    setEditingIndex(null);
                   }}
                 />
               </>
@@ -1028,6 +938,7 @@ function ComponenteRegistrarProductosFinal({
               </Button>
             )}
           </form.Subscribe>
+          
         </Flex>
       </form>
     </Modal>
