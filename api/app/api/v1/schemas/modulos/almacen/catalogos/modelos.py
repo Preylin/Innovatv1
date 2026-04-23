@@ -17,7 +17,6 @@ class ProductoIn(BaseModel):
     dimension: Optional[str]
     categoria: str
     serie: List[dict] # Solo traerá {"codigo": "..."}
-    cantidad: int
     valor: float
     ubicacion: str
 

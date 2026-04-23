@@ -2,6 +2,7 @@ import z from "zod";
 
 
 const ItemsSeries = z.object({
+  cantidad: z.number(),
   codigo: z.string(),
   image: z
     .array(
@@ -21,7 +22,6 @@ const ProductoSchema = z.object({
   dimension: z.string(),
   categoria: z.string(),
   serie: z.array(ItemsSeries),
-  cantidad: z.number(),
   valor: z.number(),
   ubicacion: z.string(),
 });

@@ -405,6 +405,7 @@ export function ModalProducto({
   );
 }
 
+
 function ComponenteRegistrarProductosFinal({
   open,
   onClose,
@@ -485,8 +486,7 @@ function ComponenteRegistrarProductosFinal({
           moneda: value.moneda,
           productos: value.productos.map((p, pIdx) => {
             // 1. Extraemos 'image' del nivel producto (catálogo) para ignorarla
-            const { image, ...datosProducto } = p;
-
+            const { image, cantidad, ...datosProducto } = p;
             return {
               ...datosProducto,
               serie: p.serie.map((s, sIdx) => {
@@ -500,6 +500,7 @@ function ComponenteRegistrarProductosFinal({
                 // Enviamos el código y un array de imagen vacío para satisfacer al Tipo/Zod
                 return {
                   codigo: s.codigo,
+                  cantidad: s.cantidad,
                   image: [], // <-- Esto soluciona el error de TypeScript
                 };
               }),
@@ -739,13 +740,12 @@ function ComponenteRegistrarProductosFinal({
         <Divider>Listado de Productos</Divider>
         <div className="overflow-auto mb-4" style={{ maxHeight: "350px" }}>
           <Row gutter={1} style={{ minWidth: "1200px", margin: "auto" }}>
-            <Col span={5}>Descripción</Col>
+            <Col span={7}>Descripción</Col>
             <Col span={2}>Marca</Col>
             <Col span={2}>Modelo</Col>
             <Col span={2}>Medida</Col>
             <Col span={2}>Dimensión</Col>
             <Col span={2}>Categoría</Col>
-            <Col span={2}>Serie</Col>
             <Col span={2}>Cantidad</Col>
             <Col span={2}>Precio</Col>
             <Col span={1}>Series</Col>
@@ -761,12 +761,12 @@ function ComponenteRegistrarProductosFinal({
                 <div style={{ marginTop: 16 }}>
                   {field.state.value.map((p, i) => {
                     const totalCantidad = p.serie.reduce(
-                      (acc, serie) => acc + serie.cantidad,
+                      (acc, s) => acc + (Number(s.cantidad) || 0),
                       0,
                     );
                     return (
                       <Row
-                        gutter={1}
+                        gutter={2}
                         key={i}
                         style={{
                           minWidth: "1200px",
@@ -774,7 +774,7 @@ function ComponenteRegistrarProductosFinal({
                           marginBottom: 10,
                         }}
                       >
-                        <Col span={5}>
+                        <Col span={7}>
                           <Text ellipsis={{ tooltip: p.name }}>{p.name}</Text>
                         </Col>
                         <Col span={2}>
@@ -799,9 +799,6 @@ function ComponenteRegistrarProductosFinal({
                           <Text ellipsis={{ tooltip: p.categoria }}>
                             {p.categoria}
                           </Text>
-                        </Col>
-                        <Col span={2}>
-                          {/* <Text ellipsis={{ tooltip: p.serie }}>{p.serie}</Text> */}
                         </Col>
                         <Col span={2}>{totalCantidad}</Col>
                         <Col span={2}>{p.valor}</Col>

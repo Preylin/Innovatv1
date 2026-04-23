@@ -68,9 +68,9 @@ async def crear_ingreso_mercaderia(
                     categoria=producto.categoria,
                     ubicacion=producto.ubicacion,
                     valor=producto.valor,
-                    cantidad=1, # Al aplanar por serie, cada fila representa 1 unidad
                     # Dato de la serie e imagen
                     serie=serie_item.get("codigo"),
+                    cantidad=serie_item.get("cantidad"),
                     image_byte=img_bytes
                 )
                 resultado_db.append(nuevo_registro)
