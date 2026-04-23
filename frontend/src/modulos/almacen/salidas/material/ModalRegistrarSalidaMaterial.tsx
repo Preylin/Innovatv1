@@ -1,4 +1,4 @@
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import {
   App,
   Button,
@@ -12,13 +12,11 @@ import {
   Modal,
   Row,
   Select,
-  Space,
   Typography,
 } from "antd";
 import dayjs from "dayjs";
 import { useMemo, useState } from "react";
 import z from "zod";
-import ButtonUpdate from "../../../../components/molecules/botons/BottonUpdate";
 import ButtonDelete from "../../../../components/molecules/botons/BottonDelete";
 import FormUploadImage from "../../../../components/molecules/upload/UploadImage";
 import { FieldWrapper } from "../../../../helpers/FieldWrapperForm";
@@ -98,84 +96,84 @@ interface Detalle {
   image_byte: string;
 }
 
-// Representa el agrupamiento interno: la llave es el string de la serie
-type SeriesMap = Record<string, Detalle[]>;
+// Estructura mejorada para el Map
+type ProductoMap = Map<string, ProductoAgrupado>;
 
 interface ProductoAgrupado {
   name: string;
-  series: SeriesMap;
+  series: Map<string, Detalle[]>; // Series también como Map para acceso rápido
 }
 
 interface ModalProps {
   open: boolean;
   onClose: () => void;
   onSave: (producto: ProductoType) => void;
-  initialValues?: ProductoType | null; // Null para creación
+  dataStock: any[];
+  productosYaSeleccionados: any[];
 }
 
 function ModalProductoMaterial({
   open,
   onClose,
   onSave,
-  initialValues,
+  productosYaSeleccionados,
+  dataStock,
 }: ModalProps) {
-  const [cantidadMax, setCantidadMax] = useState<number>(0);
   const createMercaderia = useToggle();
-  const { data: data2 } = useCatalogoStockDetalladoMaterialList();
 
-  const productosAgrupados = useMemo(() => {
-    if (!data2) return {};
+  // 1. Agrupación de datos con cálculo de stock disponible
+  const productosMap = useMemo(() => {
+    const map: ProductoMap = new Map();
 
-    const inicial: Record<string, ProductoAgrupado> = {};
+    dataStock.forEach((item) => {
+      // 1. Calcular cuánto se ha usado ya en el carrito
+      const cantidadEnCarrito = productosYaSeleccionados
+        .filter((p) => {
+          // IMPORTANTE: Usa uuid_material (o el que guardes en el formulario)
+          const esMismoLote = p.uuid_material === item.uuid_registro;
 
-    return data2.reduce((acc, item) => {
-      const { codigo, name, serie } = item;
+          return esMismoLote;
+        })
+        .reduce((sum, curr) => sum + curr.cantidad, 0);
 
-      const nuevoDetalle: Detalle = {
-        codigo: item.codigo,
-        uuid_registro: item.uuid_registro,
-        marca: item.marca,
-        modelo: item.modelo,
-        medida: item.medida,
-        dimension: item.dimension,
-        tipo: item.tipo,
-        cantidad: item.stock_actual,
-        valor: item.valor,
-        moneda: item.moneda,
-        fecha_ingreso: item.fecha_ingreso,
-        image_byte: item.image_byte,
-      };
+      // 2. Stock real para el usuario
+      const stockDisponible = item.stock_actual - cantidadEnCarrito;
 
-      // 1. Inicializar el grupo por Nombre
-      if (!acc[codigo]) {
-        acc[codigo] = {
-          name: name,
-          series: {
-            [serie]: [nuevoDetalle],
-          },
-        };
-      } else {
-        // 2. Inicializar o agregar al grupo por Serie
-        if (!acc[codigo].series[serie]) {
-          acc[codigo].series[serie] = [nuevoDetalle];
-        } else {
-          acc[codigo].series[serie].push(nuevoDetalle);
-        }
+      // 4. Agrupación en el Map (Tu lógica actual corregida)
+      if (!map.has(item.codigo)) {
+        map.set(item.codigo, {
+          name: item.name,
+          series: new Map(),
+        });
       }
 
-      return acc;
-    }, inicial);
-  }, [data2]); // Solo se recalcula si data2 cambia
+      const producto = map.get(item.codigo)!;
 
+      if (!producto.series.has(item.serie)) {
+        producto.series.set(item.serie, []);
+      }
+
+      producto.series.get(item.serie)!.push({
+        ...item,
+        uuid_registro: item.uuid_registro,
+        cantidad: stockDisponible, // Este es el valor que consumirá el 'max' del InputNumber
+        valor: item.valor || 0,
+      });
+    });
+
+    return map;
+  }, [dataStock, productosYaSeleccionados]);
+
+  // 2. Opciones para el primer selector (Productos)
   const opcionesProductos = useMemo(() => {
-    return Object.entries(productosAgrupados).map(([codigo, producto]) => ({
-      label: `${codigo} - ${producto.name}`, // Mostramos ambos para el usuario
-      value: codigo, // Usamos el código como valor único para TanStack Form
+    return Array.from(productosMap.entries()).map(([codigo, producto]) => ({
+      label: `${codigo} - ${producto.name}`,
+      value: codigo,
     }));
-  }, [productosAgrupados]);
+  }, [productosMap]);
 
   const form = useForm({
-    defaultValues: initialValues || {
+    defaultValues: {
       n_serie: "",
       uuid_material: "",
       codigo: "",
@@ -198,15 +196,27 @@ function ModalProductoMaterial({
     },
   });
 
+  const cantidadMaxDisponible = useStore(form.store, (state) => {
+    const { codigo, serie, uuid_material } = state.values;
+    if (!codigo || !serie || !uuid_material) return 0;
+
+    const variantes = productosMap.get(codigo)?.series.get(serie) || [];
+    const itemSeleccionado = variantes.find(
+      (v) => v.uuid_registro === uuid_material,
+    );
+
+    return itemSeleccionado ? itemSeleccionado.cantidad : 0;
+  });
+
   return (
     <Modal
       title={
-        <Flex justify={"space-between"} style={{ marginRight: 25 }}>
-          <Text>{initialValues ? "Editar Material" : "Nueva Material"}</Text>
-          <Text style={{ color: "#B55989" }}>
-            {cantidadMax === 0 ? "" : `Stock disponible: ${cantidadMax}`}
-          </Text>
-        </Flex>
+        <div className="flex flex-row justify-between mr-6">
+          <Text>{"Nueva Material"}</Text>
+          <h2 className="font-semibold text-xs bg-green-500 px-2 py-1 rounded-xl">
+            {cantidadMaxDisponible} en stock
+          </h2>
+        </div>
       }
       open={open}
       onOk={onClose}
@@ -265,7 +275,7 @@ function ModalProductoMaterial({
                         const codStr = codigoSeleccionado
                           ? String(codigoSeleccionado)
                           : "";
-                        const productoAgrupado = productosAgrupados[codStr];
+                        const productoAgrupado = productosMap.get(codStr);
 
                         if (productoAgrupado) {
                           // Seteamos solo lo básico del producto
@@ -285,7 +295,6 @@ function ModalProductoMaterial({
                           field.form.setFieldValue("moneda", "");
                           field.form.setFieldValue("uuid_material", "");
                           field.form.setFieldValue("image", []);
-                          setCantidadMax(0);
                         }
                       }}
                     />
@@ -301,13 +310,13 @@ function ModalProductoMaterial({
                 <form.Field name="serie">
                   {(field) => {
                     const seriesDisponibles =
-                      productosAgrupados[codigoActual]?.series || {};
-                    const opcionesSeries = Object.keys(seriesDisponibles).map(
-                      (s) => ({
-                        label: s,
-                        value: s,
-                      }),
-                    );
+                      productosMap.get(codigoActual)?.series || new Map();
+                    const opcionesSeries = Array.from(
+                      seriesDisponibles.keys(),
+                    ).map((s) => ({
+                      label: s,
+                      value: s,
+                    }));
 
                     return (
                       <FieldWrapper field={field}>
@@ -323,7 +332,6 @@ function ModalProductoMaterial({
                               field.handleChange(serieElegida);
                               // Limpiar hijos
                               field.form.setFieldValue("n_serie", "");
-                              setCantidadMax(0);
                             }}
                           />
                         )}
@@ -334,7 +342,6 @@ function ModalProductoMaterial({
               )}
             </form.Subscribe>
           </Col>
-
           <Col xs={10} md={5}>
             {/* Suscribimos este bloque a 'codigo' y 'serie' */}
             <form.Subscribe
@@ -344,8 +351,9 @@ function ModalProductoMaterial({
                 <form.Field name="n_serie">
                   {(field) => {
                     const variantes =
-                      productosAgrupados[codigoActual]?.series[serieActual] ||
+                      productosMap.get(codigoActual)?.series.get(serieActual) ||
                       [];
+                    [];
                     const opcionesVariantes = variantes.map((item, index) => ({
                       label: `Stock: ${item.cantidad} - Precio: ${item.moneda}${item.valor}`,
                       value: index,
@@ -358,12 +366,7 @@ function ModalProductoMaterial({
                             {...props}
                             placeholder="Material"
                             options={opcionesVariantes}
-                            // Sincronizamos el valor visual con el estado del form
-                            value={
-                              field.state.value === ""
-                                ? undefined
-                                : field.state.value
-                            }
+                            value={field.state.value || undefined}
                             disabled={variantes.length === 0}
                             onChange={(index) => {
                               const seleccionado = variantes[Number(index)];
@@ -416,8 +419,6 @@ function ModalProductoMaterial({
                                       ]
                                     : [],
                                 );
-
-                                setCantidadMax(seleccionado.cantidad);
                                 field.form.setFieldValue("cantidad", 0);
                               }
                             }}
@@ -430,6 +431,7 @@ function ModalProductoMaterial({
               )}
             </form.Subscribe>
           </Col>
+          <Col span={24}></Col>
           <Col xs={24} md={12}>
             <form.Field name="codigo">
               {(field) => (
@@ -543,7 +545,7 @@ function ModalProductoMaterial({
                       maxLength={20}
                       style={{ width: "100%" }}
                       min={0}
-                      max={cantidadMax}
+                      max={cantidadMaxDisponible}
                     />
                   )}
                 </FieldWrapper>
@@ -615,6 +617,20 @@ function ModalProductoMaterial({
   );
 }
 
+// Función helper para convertir base64 a Blob
+const dataURLtoBlob = (dataurl: string) => {
+  const arr = dataurl.split(",");
+  const mime = arr[0].match(/:(.*?);/)?.[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new Blob([u8arr], { type: mime });
+};
+
+
 function ModalRegistrarSalidaMaterial({
   open,
   onClose,
@@ -627,6 +643,7 @@ function ModalRegistrarSalidaMaterial({
   const itemModal = useToggle();
   const ModalCliente = useToggle();
   const { data: dataCliente } = useClientesListaList();
+  const { data: stockData } = useCatalogoStockDetalladoMaterialList();
 
   const opciones = useMemo(() => {
     return (
@@ -673,30 +690,44 @@ function ModalRegistrarSalidaMaterial({
     },
     validators: { onSubmit: RegistrarProductosClienteSchema },
     onSubmit: async ({ value, formApi }) => {
+      const formData = new FormData();
+
       try {
-        const payload: RegistrarSalidaMaterialCreateApiType = {
+        // 1. Preparamos el payload JSON (sin los bytes pesados de las imágenes)
+        const jsonData: RegistrarSalidaMaterialCreateApiType = {
           ...value,
-          serieNumGR: value.serieNumGR.trim() || null,
-          adicional: value.adicional.trim() || null,
-          productos: value.productos.map((p) => ({
-            uuid_material: p.uuid_material,
-            codigo: p.codigo,
-            name: p.name,
-            marca: p.marca,
-            modelo: p.modelo,
-            medida: p.medida,
-            dimension: p.dimension,
-            tipo: p.tipo,
-            serie: p.serie,
-            cantidad: p.cantidad,
-            valor: p.valor,
-            moneda: p.moneda,
-            image: p.image.map((i) => ({
-              image_byte: i.image_byte.split(",")[1] || "",
-            })),
-          })),
+          serieNumGR: value.serieNumGR?.trim() || null,
+          adicional: value.adicional?.trim() || null,
+          productos: value.productos.map((p, pIdx) => {
+            return {
+              ...p,
+              // Mapeamos las imágenes para extraerlas al FormData
+              image: p.image.map((i, iIdx) => {
+                if (i.image_byte) {
+                  // Convertimos el base64 a Blob para enviarlo como archivo real
+                  const blob = dataURLtoBlob(i.image_byte);
+
+                  // Agregamos al FormData con un nombre identificable
+                  formData.append(
+                    "files",
+                    blob,
+                    `prod_${pIdx}_img_${iIdx}.jpg`,
+                  );
+                }
+
+                // Devolvemos el objeto vacío de bytes para no inflar el JSON
+                return { image_byte: "" };
+              }),
+            };
+          }),
         };
-        await mutateAsync(payload);
+
+        // 2. Empaquetamos el JSON stringificado dentro del FormData
+        formData.append("data", JSON.stringify(jsonData));
+
+        // 3. Enviamos la mutación con el FormData
+        await mutateAsync(formData as any);
+
         message.success("Registro exitoso");
         formApi.reset();
         itemModal.setOff();
@@ -707,16 +738,30 @@ function ModalRegistrarSalidaMaterial({
           setFormErrors(err, formApi, isUsuarioField);
           if (err.kind !== "validation") message.error(err.message);
         } else {
-          message.error("Error inesperado");
+          message.error("Error inesperado al procesar la salida");
         }
       }
     },
   });
 
-  // Helper para abrir el modal en modo edición
-  const handleEditClick = (index: number) => {
-    setEditingIndex(index);
-    itemModal.toggle();
+  // Dentro de ModalRegistrarSalidaMaterial
+  const handleSaveProducto = (producto: ProductoType) => {
+    form.setFieldValue("productos", (prev) => {
+      // Usamos una copia del array actual
+      const nuevaLista = [...prev];
+
+      if (editingIndex !== null) {
+        // Caso Edición: Reemplazamos en el índice específico
+        nuevaLista[editingIndex] = producto;
+      } else {
+        // Caso Creación: Agregamos al final
+        nuevaLista.push(producto);
+      }
+      return nuevaLista;
+    });
+
+    itemModal.setOff(); // Cerrar modal
+    setEditingIndex(null); // Limpiar índice
   };
 
   return (
@@ -963,15 +1008,12 @@ function ModalRegistrarSalidaMaterial({
                         <Text ellipsis={{ tooltip: p.serie }}>{p.serie}</Text>
                       </Col>
                       <Col span={2}>{p.cantidad}</Col>
-                      <Col span={2}>{p.moneda} {p.valor}</Col>
+                      <Col span={2}>
+                        {p.moneda} {p.valor}
+                      </Col>
                       <Col span={2}>
                         <Row justify={"center"} gutter={2}>
-                          <Space size="small">
-                            <ButtonUpdate onClick={() => handleEditClick(i)} />
-                            <ButtonDelete
-                              onClick={() => field.removeValue(i)}
-                            />
-                          </Space>
+                          <ButtonDelete onClick={() => field.removeValue(i)} />
                         </Row>
                       </Col>
                     </Row>
@@ -981,27 +1023,17 @@ function ModalRegistrarSalidaMaterial({
                 {/* INTEGRACIÓN DEL MODAL DUAL */}
                 <ModalProductoMaterial
                   open={itemModal.isToggled}
-                  initialValues={
-                    editingIndex !== null
-                      ? field.state.value[editingIndex]
-                      : null
-                  }
                   onClose={() => {
                     itemModal.setOff();
                     setEditingIndex(null);
                   }}
-                  onSave={(data) => {
-                    if (editingIndex !== null) {
-                      // MODO EDICIÓN: Reemplaza el valor en la posición específica
-                      field.insertValue(editingIndex, data);
-                      field.removeValue(editingIndex + 1);
-                    } else {
-                      // MODO CREACIÓN
-                      field.pushValue(data);
-                    }
-                    itemModal.setOff();
-                    setEditingIndex(null);
-                  }}
+                  onSave={handleSaveProducto}
+                  // Pasamos una copia fresca de los datos del Map/Array para edición
+
+                  dataStock={stockData || []}
+                  productosYaSeleccionados={
+                    form.getFieldValue("productos") || []
+                  }
                 />
               </>
             )}

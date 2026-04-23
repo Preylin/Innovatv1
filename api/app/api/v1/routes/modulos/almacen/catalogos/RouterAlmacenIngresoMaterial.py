@@ -1,9 +1,10 @@
 import base64
 import binascii
+import json
 import logging
 from typing import List, Optional, Union
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,90 +16,90 @@ from app.core.deps import get_current_user
 
 logger = logging.getLogger("uvicorn.error")
 
-# ---------- HELPERS ----------
-
-def decode_base64_image(data: Union[str, list, None]) -> Optional[bytes]:
-    if not data: 
-        return None
-    
-    # Manejo de la lista que envía tu frontend
-    if isinstance(data, list) and data:
-        img_obj = data[0]
-        # Si es un objeto Pydantic o un dict
-        data = getattr(img_obj, "image_byte", img_obj.get("image_byte") if isinstance(img_obj, dict) else None)
-    
-    if not isinstance(data, str): 
-        return None
-
-    try:
-        if "base64," in data:
-            data = data.split("base64,")[1]
-        return base64.b64decode(data) # Esto retorna <bytes>
-    except (binascii.Error, ValueError):
-        return None
-    
-
-def transform_request_to_db_model_Material(request_data: RegistrarProveedorRequestMaterial) -> List[RegistroIngresoMaterialCreate]:
-    """
-    Convierte el request anidado en una lista de modelos planos 
-    compatibles con la tabla 'almacen.inventario'.
-    """
-    return [
-        RegistroIngresoMaterialCreate(
-            ruc=request_data.ruc,
-            proveedor=request_data.proveedor,
-            serieNumCP=request_data.serieNumCP,
-            serieNumGR=request_data.serieNumGR,
-            condicion=request_data.condicion,
-            fecha=request_data.fecha,
-            moneda=request_data.moneda,
-            codigo=p.codigo,
-            uuid_material=p.uuid_material,
-            name=p.name,
-            marca=p.marca,
-            modelo=p.modelo,
-            medida=p.medida,
-            dimension=p.dimension,
-            serie=p.serie,
-            cantidad=p.cantidad,
-            valor=p.valor,
-            image_byte=decode_base64_image(p.image),
-            tipo=p.tipo,
-            ubicacion=p.ubicacion
-        )
-        for p in request_data.productos
-    ]
-
 router_ingresoMaterial = APIRouter(
     prefix="/ingresoMaterial",
     tags=["ingresoMaterial"],
     dependencies=[Depends(get_current_user)],
 )
 
+
 @router_ingresoMaterial.post("", response_model=List[RegistroIngresoMaterialOut], status_code=status.HTTP_201_CREATED)
-async def crear_ingresoMaterial(data: RegistrarProveedorRequestMaterial, session: AsyncSession = Depends(get_session)):
+async def crear_ingresoMaterial(
+    data: str = Form(...),  # Recibe el JSON stringificado
+    files: List[UploadFile] = File(None),  # Recibe los archivos binarios
+    session: AsyncSession = Depends(get_session)
+):
     try:
-        # 1. Transformar datos de Pydantic a lista de diccionarios o modelos de SQLAlchemy
-        productos_validados = transform_request_to_db_model_Material(data)
-        
-        # 2. Convertir esquemas Pydantic a objetos de SQLAlchemy
-        nuevos_registros = [
-            IngresoMaterial(**p.model_dump()) for p in productos_validados
-        ]
-        
+        # 1. Parsear y validar el JSON
+        try:
+            raw_json = json.loads(data)
+            validated_data = RegistrarProveedorRequestMaterial(**raw_json)
+        except Exception as e:
+            logger.error(f"Error parseando JSON de ingreso: {str(e)}")
+            raise HTTPException(status_code=422, detail=f"Error en formato JSON: {str(e)}")
+
+        # 2. Mapear archivos binarios por nombre para búsqueda rápida
+        files_map = {}
+        if files:
+            for f in files:
+                files_map[f.filename] = await f.read()
+
+        nuevos_registros = []
+
+        # 3. Procesar productos y aplanar para la base de datos
+        for p_idx, p in enumerate(validated_data.productos):
+            
+            # Buscamos la imagen binaria usando la convención del frontend: prod_{index}_img_0.jpg
+            filename_expected = f"prod_{p_idx}_img_0.jpg"
+            img_bytes = files_map.get(filename_expected)
+
+            # Creamos el objeto de base de datos directamente
+            registro_db = IngresoMaterial(
+                ruc=validated_data.ruc,
+                proveedor=validated_data.proveedor,
+                serieNumCP=validated_data.serieNumCP,
+                serieNumGR=validated_data.serieNumGR,
+                condicion=validated_data.condicion,
+                fecha=validated_data.fecha,
+                moneda=validated_data.moneda,
+                # Datos del producto
+                uuid_material=p.uuid_material,
+                codigo=p.codigo,
+                name=p.name,
+                marca=p.marca,
+                modelo=p.modelo,
+                medida=p.medida,
+                dimension=p.dimension,
+                tipo=p.tipo,
+                serie=p.serie,
+                cantidad=p.cantidad,
+                valor=p.valor,
+                ubicacion=p.ubicacion,
+                # Asignamos los bytes binarios (si existen)
+                image_byte=img_bytes 
+            )
+            nuevos_registros.append(registro_db)
+
+        # 4. Guardar en Base de Datos
         session.add_all(nuevos_registros)
         await session.commit()
         
-        # Refrescar para obtener IDs y created_at
+        # Refrescar para obtener IDs generados y campos automáticos (created_at)
+        for r in nuevos_registros:
+            await session.refresh(r)
+
         return nuevos_registros
-        
+
     except IntegrityError as e:
         await session.rollback()
-        logger.error(f"Error de integridad: {e}")
-        raise HTTPException(status_code=400, detail="Error de integridad en la base de datos (posible RUC o Serie duplicada)")
+        logger.error(f"Error de integridad en ingreso: {e}")
+        raise HTTPException(
+            status_code=400, 
+            detail="Error de integridad: Posible duplicado de serie o documento."
+        )
     except Exception as e:
         await session.rollback()
-        logger.error(f"Error inesperado: {e}")
+        logger.error(f"Error inesperado en ingreso: {str(e)}")
         raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 @router_ingresoMaterial.get("", response_model=List[RegistroIngresoMaterialOut])

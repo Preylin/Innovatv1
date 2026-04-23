@@ -65,7 +65,7 @@ const ProductoSchema = z.object({
 export type ProductoType = z.infer<typeof ProductoSchema>;
 
 const RegistrarProductosClienteSchema = z.object({
-  ruc: z.string().min(1, "Requerido").max(50, "Máximo 11 números"),
+  ruc: z.string().min(1, "Requerido").max(11, "Máximo 11 números"),
   cliente: z.string().min(3, "Requerido"),
   serieNumGR: z.string(),
   condicion: z.string().min(1, "Requerido"),
@@ -153,7 +153,7 @@ function ModalProducto({
           cantidad: stockDisponible, // <-- Stock real para este modal
           valor: item.valor,
           moneda: item.moneda,
-          fecha_ingreso: ""
+          fecha_ingreso: "",
         });
       }
     });
@@ -340,10 +340,7 @@ function ModalProducto({
                   if (!name) return null; // No mostrar nada si no hay producto seleccionado
 
                   return (
-                    <div
-                      
-                      className="mt-4 p-3 border rounded shadow"
-                    >
+                    <div className="mt-4 p-3 border rounded shadow">
                       <Text
                         strong
                         style={{
@@ -392,9 +389,7 @@ function ModalProducto({
                     return <Empty description="Busque un producto" />;
 
                   return (
-                    <div
-                      className="p-3 border rounded shadow overflow-auto scroll-auto max-h-60 flex flex-col gap-2"
-                    >
+                    <div className="p-3 border rounded shadow overflow-auto scroll-auto max-h-60 flex flex-col gap-2">
                       {producto.variantes.map((v, index) => {
                         // Generamos un identificador único para el estado del formulario
                         const fieldName =
@@ -441,18 +436,16 @@ function ModalProducto({
                                           }
                                         />
                                         <div className="flex flex-col gap-2">
-                                          <h1
-                                            className="font-semibold text-xs dark:text-mist-900"
-                                          >
+                                          <h1 className="font-semibold text-xs dark:text-mist-900">
                                             S/N: {v.serie}
                                           </h1>
                                           <div className="flex flex-row gap-2">
                                             <Tag color="blue">
-                                            Disp: {v.cantidad}
-                                          </Tag>
-                                          <Tag color="green">
-                                            {v.moneda} {v.valor}
-                                          </Tag>
+                                              Disp: {v.cantidad}
+                                            </Tag>
+                                            <Tag color="green">
+                                              {v.moneda} {v.valor}
+                                            </Tag>
                                           </div>
                                         </div>
                                       </Flex>
@@ -460,7 +453,7 @@ function ModalProducto({
 
                                     {/* INPUT DE CANTIDAD */}
                                     <Col span={6}>
-                                      <div style={{ textAlign: "right"}}>
+                                      <div style={{ textAlign: "right" }}>
                                         <InputNumber
                                           min={0}
                                           max={v.cantidad}
@@ -550,8 +543,7 @@ function ComponenteRegistrarProductosFinal({
   const itemModal = useToggle();
   const ModalCliente = useToggle();
   const { data: dataCliente } = useClientesListaList();
-  const { data: stockData } =
-    useCatalogoStockDetalladoMercaderiaList();
+  const { data: stockData } = useCatalogoStockDetalladoMercaderiaList();
 
   const opciones = useMemo(() => {
     return (
@@ -597,53 +589,57 @@ function ComponenteRegistrarProductosFinal({
     },
     validators: { onSubmit: RegistrarProductosClienteSchema },
     onSubmit: async ({ value, formApi }) => {
-  const formData = new FormData();
+      const formData = new FormData();
 
-  try {
-    // 1. Preparamos el payload JSON (sin los bytes pesados de las imágenes)
-    const jsonData: RegistrarSalidaMercaderiaCreateApiType = {
-      ...value,
-      serieNumGR: value.serieNumGR?.trim().toUpperCase() || null,
-      adicional: value.adicional?.trim() || null,
-      productos: value.productos.map((p, pIdx) => {
-        return {
-          ...p,
-          // Mapeamos las series/productos para extraer las imágenes al FormData
-          image: p.image.map((i, iIdx) => {
-            if (i.image_byte) {
-              // Convertimos el base64 a Blob para enviarlo como archivo real
-              const blob = dataURLtoBlob(i.image_byte);
-              // Nombre único para identificarlo en el backend si es necesario
-              formData.append("files", blob, `prod_${pIdx}_img_${iIdx}.jpg`);
-            }
-            
-            // Devolvemos el objeto de imagen vacío de bytes para el JSON
-            // Esto mantiene la estructura que espera tu Tipo/Zod sin saturar el payload
-            return { image_byte: "" }; 
+      try {
+        // 1. Preparamos el payload JSON (sin los bytes pesados de las imágenes)
+        const jsonData: RegistrarSalidaMercaderiaCreateApiType = {
+          ...value,
+          serieNumGR: value.serieNumGR?.trim().toUpperCase() || null,
+          adicional: value.adicional?.trim() || null,
+          productos: value.productos.map((p, pIdx) => {
+            return {
+              ...p,
+              // Mapeamos las series/productos para extraer las imágenes al FormData
+              image: p.image.map((i, iIdx) => {
+                if (i.image_byte) {
+                  // Convertimos el base64 a Blob para enviarlo como archivo real
+                  const blob = dataURLtoBlob(i.image_byte);
+                  // Nombre único para identificarlo en el backend si es necesario
+                  formData.append(
+                    "files",
+                    blob,
+                    `prod_${pIdx}_img_${iIdx}.jpg`,
+                  );
+                }
+
+                // Devolvemos el objeto de imagen vacío de bytes para el JSON
+                // Esto mantiene la estructura que espera tu Tipo/Zod sin saturar el payload
+                return { image_byte: "" };
+              }),
+            };
           }),
         };
-      }),
-    };
 
-    // 2. Empaquetamos todo en el FormData
-    formData.append("data", JSON.stringify(jsonData));
+        // 2. Empaquetamos todo en el FormData
+        formData.append("data", JSON.stringify(jsonData));
 
-    // 3. Enviamos la mutación (asegúrate que el backend espere multipart/form-data)
-    await mutateAsync(formData as any);
+        // 3. Enviamos la mutación (asegúrate que el backend espere multipart/form-data)
+        await mutateAsync(formData as any);
 
-    message.success("Registro exitoso");
-    formApi.reset();
-    itemModal.setOff();
-    onClose();
-  } catch (err) {
-    if (err instanceof ApiError) {
-      setFormErrors(err, formApi, isUsuarioField);
-      if (err.kind !== "validation") message.error(err.message);
-    } else {
-      message.error("Error inesperado al procesar la salida");
-    }
-  }
-},
+        message.success("Registro exitoso");
+        formApi.reset();
+        itemModal.setOff();
+        onClose();
+      } catch (err) {
+        if (err instanceof ApiError) {
+          setFormErrors(err, formApi, isUsuarioField);
+          if (err.kind !== "validation") message.error(err.message);
+        } else {
+          message.error("Error inesperado al procesar la salida");
+        }
+      }
+    },
   });
 
   return (
@@ -938,7 +934,6 @@ function ComponenteRegistrarProductosFinal({
               </Button>
             )}
           </form.Subscribe>
-          
         </Flex>
       </form>
     </Modal>

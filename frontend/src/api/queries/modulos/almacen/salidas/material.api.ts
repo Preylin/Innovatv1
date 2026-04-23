@@ -2,9 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createQuery } from "../../../../query/createQuery";
 import api from "../../../../client";
 import type { ApiError } from "../../../../normalizeError";
-import { createMutation } from "../../../../query/createMutation";
 import { createDeleteMutation } from "../../../../query/createDeleteMutation";
-import { RegistrarSalidaMaterialCreateApiSchema, RegistrarSalidaMaterialOutApiSchema, type RegistrarSalidaMaterialCreateApiType, type RegistrarSalidaMaterialOutApiType } from "./material.api.schema";
+import { RegistrarSalidaMaterialOutApiSchema, type RegistrarSalidaMaterialOutApiType } from "./material.api.schema";
 
 
 export function useCatalogoSalidaMaterialList() {
@@ -21,16 +20,24 @@ export function useCreateSalidaMaterial() {
   const qc = useQueryClient();
 
   return useMutation<
-    RegistrarSalidaMaterialOutApiType[],
-    ApiError,
-    RegistrarSalidaMaterialCreateApiType
+    RegistrarSalidaMaterialOutApiType[], // Tipo de respuesta exitosa
+    ApiError,                            // Tipo de error
+    FormData                             // El nuevo tipo de entrada
   >({
-    mutationFn: createMutation({
-      request: (payload) => api.post("/salidaMaterial", payload),
-      inputSchema: RegistrarSalidaMaterialCreateApiSchema,
-      outputSchema: RegistrarSalidaMaterialOutApiSchema.array(),
-    }),
+    mutationFn: async (formData: FormData) => {
+      // Enviamos el FormData directamente
+      const response = await api.post("/salidaMaterial", formData, {
+        headers: {
+          // Importante para el manejo de archivos
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      // Validamos y devolvemos la respuesta usando el esquema de salida existente
+      return RegistrarSalidaMaterialOutApiSchema.array().parse(response.data);
+    },
     onSuccess: () => {
+      // Refrescamos los datos de materiales
       qc.invalidateQueries({ queryKey: ["salidaMaterial"] });
     },
   });

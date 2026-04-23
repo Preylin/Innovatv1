@@ -443,6 +443,20 @@ function ModalProductoMaterial({
   );
 }
 
+
+// Función helper para convertir base64 a Blob
+const dataURLtoBlob = (dataurl: string) => {
+  const arr = dataurl.split(",");
+  const mime = arr[0].match(/:(.*?);/)?.[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new Blob([u8arr], { type: mime });
+};
+
 function ModalRegistrarIngresoMaterial({
   open,
   onClose,
@@ -506,33 +520,61 @@ function ModalRegistrarIngresoMaterial({
     },
     validators: { onSubmit: RegistrarProductosProveedorSchema },
     onSubmit: async ({ value, formApi }) => {
-      try {
-        const payload: RegistrarIngresoMaterialCreateApiType = {
-          ...value,
-          serieNumCP: value.serieNumCP.trim() || null,
-          serieNumGR: value.serieNumGR.trim() || null,
-          productos: value.productos.map((p) => ({
-            ...p,
-            image: p.image.map((i) => ({
-              image_byte: i.image_byte.split(",")[1] || "",
-            })),
-          })),
+  const formData = new FormData();
+
+  try {
+    // 1. Preparamos el payload JSON limpio (sin los strings base64 pesados)
+    const jsonData: RegistrarIngresoMaterialCreateApiType = {
+      ...value,
+      // Limpieza de strings
+      serieNumCP: value.serieNumCP?.trim() || null,
+      serieNumGR: value.serieNumGR?.trim() || null,
+      // Procesamiento de productos e imágenes
+      productos: value.productos.map((p, pIdx) => {
+        return {
+          ...p,
+          image: p.image.map((i, iIdx) => {
+            if (i.image_byte) {
+              // Convertimos el base64 a Blob real
+              const blob = dataURLtoBlob(i.image_byte);
+              
+              // Agregamos al FormData. Usamos una nomenclatura consistente
+              // para que el backend pueda identificar de qué producto es la imagen.
+              formData.append(
+                "files", 
+                blob, 
+                `prod_${pIdx}_img_${iIdx}.jpg`
+              );
+            }
+
+            // Devolvemos el campo vacío en el JSON para mantener la estructura
+            return { image_byte: "" };
+          }),
         };
-        await mutateAsync(payload);
-        message.success("Registro exitoso");
-        formApi.reset();
-        itemModal.setOff();
-        setEditingIndex(null);
-        onClose();
-      } catch (err) {
-        if (err instanceof ApiError) {
-          setFormErrors(err, formApi, isUsuarioField);
-          if (err.kind !== "validation") message.error(err.message);
-        } else {
-          message.error("Error inesperado");
-        }
-      }
-    },
+      }),
+    };
+
+    // 2. Agregamos el JSON stringificado al FormData
+    formData.append("data", JSON.stringify(jsonData));
+
+    // 3. Ejecutamos la mutación enviando el FormData
+    // Asegúrate de que el hook 'useCreateIngresoMaterial' acepte FormData (como el ejemplo anterior)
+    await mutateAsync(formData as any);
+
+    message.success("Registro exitoso");
+    formApi.reset();
+    itemModal.setOff();
+    setEditingIndex(null);
+    onClose();
+  } catch (err) {
+    if (err instanceof ApiError) {
+      setFormErrors(err, formApi, isUsuarioField);
+      if (err.kind !== "validation") message.error(err.message);
+    } else {
+      message.error("Error inesperado al registrar el ingreso");
+    }
+  }
+},
   });
 
   // Helper para abrir el modal en modo edición

@@ -202,8 +202,8 @@ export function ModalProducto({
         <div className="flex flex-col lg:flex-row gap-2">
           {/* COLUMNA IZQUIERDA: DATOS GENERALES */}
           <div className="w-full lg:w-2/3 space-y-2 bg-mist-100 p-4 rounded-xl border border-gray-200">
-            <div className="flex gap-4">
-              <div className="flex-1">
+            <div className="flex flex-row gap-4 w-full">
+              <div className="overflow-auto">
                 <form.Field name="name">
                   {(field) => (
                     <Form.Item
@@ -326,7 +326,7 @@ export function ModalProducto({
                 </div>
               </div>
 
-              {/* Imagen Principal Previsualización */}
+                {/* Imagen Principal Previsualización */}
               <form.Field name="image">
                 {(field) => (
                   <div className="mt-8">

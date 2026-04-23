@@ -2,9 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createQuery } from "../../../../query/createQuery";
 import api from "../../../../client";
 import type { ApiError } from "../../../../normalizeError";
-import { createMutation } from "../../../../query/createMutation";
 import { createDeleteMutation } from "../../../../query/createDeleteMutation";
-import { RegistrarIngresoMaterialCreateApiSchema, RegistrarIngresoMaterialOutApiSchema, StockActualDetalladoMaterialOutApiSchema, StockActualLimiteMaterial, type RegistrarIngresoMaterialCreateApiType, type RegistrarIngresoMaterialOutApiType } from "./material.api.schema";
+import {RegistrarIngresoMaterialOutApiSchema, StockActualDetalladoMaterialOutApiSchema, StockActualLimiteMaterial, type RegistrarIngresoMaterialOutApiType } from "./material.api.schema";
 
 
 export function useCatalogoIngresoMaterialList() {
@@ -41,16 +40,24 @@ export function useCreateIngresoMaterial() {
   const qc = useQueryClient();
 
   return useMutation<
-    RegistrarIngresoMaterialOutApiType[],
-    ApiError,
-    RegistrarIngresoMaterialCreateApiType
+    RegistrarIngresoMaterialOutApiType[], // Tipo de respuesta del servidor
+    ApiError,                             // Tipo de error
+    FormData                              // Nuevo tipo de entrada (en lugar del objeto JSON)
   >({
-    mutationFn: createMutation({
-      request: (payload) => api.post("/ingresoMaterial", payload),
-      inputSchema: RegistrarIngresoMaterialCreateApiSchema,
-      outputSchema: RegistrarIngresoMaterialOutApiSchema.array(),
-    }),
+    mutationFn: async (formData: FormData) => {
+      // Realizamos el envío manual vía 'api' (axios)
+      const response = await api.post("/ingresoMaterial", formData, {
+        headers: {
+          // Obligamos al navegador a tratarlo como envío de archivos
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      // Validamos que la respuesta cumpla con el esquema esperado
+      return RegistrarIngresoMaterialOutApiSchema.array().parse(response.data);
+    },
     onSuccess: () => {
+      // Invalida la caché para refrescar la lista de ingresos
       qc.invalidateQueries({ queryKey: ["ingresoMaterial"] });
     },
   });
