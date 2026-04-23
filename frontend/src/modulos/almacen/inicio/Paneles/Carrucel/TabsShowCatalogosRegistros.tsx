@@ -175,10 +175,10 @@ export function CarrucelProductos() {
 }
 export function PanelCarucelProductosTerminarStock() {
   return (
-    <div className="md:col-span-2 md:col-start-5 flex flex-col gap-4 overflow-hidden min-h-[600px]">
+    <div className="md:col-span-2 md:col-start-5 flex flex-col gap-4 overflow-hidden min-h-150">
       <div className="flex flex-row gap-4 justify-center items-center">
         <RiAlarmWarningFill  style={{color:"red", fontSize: "1.3rem"}} className="animate-pulse"/>
-        <h1 style={{ fontSize: "1.2rem", fontWeight: "bold"}}>Recordatorio </h1>
+        <h1 style={{ fontSize: "1.2rem", fontWeight: "bold"}} className="dark: text-mist-300">Recordatorio </h1>
       </div>
       <div className="overflow-auto scroll-auto w-full">
         <CarrucelProductos />

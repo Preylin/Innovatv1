@@ -1,14 +1,8 @@
-import { Input } from "antd";
+import { Button, Input, InputNumber } from "antd";
 import type { ChangeEvent } from "react";
 import { CiSquarePlus } from "react-icons/ci";
 
-export const SerieItem = ({
-  index,
-  form,
-}: {
-  index: number;
-  form: any;
-}) => {
+export const SerieItem = ({ index, form }: { index: number; form: any }) => {
   const handleImage = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -25,7 +19,18 @@ export const SerieItem = ({
 
   return (
     <div className="group flex items-center gap-2 p-2 bg-white border border-gray-200 rounded-md mb-2 hover:border-mist-400 transition-all shadow-sm">
-      <div className="flex-1">
+      <div className="flex-1 flex flex-row gap-1">
+        <form.Field name={`serie[${index}].cantidad`}>
+          {(field: any) => (
+            <InputNumber
+              value={field.state.value}
+              onChange={(val) => field.handleChange(val)} // 'val' es el número directamente
+              placeholder="Cantidad"
+              className="w-full rounded-lg"
+              status={field.state.meta.errors.length > 0 ? "error" : ""}
+            />
+          )}
+        </form.Field>
         <form.Field name={`serie[${index}].codigo`}>
           {(field: any) => (
             <Input
@@ -71,6 +76,14 @@ export const SerieItem = ({
           )}
         </form.Field>
       </div>
+      <Button
+        danger
+        type="text"
+        onClick={() => form.removeFieldValue("serie", index)}
+        style={{padding:"6px"}}
+      >
+        x
+      </Button>
     </div>
   );
 };

@@ -54,7 +54,7 @@ function TotalesMercaderia() {
 
   return (
     <div className="grid grid-cols-1 gap-2">
-      <h1 className="flex items-center justify-center font-bold text-xs md:text-lg">MERCADERÍA</h1>
+      <h1 className="flex items-center justify-center font-bold text-xs md:text-lg dark:text-mist-300">MERCADERÍA</h1>
       <div className="grid grid-cols-1 gap-3">
         <Card
         hoverable
@@ -125,7 +125,7 @@ function TotalesMaterial() {
 
   return (
     <div className="grid grid-cols-1 gap-2">
-      <h1 className="flex items-center justify-center font-bold text-xs md:text-lg">MATERIALES</h1>
+      <h1 className="flex items-center justify-center font-bold text-xs md:text-lg dark:text-mist-300">MATERIALES</h1>
       <div className="grid grid-cols-1 gap-3">
         <Card
         hoverable

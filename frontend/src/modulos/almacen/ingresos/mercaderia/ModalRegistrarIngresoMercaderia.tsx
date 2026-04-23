@@ -1,4 +1,4 @@
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm } from "@tanstack/react-form";
 import {
   App,
   Button,
@@ -17,7 +17,7 @@ import {
   Typography,
 } from "antd";
 import dayjs from "dayjs";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import z from "zod";
 import ButtonUpdate from "../../../../components/molecules/botons/BottonUpdate";
 import ButtonDelete from "../../../../components/molecules/botons/BottonDelete";
@@ -39,6 +39,7 @@ import { SerieItem } from "../../../../components/molecules/upload/arrayCompuest
 const { Text } = Typography;
 
 const ItemsSeries = z.object({
+  cantidad: z.number().min(1, "Requerido"),
   codigo: z.string().min(3, "Requerido"),
   image: z
     .array(
@@ -153,28 +154,6 @@ export function ModalProducto({
     },
   });
 
-  // 1. Obtenemos el valor de cantidad suscribiéndonos solo a ese campo
-  const cantidadActual = useStore(form.store, (state) => state.values.cantidad); // 2. Efecto para ajustar el array de series
-  useEffect(() => {
-    const currentSeries = form.getFieldValue("serie") || [];
-    const targetCount = Number(cantidadActual) || 0;
-
-    if (currentSeries.length === targetCount) return;
-
-    if (currentSeries.length < targetCount) {
-      const diff = targetCount - currentSeries.length;
-      for (let i = 0; i < diff; i++) {
-        form.pushFieldValue("serie", { codigo: "", image: [] });
-      }
-    } else {
-      const diff = currentSeries.length - targetCount;
-      for (let i = 0; i < diff; i++) {
-        // Eliminamos desde el final
-        form.removeFieldValue("serie", form.getFieldValue("serie").length - 1);
-      }
-    }
-  }, [cantidadActual, form]);
-
   return (
     <Modal
       title={
@@ -201,14 +180,14 @@ export function ModalProducto({
       >
         <div className="flex flex-col lg:flex-row gap-2">
           {/* COLUMNA IZQUIERDA: DATOS GENERALES */}
-          <div className="w-full lg:w-2/3 space-y-2 bg-mist-100 p-4 rounded-xl border border-gray-200">
+          <div className="w-full lg:w-3/5 space-y-2 bg-mist-100 p-4 rounded-xl border border-gray-200">
             <div className="flex flex-row gap-4 w-full">
-              <div className="overflow-auto">
+              <div className="overflow-auto p-0.5">
                 <form.Field name="name">
                   {(field) => (
                     <Form.Item
                       label={
-                        <span className="font-semibold dark:text-mist-900">
+                        <span className="font-semibold dark:text-mist-900 text-base">
                           Producto / Mercadería
                         </span>
                       }
@@ -255,78 +234,62 @@ export function ModalProducto({
                     </Form.Item>
                   )}
                 </form.Field>
-                <div className="grid grid-cols-3 gap-4">
-                  <form.Field name="cantidad">
-                    {(field) => (
-                      <Form.Item
-                        label={
-                          <span className="font-semibold dark:text-mist-900">
-                            Cantidad
-                          </span>
-                        }
-                        layout="vertical"
-                      >
-                        <FieldWrapper field={field}>
-                          {(props) => (
-                            <InputNumber
-                              {...props}
-                              placeholder="Cantidad"
-                              type={"number"}
-                              min={0}
-                              maxLength={20}
-                              style={{ width: "100%" }}
-                            />
-                          )}
-                        </FieldWrapper>
-                      </Form.Item>
-                    )}
-                  </form.Field>
-
-                  <form.Field name="valor">
-                    {(field) => (
-                      <Form.Item label={
-                          <span className="font-semibold dark:text-mist-900">
-                            Valor
-                          </span>
-                        } layout="vertical">
-                        <FieldWrapper field={field}>
-                          {(props) => (
-                            <InputNumber
-                              {...props}
-                              placeholder="Valor unitario"
-                              type={"number"}
-                              min={0}
-                              maxLength={20}
-                              style={{ width: "100%" }}
-                            />
-                          )}
-                        </FieldWrapper>
-                      </Form.Item>
-                    )}
-                  </form.Field>
-                  <form.Field name="ubicacion">
-                    {(field) => (
-                      <Form.Item label={
-                          <span className="font-semibold dark:text-mist-900">
-                            Ubicación
-                          </span>
-                        } layout="vertical">
-                        <FieldWrapper field={field}>
-                          {(props) => (
-                            <Input
-                              {...props}
-                              placeholder="Ubicación del producto"
-                              allowClear
-                            />
-                          )}
-                        </FieldWrapper>
-                      </Form.Item>
-                    )}
-                  </form.Field>
+                <div className="grid grid-cols-3 gap-4 p-0.5">
+                  <div>
+                    <form.Field name="valor">
+                      {(field) => (
+                        <Form.Item
+                          label={
+                            <span className="font-semibold dark:text-mist-900">
+                              Valor unitario
+                            </span>
+                          }
+                          layout="vertical"
+                        >
+                          <FieldWrapper field={field}>
+                            {(props) => (
+                              <InputNumber
+                                {...props}
+                                placeholder="Valor unitario"
+                                type={"number"}
+                                min={0}
+                                maxLength={20}
+                                style={{ width: "100%" }}
+                              />
+                            )}
+                          </FieldWrapper>
+                        </Form.Item>
+                      )}
+                    </form.Field>
+                  </div>
+                  <div className="col-span-2">
+                    <form.Field name="ubicacion">
+                      {(field) => (
+                        <Form.Item
+                          label={
+                            <span className="font-semibold dark:text-mist-900">
+                              Ubicación
+                            </span>
+                          }
+                          layout="vertical"
+                        >
+                          <FieldWrapper field={field}>
+                            {(props) => (
+                              <Input
+                                {...props}
+                                placeholder="Ubicación del producto"
+                                allowClear
+                              />
+                            )}
+                          </FieldWrapper>
+                        </Form.Item>
+                      )}
+                    </form.Field>
+                  </div>
                 </div>
               </div>
 
-                {/* Imagen Principal Previsualización */}
+              {/* Imagen Principal Previsualización */}
               <form.Field name="image">
                 {(field) => (
                   <div className="mt-8">
@@ -342,7 +305,7 @@ export function ModalProducto({
               </form.Field>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {/* Campos de solo lectura o informativos que vienen del catálogo */}
               {[
                 { n: "codigo", l: "Código" },
@@ -369,17 +332,27 @@ export function ModalProducto({
           </div>
 
           {/* COLUMNA DERECHA: LISTA DE SERIES */}
-          <div className="w-full lg:w-1/3 flex flex-col bg-gray-50 p-2 rounded-xl border border-gray-200">
+          <div className="w-full lg:w-2/5 flex flex-col bg-gray-50 p-2 rounded-xl border border-gray-200">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-800 px-1">
-                Series Requeridas
+              <h3 className="text-base font-semibold text-gray-800 px-1">
+                Cantidad y series del producto
               </h3>
-              <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold">
-                {cantidadActual || 0} unidades
-              </span>
+              <Button
+                type="dashed"
+                icon={<div>+</div>} // Opcional: agrega el icono también aquí
+                onClick={() => {
+                  form.pushFieldValue("serie", {
+                    cantidad: 1,
+                    codigo: "",
+                    image: [],
+                  });
+                }}
+              >
+                Agregar Serie
+              </Button>
             </div>
 
-            <div className="flex-1 overflow-auto scroll-auto max-h-70">
+            <div className="flex-1 overflow-auto scroll-auto max-h-90">
               <form.Field name="serie" mode="array">
                 {(field) => (
                   <>
@@ -395,12 +368,11 @@ export function ModalProducto({
                       </div>
                     ))}
 
-                    {(!cantidadActual || cantidadActual === 0) && (
+                    {field.state.value.length === 0 && (
                       <div className="text-center py-20 text-gray-400 border-2 border-dashed rounded-xl">
                         <p className="text-sm">
-                          Define una cantidad para
-                          <br />
-                          generar las series.
+                          Presiona "Agregar Serie" para comenzar
+                          <br />o define una cantidad.
                         </p>
                       </div>
                     )}
@@ -787,56 +759,68 @@ function ComponenteRegistrarProductosFinal({
             {(field) => (
               <>
                 <div style={{ marginTop: 16 }}>
-                  {field.state.value.map((p, i) => (
-                    <Row
-                      gutter={1}
-                      key={i}
-                      style={{
-                        minWidth: "1200px",
-                        margin: "auto",
-                        marginBottom: 10,
-                      }}
-                    >
-                      <Col span={5}>
-                        <Text ellipsis={{ tooltip: p.name }}>{p.name}</Text>
-                      </Col>
-                      <Col span={2}>
-                        <Text ellipsis={{ tooltip: p.marca }}>{p.marca}</Text>
-                      </Col>
-                      <Col span={2}>
-                        <Text ellipsis={{ tooltip: p.modelo }}>{p.modelo}</Text>
-                      </Col>
-                      <Col span={2}>
-                        <Text ellipsis={{ tooltip: p.medida }}>{p.medida}</Text>
-                      </Col>
-                      <Col span={2}>
-                        <Text ellipsis={{ tooltip: p.dimension }}>
-                          {p.dimension}
-                        </Text>
-                      </Col>
-                      <Col span={2}>
-                        <Text ellipsis={{ tooltip: p.categoria }}>
-                          {p.categoria}
-                        </Text>
-                      </Col>
-                      <Col span={2}>
-                        {/* <Text ellipsis={{ tooltip: p.serie }}>{p.serie}</Text> */}
-                      </Col>
-                      <Col span={2}>{p.cantidad}</Col>
-                      <Col span={2}>{p.valor}</Col>
-                      <Col span={1}>{p.serie.length}</Col>
-                      <Col span={2}>
-                        <Row justify={"center"} gutter={2}>
-                          <Space size="small">
-                            <ButtonUpdate onClick={() => handleEditClick(i)} />
-                            <ButtonDelete
-                              onClick={() => field.removeValue(i)}
-                            />
-                          </Space>
-                        </Row>
-                      </Col>
-                    </Row>
-                  ))}
+                  {field.state.value.map((p, i) => {
+                    const totalCantidad = p.serie.reduce(
+                      (acc, serie) => acc + serie.cantidad,
+                      0,
+                    );
+                    return (
+                      <Row
+                        gutter={1}
+                        key={i}
+                        style={{
+                          minWidth: "1200px",
+                          margin: "auto",
+                          marginBottom: 10,
+                        }}
+                      >
+                        <Col span={5}>
+                          <Text ellipsis={{ tooltip: p.name }}>{p.name}</Text>
+                        </Col>
+                        <Col span={2}>
+                          <Text ellipsis={{ tooltip: p.marca }}>{p.marca}</Text>
+                        </Col>
+                        <Col span={2}>
+                          <Text ellipsis={{ tooltip: p.modelo }}>
+                            {p.modelo}
+                          </Text>
+                        </Col>
+                        <Col span={2}>
+                          <Text ellipsis={{ tooltip: p.medida }}>
+                            {p.medida}
+                          </Text>
+                        </Col>
+                        <Col span={2}>
+                          <Text ellipsis={{ tooltip: p.dimension }}>
+                            {p.dimension}
+                          </Text>
+                        </Col>
+                        <Col span={2}>
+                          <Text ellipsis={{ tooltip: p.categoria }}>
+                            {p.categoria}
+                          </Text>
+                        </Col>
+                        <Col span={2}>
+                          {/* <Text ellipsis={{ tooltip: p.serie }}>{p.serie}</Text> */}
+                        </Col>
+                        <Col span={2}>{totalCantidad}</Col>
+                        <Col span={2}>{p.valor}</Col>
+                        <Col span={1}>{p.serie.length}</Col>
+                        <Col span={2}>
+                          <Row justify={"center"} gutter={2}>
+                            <Space size="small">
+                              <ButtonUpdate
+                                onClick={() => handleEditClick(i)}
+                              />
+                              <ButtonDelete
+                                onClick={() => field.removeValue(i)}
+                              />
+                            </Space>
+                          </Row>
+                        </Col>
+                      </Row>
+                    );
+                  })}
                 </div>
 
                 {/* INTEGRACIÓN DEL MODAL DUAL */}
