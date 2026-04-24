@@ -1,4 +1,4 @@
-import { Button, Input, InputNumber } from "antd";
+import { Button, Image, Input, InputNumber } from "antd";
 import type { ChangeEvent } from "react";
 import { CiSquarePlus } from "react-icons/ci";
 
@@ -61,7 +61,7 @@ export const SerieItem = ({ index, form }: { index: number; form: any }) => {
 
               <div className="w-10 h-10 rounded border overflow-hidden bg-white flex items-center justify-center">
                 {field.state.value?.[0]?.image_byte ? (
-                  <img
+                  <Image
                     src={field.state.value[0].image_byte}
                     className="w-full h-full object-cover"
                     alt="S"

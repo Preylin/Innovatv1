@@ -1,4 +1,4 @@
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import {
   App,
   Button,
@@ -63,7 +63,7 @@ const ProductoSchema = z.object({
   categoria: z.string().min(3, "Requerido"),
   serie: z.array(ItemsSeries).min(1, "Requerido"),
   cantidad: z.number().min(0, "Requerido"),
-  valor: z.number().min(0, "Requerido"),
+  valor: z.number().min(0.0001, "Requerido"),
   image: z.array(
     z.object({
       image_byte: z.string(),
@@ -154,6 +154,8 @@ export function ModalProducto({
     },
   });
 
+  const ImagenActual = useStore(form.store, (state) => state.values.image);
+
   return (
     <Modal
       title={
@@ -206,7 +208,16 @@ export function ModalProducto({
                             (c) => c.name === stringVal,
                           );
                           if (select) {
-                            // Autocompletado masivo
+                            const nuevaImagen = select.imagen1
+                              ? [
+                                  {
+                                    image_byte: getBase64WithPrefix(
+                                      select.imagen1,
+                                    ),
+                                  },
+                                ]
+                              : [];
+                              form.setFieldValue("image", nuevaImagen);
                             form.setFieldValue("codigo", select.codigo || "");
                             form.setFieldValue("marca", select.marca || "");
                             form.setFieldValue("modelo", select.modelo || "");
@@ -219,15 +230,7 @@ export function ModalProducto({
                               "categoria",
                               select.categoria || "",
                             );
-                            if (select.imagen1) {
-                              form.setFieldValue("image", [
-                                {
-                                  image_byte: getBase64WithPrefix(
-                                    select.imagen1,
-                                  ),
-                                },
-                              ]);
-                            }
+                            
                           }
                         }}
                       />
@@ -339,12 +342,17 @@ export function ModalProducto({
               </h3>
               <Button
                 type="dashed"
-                icon={<div>+</div>} // Opcional: agrega el icono también aquí
+                icon={<div>+</div>}
                 onClick={() => {
+                  // Obtenemos la imagen actual del estado del formulario
+                  // Si no hay imagen, enviamos un array vacío
+                  const imagenParaSerie =
+                    ImagenActual && ImagenActual.length > 0 ? ImagenActual : [];
+
                   form.pushFieldValue("serie", {
                     cantidad: 1,
                     codigo: "",
-                    image: [],
+                    image: [...imagenParaSerie], // Usamos el spread para crear una copia y evitar referencias compartidas
                   });
                 }}
               >
@@ -404,7 +412,6 @@ export function ModalProducto({
     </Modal>
   );
 }
-
 
 function ComponenteRegistrarProductosFinal({
   open,
@@ -740,7 +747,8 @@ function ComponenteRegistrarProductosFinal({
         <Divider>Listado de Productos</Divider>
         <div className="overflow-auto mb-4" style={{ maxHeight: "350px" }}>
           <Row gutter={1} style={{ minWidth: "1200px", margin: "auto" }}>
-            <Col span={7}>Descripción</Col>
+            <Col span={1}>Imagen</Col>
+            <Col span={6}>Descripción</Col>
             <Col span={2}>Marca</Col>
             <Col span={2}>Modelo</Col>
             <Col span={2}>Medida</Col>
@@ -771,10 +779,19 @@ function ComponenteRegistrarProductosFinal({
                         style={{
                           minWidth: "1200px",
                           margin: "auto",
-                          marginBottom: 10,
+                          marginBottom: 5,
                         }}
                       >
-                        <Col span={7}>
+                        <Col span={1}>
+                          <Image
+                            className="rounded-lg border"
+                            width={22}
+                            height={22}
+                            src={p.image[0]?.image_byte}
+                            fallback="https://placehold.co/110x110?text=Sin+Imagen"
+                          />
+                        </Col>
+                        <Col span={6}>
                           <Text ellipsis={{ tooltip: p.name }}>{p.name}</Text>
                         </Col>
                         <Col span={2}>
