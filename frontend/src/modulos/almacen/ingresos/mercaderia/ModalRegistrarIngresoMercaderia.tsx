@@ -217,7 +217,7 @@ export function ModalProducto({
                                   },
                                 ]
                               : [];
-                              form.setFieldValue("image", nuevaImagen);
+                            form.setFieldValue("image", nuevaImagen);
                             form.setFieldValue("codigo", select.codigo || "");
                             form.setFieldValue("marca", select.marca || "");
                             form.setFieldValue("modelo", select.modelo || "");
@@ -230,7 +230,6 @@ export function ModalProducto({
                               "categoria",
                               select.categoria || "",
                             );
-                            
                           }
                         }}
                       />

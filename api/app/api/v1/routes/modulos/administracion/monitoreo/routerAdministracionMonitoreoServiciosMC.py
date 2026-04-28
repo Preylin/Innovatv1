@@ -40,7 +40,7 @@ async def import_serviciosmc(file: UploadFile = File(...), session: AsyncSession
     
     try:
         contents = await file.read()
-        df = pd.read_excel(io.BytesIO(contents))
+        df = pd.read_excel(io.BytesIO(contents), dtype=str)
         df.columns = [c.lower().strip() for c in df.columns]
 
         required = ['empresa', 'ubicacion', 'inicio', 'fin', 'servicio', 'informe', 'certificado', 'encargado', 'tecnico', 'incidencia', 'status']
