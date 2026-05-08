@@ -1,4 +1,5 @@
 // src/main.tsx
+import 'react-data-grid/lib/styles.css';
 import "./index.css";
 import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";

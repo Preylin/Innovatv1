@@ -13,6 +13,8 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
-
   ],
+  build: {
+    cssTarget: 'esnext'
+  },
 })

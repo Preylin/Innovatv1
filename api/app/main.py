@@ -20,6 +20,12 @@ from app.api.v1.routes.modulos.almacen.catalogos.RouterAlmacenSalidaMaterial imp
 from app.api.v1.routes.modulos.gerencia.inicio.RouterGerenciaInicioProvClient import router_clientesGerenciaInicio, router_proveedoresGerenciaInicio
 from app.api.v1.routes.modulos.administracion.ventas.RouterHistorialVentas import router_historialVentas
 from app.api.v1.routes.modulos.administracion.ventas.RouterHistorialCompras import router_historialCompras
+from app.api.v1.routes.modulos.tesoreria.RouterTesoreriaEfectivo import router_cajachica, router_bcpsoles, router_bcpdolares
+from app.api.v1.routes.modulos.tesoreria.RouterTesoreriaCntPorPagar import router_cuentasporpagar
+
+
+
+
 
 
 # CONFIGURACIÓN GLOBAL DE LOGGING
@@ -134,3 +140,7 @@ app.include_router(router_clientesGerenciaInicio)
 app.include_router(router_proveedoresGerenciaInicio)
 app.include_router(router_historialVentas)
 app.include_router(router_historialCompras)
+app.include_router(router_cajachica)
+app.include_router(router_bcpsoles)
+app.include_router(router_bcpdolares)
+app.include_router(router_cuentasporpagar)

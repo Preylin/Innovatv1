@@ -1,13 +1,12 @@
 import { Button, Dropdown, Empty, Popconfirm, type MenuProps } from "antd";
 import { dataActivosPersonal } from "../api/personal/data";
 import { usePersonalData } from "../hooks/dataMemoPersonal";
-import {
-  ModalCrearPersonalActivo,
-  ModalEditarPersonalActivo,
-} from "./personal/modalCrearPersona";
+import { ModalCrearPersonalActivo } from "./personal/modalCrearPersonal";
 import { useToggle, useUpdateModal } from "../../../../hooks/Toggle";
 import ButtonDelete from "../../../../components/molecules/botons/BottonDelete";
 import ButtonUpdate from "../../../../components/molecules/botons/BottonUpdate";
+import { ModalEditarPersonalActivo } from "./personal/modalUpdatePersonal";
+import { BiDotsVerticalRounded } from "react-icons/bi";
 
 interface Header {
   id: number;
@@ -121,14 +120,16 @@ export default function TablaActivosPersonal() {
                   <DatoTabla dato={item.vacacion} />
                   <DatoTabla dato={item.soles} />
                   <DatoTabla dato={item.dolares} />
-                  <td className="text-center">
+                  <td className="flex justify-center">
                     <Dropdown
                       menu={{ items: getMenuItems(item.id) }}
                       trigger={["click"]}
                       placement="bottom"
                       styles={{ item: { padding: "3px 0px" } }}
                     >
-                      <Button size="small">:</Button>
+                      <div className="w-6 h-5 flex justify-center items-center border rounded-xs bg-mist-600 hover:bg-mist-500 cursor-pointer">
+                        <BiDotsVerticalRounded className="text-white" />
+                      </div>
                     </Dropdown>
                   </td>
                 </tr>

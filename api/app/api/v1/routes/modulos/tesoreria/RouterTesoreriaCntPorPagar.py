@@ -1,0 +1,197 @@
+from typing import List
+from datetime import date
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.deps import get_current_user
+from app.core.db import get_session
+from app.api.v1.schemas.modulos.tesoreria.SchemaTesoreriaCntPorPagar import (
+    ObligacionCreate,
+    ObligacionRead,
+    ObligacionUpdate, 
+    RegistroPagoCreate
+)
+from app.models.modulos.tesoreria.ModelsTesoreriaCntPorpagar import (
+    ObligacionCuentasPorPagar, 
+    RegistroCuentasPorPagar
+)
+
+router_cuentasporpagar = APIRouter(
+    prefix="/cuentasporpagar",
+    tags=["cuentasporpagar"],
+    dependencies=[Depends(get_current_user)],
+)
+
+@router_cuentasporpagar.get("/resumen-mensual", response_model=List[ObligacionRead])
+async def get_resumen(mes: date, db: AsyncSession = Depends(get_session)):
+    # Seleccionamos la obligación y la suma de sus pagos en ese mes
+    stmt = (
+        select(
+            ObligacionCuentasPorPagar,
+            func.sum(RegistroCuentasPorPagar.monto_pagado).label("total_pagado")
+        )
+        .outerjoin(
+            RegistroCuentasPorPagar,
+            (ObligacionCuentasPorPagar.id == RegistroCuentasPorPagar.obligacion_id) & 
+            (RegistroCuentasPorPagar.mes_correspondiente == mes)
+        )
+        .where(ObligacionCuentasPorPagar.activo == True)
+        .group_by(ObligacionCuentasPorPagar.id) # Agrupamos por la obligación
+        .order_by(ObligacionCuentasPorPagar.dia_pago.asc())
+    )
+    
+    result = await db.execute(stmt)
+    rows = result.all()
+    
+    response = []
+    for ob, total_pagado in rows:
+        data = ObligacionRead.from_orm(ob)
+        # total_pagado será None si no hay registros por el outer join
+        monto_acumulado = float(total_pagado) if total_pagado else 0.0
+        data.monto_pagado_actual = monto_acumulado
+        
+        # Nueva lógica de estado basada en el acumulado
+        if monto_acumulado <= 0:
+            data.estado_pago = "PENDIENTE"
+        elif monto_acumulado < float(ob.monto_esperado):
+            data.estado_pago = "PARCIAL"
+        else:
+            data.estado_pago = "TOTAL"
+            
+        response.append(data)
+    return response
+
+@router_cuentasporpagar.post("/pagos")
+async def crear_pago(pago: RegistroPagoCreate, db: AsyncSession = Depends(get_session)):
+    # 1. Obtener la obligación para comparar montos
+    stmt_ob = select(ObligacionCuentasPorPagar).where(ObligacionCuentasPorPagar.id == pago.obligacion_id)
+    res_ob = await db.execute(stmt_ob)
+    obligacion = res_ob.scalar_one_or_none()
+    
+    if not obligacion:
+        raise HTTPException(status_code=404, detail="Obligación no encontrada")
+
+    # 2. Buscar si YA existe un pago para esta obligación en este mes
+    stmt_pago = select(RegistroCuentasPorPagar).where(
+        (RegistroCuentasPorPagar.obligacion_id == pago.obligacion_id) &
+        (RegistroCuentasPorPagar.mes_correspondiente == pago.mes_correspondiente)
+    )
+    res_pago = await db.execute(stmt_pago)
+    pago_existente = res_pago.scalar_one_or_none()
+
+    monto_final = pago.monto_pagado
+    
+    if pago_existente:
+        # Si ya existía un pago parcial, sumamos el nuevo abono
+        monto_final = float(pago_existente.monto_pagado) + float(pago.monto_pagado)
+        pago_existente.monto_pagado = monto_final
+        pago_existente.estado_pago = "TOTAL" if monto_final >= obligacion.monto_esperado else "PARCIAL"
+        pago_existente.fecha_pago = pago.fecha_pago # Actualizar a la última fecha de abono
+        objeto_final = pago_existente
+    else:
+        # Si es el primer pago del mes, creamos el registro
+        estado = "TOTAL" if pago.monto_pagado >= obligacion.monto_esperado else "PARCIAL"
+        nuevo_pago = RegistroCuentasPorPagar(
+            **pago.dict(exclude={"estado_pago"}), 
+            estado_pago=estado
+        )
+        db.add(nuevo_pago)
+        objeto_final = nuevo_pago
+    
+    try:
+        await db.commit()
+        await db.refresh(objeto_final)
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error: {e}")
+        
+    return objeto_final
+
+@router_cuentasporpagar.delete("/eliminar-obligacion/{id}")
+async def desactivar_obligacion(id: int, db: AsyncSession = Depends(get_session)):
+    """
+    Realiza un borrado lógico de la obligación.
+    """
+    stmt = (
+        update(ObligacionCuentasPorPagar)
+        .where(ObligacionCuentasPorPagar.id == id)
+        .values(activo=False)
+    )
+    
+    result = await db.execute(stmt)
+    
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Obligación no encontrada")
+        
+    await db.commit()
+    return {"status": "success", "message": "Obligación desactivada correctamente"}
+
+@router_cuentasporpagar.post("/obligaciones", response_model=ObligacionRead)
+async def crear_obligacion(
+    obj_in: ObligacionCreate, 
+    db: AsyncSession = Depends(get_session)
+):
+    """
+    Registra una nueva obligación fija en el sistema de tesorería.
+    """
+    # 1. Instanciar el modelo de la base de datos con los datos de entrada
+    nueva_obligacion = ObligacionCuentasPorPagar(
+        **obj_in.dict()
+    )
+    
+    # 2. Persistir en la base de datos
+    try:
+        db.add(nueva_obligacion)
+        await db.commit()
+        await db.refresh(nueva_obligacion)
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail="Error interno al registrar la obligación"
+        )
+    
+    return nueva_obligacion
+
+@router_cuentasporpagar.put("/actualizar-obligacion/{id}", response_model=ObligacionRead)
+async def actualizar_obligacion(
+    id: int, 
+    obj_in: ObligacionUpdate, 
+    db: AsyncSession = Depends(get_session)
+):
+    """
+    Actualiza una obligación existente en el sistema de tesorería.
+    """
+    # 1. Obtener la obligación existente
+    stmt = select(ObligacionCuentasPorPagar).where(ObligacionCuentasPorPagar.id == id)
+    result = await db.execute(stmt)
+    obligacion_db = result.scalar_one_or_none()
+
+    if not obligacion_db:
+        raise HTTPException(
+            status_code=404, 
+            detail="La obligación solicitada no existe"
+        )
+
+    # 2. Extraer los datos enviados (excluyendo el ID para no intentar sobrescribirlo)
+    update_data = obj_in.dict(exclude={"id"}, exclude_unset=True)
+
+    # 3. Aplicar los cambios dinámicamente
+    for field, value in update_data.items():
+        setattr(obligacion_db, field, value)
+
+    # 4. Persistir cambios
+    try:
+        await db.commit()
+        await db.refresh(obligacion_db)
+    except Exception as e:
+        await db.rollback()
+        print(f"Error al actualizar obligación: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail="Error interno al actualizar los datos de la obligación"
+        )
+
+    # El response_model se encargará de transformar el modelo de DB al formato ObligacionRead
+    return obligacion_db

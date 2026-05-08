@@ -1,7 +1,6 @@
 import { Link, Outlet, createLazyFileRoute } from "@tanstack/react-router";
 import { Card, Col, Row, Typography } from "antd";
 const { Title, Text } = Typography;
-import { GiSpinningBlades } from "react-icons/gi";
 
 export const Route = createLazyFileRoute("/gerencia/")({
   component: RouteComponent,
@@ -18,7 +17,6 @@ function RouteComponent() {
 
 function PanelGeneralGerencia() {
   return (
-    <Row gutter={[16, 16]}>
       <Col span={24}>
         <Card className="shadow-sm">
           <Row gutter={[24, 24]} align="middle">
@@ -55,24 +53,7 @@ function PanelGeneralGerencia() {
         </Card>
       </Col>
 
-      <Col span={24}>
-        <Row gutter={[16, 16]}>
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Col xs={24} md={12} lg={8} key={i}>
-              <Card className="flex justify-center items-center h-50">
-                <div className="flex flex-col items-center gap-4">
-                  <GiSpinningBlades
-                    className="animate-spin text-amber-500"
-                    size={"3rem"}
-                  />
-                  <Text type="secondary">En desarrollo módulo {i}...</Text>
-                </div>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </Col>
-    </Row>
+
   );
 }
 
