@@ -18,15 +18,15 @@ import ButtonUpdate from "../../../../../components/molecules/botons/BottonUpdat
 import ButtonDelete from "../../../../../components/molecules/botons/BottonDelete";
 import { ModalEditarCntsPagarFijas } from "./EditarRegistrosCntPagarFijas";
 
-const FECHA_SIMULADA = new Date("2026-05-04");
+// const FECHA_SIMULADA = new Date("2026-05-04");
 
 export function ObligacionItem({
   item,
 }: {
   item: CuentasPorPagarResumenMensualSchemaApiOutType;
 }) {
-  //   const hoy = new Date();
-  const hoy = FECHA_SIMULADA;
+    const hoy = new Date();
+  // const hoy = FECHA_SIMULADA;
 
   const diaActual = getDate(hoy);
 
@@ -169,9 +169,9 @@ export function ObligacionItem({
 }
 
 export function CuentasPorPagarFijas() {
-  //   const [mesActual] = useState(format(new Date(), "yyyy-MM-01"));
+    const [mesActual] = useState(format(new Date(), "yyyy-MM-01"));
   //prueba
-  const [mesActual] = useState("2027-08-01");
+  // const [mesActual] = useState("2027-08-01");
   const [itemAPagar, setItemAPagar] =
     useState<CuentasPorPagarResumenMensualSchemaApiOutType | null>(null);
   const { data, isLoading } = useCuentasPorPagarResumenMensual(mesActual);

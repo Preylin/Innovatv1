@@ -106,7 +106,7 @@ const getColumns = (
     name: "Nro",
     width: 50,
     headerCellClass: "text-center",
-    renderCell: ({ row }) => {
+    renderCell: ({ row }: RenderCellProps<Row>) => {
       return (
         <div className="text-center text-[10px] md:text-[12px]">{row.key}</div>
       );
@@ -120,10 +120,12 @@ const getColumns = (
     sortable: true,
     headerCellClass: "text-center",
     renderEditCell: renderTextEditor,
-    renderHeaderCell: (props) => (
-      <FilterHeader {...props} filters={filters} setFilters={setFilters} />
-    ),
-    renderCell: ({ row }) => (
+    renderHeaderCell: (props: {
+      column: Column<Row>;
+      sortDirection: any;
+      priority: any;
+    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
+    renderCell: ({ row }: RenderCellProps<Row>) => (
       <input
         className="w-full h-full bg-transparent outline-none px-1.5 focus:bg-blue-50 transition-colors text-[10px] md:text-[12px]"
         type="date"
@@ -140,10 +142,12 @@ const getColumns = (
     editable: true,
     minWidth: 200,
     renderEditCell: renderTextEditor,
-    renderHeaderCell: (props) => (
-      <FilterHeader {...props} filters={filters} setFilters={setFilters} />
-    ),
-    renderCell: ({ row }) => (
+    renderHeaderCell: (props: {
+      column: Column<Row>;
+      sortDirection: any;
+      priority: any;
+    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
+    renderCell: ({ row }: RenderCellProps<Row>) => (
       <input
         className="w-full h-full bg-transparent outline-none px-2 focus:bg-blue-50 transition-colors text-[10px] md:text-[12px]"
         type="text"
@@ -164,10 +168,12 @@ const getColumns = (
     width: 120,
     editable: true,
     renderEditCell: renderTextEditor,
-    renderHeaderCell: (props) => (
-      <FilterHeader {...props} filters={filters} setFilters={setFilters} />
-    ),
-    renderCell: ({ row }) => (
+    renderHeaderCell: (props: {
+      column: Column<Row>;
+      sortDirection: any;
+      priority: any;
+    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
+    renderCell: ({ row }: RenderCellProps<Row>) => (
       <input
         className="w-full h-full bg-transparent outline-none px-2 focus:bg-blue-50 transition-colors text-[10px] md:text-[12px]"
         type="text"
@@ -187,10 +193,12 @@ const getColumns = (
     width: 120,
     sortable: true,
     headerCellClass: "text-center",
-    renderHeaderCell: (props) => (
-      <FilterHeader {...props} filters={filters} setFilters={setFilters} />
-    ),
-    renderCell: ({ row }) => (
+    renderHeaderCell: (props: {
+      column: Column<Row>;
+      sortDirection: any;
+      priority: any;
+    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
+    renderCell: ({ row }: RenderCellProps<Row>) => (
       <div
         className={`text-right pr-4 font-medium text-[10px] md:text-[12px] ${row.ingreso >= 0 ? "text-teal-700" : "text-orange-500"}`}
       >
@@ -213,10 +221,12 @@ const getColumns = (
     width: 120,
     sortable: true,
     headerCellClass: "text-center",
-    renderHeaderCell: (props) => (
-      <FilterHeader {...props} filters={filters} setFilters={setFilters} />
-    ),
-    renderCell: ({ row }) => (
+    renderHeaderCell: (props: {
+      column: Column<Row>;
+      sortDirection: any;
+      priority: any;
+    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
+    renderCell: ({ row }: RenderCellProps<Row>) => (
       <div
         className={`text-right pr-4 font-medium text-[10px] md:text-[12px] ${row.egreso <= 0 ? "text-rose-600" : "text-cyan-500"}`}
       >
@@ -238,7 +248,7 @@ const getColumns = (
     name: "Saldo",
     width: 130,
     headerCellClass: "text-center bg-gray-100",
-    renderCell: ({ row }) => (
+    renderCell: ({ row }: RenderCellProps<Row>) => (
       <div
         className={`text-right pr-4 font-semibold text-[11px] md:text-[13px] ${row.saldo < 0 ? "text-rose-600" : "text-sky-700"}`}
       >
@@ -258,10 +268,12 @@ const getColumns = (
     name: "Inf. Adicional",
     minWidth: 200,
     renderEditCell: renderTextEditor,
-    renderHeaderCell: (props) => (
-      <FilterHeader {...props} filters={filters} setFilters={setFilters} />
-    ),
-    renderCell: ({ row }) => (
+    renderHeaderCell: (props: {
+      column: Column<Row>;
+      sortDirection: any;
+      priority: any;
+    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
+    renderCell: ({ row }: RenderCellProps<Row>) => (
       <input
         className="w-full h-full bg-transparent outline-none text-[10px] md:text-[12px] px-2 focus:bg-blue-50 transition-colors"
         type="text"
@@ -286,7 +298,7 @@ const mapDataApi = (data: EfectivoSchemaOutApiType[]): Row[] => {
     adicionales: item.adicionales,
   }));
 };
-const rowProcessor = (rows: Row[], apiData: Row[]) => {
+const rowProcessor = (rows: Row[], apiData: Row[]): Row[] => {
   let saldoAcumulado = 0;
   let visualIndex = 1;
   return rows.map((row) => {

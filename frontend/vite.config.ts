@@ -15,4 +15,7 @@ export default defineConfig({
     tailwindcss(),
 
   ],
+  build: {
+    cssTarget: 'esnext'
+  },
 })

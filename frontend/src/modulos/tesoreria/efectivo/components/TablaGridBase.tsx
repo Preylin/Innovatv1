@@ -222,7 +222,7 @@ function TablaGridBase<T extends BaseRow>({
       const updatedRows = [...newRows];
 
       // 1. Registrar los cambios en el manager
-      data.indexes.forEach((index) => {
+      data.indexes.forEach((index: number) => {
         const updatedRow = updatedRows[index];
         const isNew = !apiData?.some((apiR) => apiR.id === updatedRow.id);
         changeManager.current.registerChange(updatedRow.id, updatedRow, isNew);
@@ -328,14 +328,14 @@ function TablaGridBase<T extends BaseRow>({
 
         const combinedIds = [...currentVisualIds, ...newIds];
 
-        gridData.forEach((rowData, i) => {
+        gridData.forEach((rowData, i: number) => {
           const targetRowId = combinedIds[startRowIdx + i];
           if (targetRowId === undefined) return;
 
           const rowToUpdate = rowsMap.get(targetRowId);
           if (!rowToUpdate) return;
 
-          rowData.forEach((value, j) => {
+          rowData.forEach((value, j: number) => {
             const colIndex = startColIdx + j;
             const column = columns[colIndex];
 
