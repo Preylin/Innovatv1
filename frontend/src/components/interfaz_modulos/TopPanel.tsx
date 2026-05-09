@@ -10,7 +10,6 @@ import {
   type MenuProps,
 } from "antd";
 import {
-  BellOutlined,
   EyeOutlined,
   LogoutOutlined,
   MenuOutlined,
@@ -109,7 +108,7 @@ export function PanelSuperior({ title, MenuItems }: TopPanelProps) {
   return (
     <nav className="flex h-12 w-full items-center justify-between shadow-sm">
       {/* SECCIÓN IZQUIERDA: Menu y Logo */}
-      <Flex align="center" gap={screens.md ? 16 : 8} className="shrink-0" style={{paddingLeft: "9px"}}>
+      <Flex align="center" gap={screens.md ? 16 : 8} className="shrink-0" style={{paddingLeft: "14px"}}>
         {isLoading ? (
           <Skeleton.Avatar active size="small" shape="square" />
         ) : (
@@ -148,12 +147,9 @@ export function PanelSuperior({ title, MenuItems }: TopPanelProps) {
       <Flex align="center" gap={screens.md ? 16 : 8} className="shrink-0">
         {/* Iconos: Se ocultan en XS para no apretar el header */}
         {screens.sm && (
-          <Space size={screens.md ? "middle" : "small"}>
+          <Space size={screens.md ? "middle" : "small"} style={{marginRight: "2px"}}>
             <Badge size="small" count={1} overflowCount={9}>
               <MessageOutlined className="cursor-pointer text-lg" style={{color: "#F7F7F7"}}/>
-            </Badge>
-            <Badge size="small" count={12} overflowCount={9}>
-              <BellOutlined className="cursor-pointer text-lg" style={{color: "#F7F7F7"}}/>
             </Badge>
           </Space>
         )}

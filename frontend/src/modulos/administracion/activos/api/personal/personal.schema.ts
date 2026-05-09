@@ -47,14 +47,17 @@ export type PersonalActivosActualizarAPI = z.infer<
 
 //UI
 export const PersonalActivosCrearUI = z.object({
-  dni: z.string().min(8).max(8),
-  nombre: z.string().min(3).max(50),
-  cargo: z.string().min(3).max(50),
-  fecha_ingreso: z.string().min(10).max(10),
-  rem_basico: z.number().min(0).max(1000000),
-  asig_familiar: z.number().min(0).max(1000000),
-  grati: z.number().min(0).max(1000000),
-  cts: z.number().min(0).max(1000000),
-  vacacion: z.number().min(0).max(1000000),
+  dni: z.string()
+    .min(8, "Mínimo 8 caracteres")
+    .max(10, "Máximo 10 caracteres")
+    .regex(/^\d+$/, "Solo números"),
+  nombre: z.string().min(3, "Requerido" ).max(100),
+  cargo: z.string().min(3,"Requerido" ).max(50),
+  fecha_ingreso: z.iso.datetime("Requerido"),
+  rem_basico: z.number().min(0.0001, "Requerido"),
+  asig_familiar: z.number().min(0.0001, "Requerido"),
+  grati: z.number().min(0.0001, "Requerido"),
+  cts: z.number().min(0.0001, "Requerido"),
+  vacacion: z.number().min(0.0001, "Requerido"),
 });
 export type PersonalActivosCrearUI = z.infer<typeof PersonalActivosCrearUI>;
