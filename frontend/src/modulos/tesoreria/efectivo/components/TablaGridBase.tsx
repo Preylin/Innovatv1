@@ -222,7 +222,7 @@ function TablaGridBase<T extends BaseRow>({
       const updatedRows = [...newRows];
 
       // 1. Registrar los cambios en el manager
-      data.indexes.forEach((index) => {
+      data.indexes.forEach((index: number) => {
         const updatedRow = updatedRows[index];
         const isNew = !apiData?.some((apiR) => apiR.id === updatedRow.id);
         changeManager.current.registerChange(updatedRow.id, updatedRow, isNew);
@@ -260,25 +260,32 @@ function TablaGridBase<T extends BaseRow>({
   const cleanNumericValue = (value: string): number => {
     if (!value) return 0;
 
-    // 1. Quitar símbolos de moneda y espacios extra
-    let clean = value.replace(/[S\/\.\$]/g, "").trim();
+    // 1. Limpieza de símbolos y espacios
+    // Mantenemos: números, puntos, comas y el signo menos (-)
+    let clean = value.replace(/[S\/$ ]/g, "").trim();
 
-    // 2. Detectar el formato:
-    // Si hay comas y puntos, el último es el decimal.
-    // Si solo hay un tipo de separador, verificamos si aparece una sola vez cerca del final.
+    // 2. Identificar y tratar los separadores
+    // En tu caso: 1,310.00
+    // La coma (thousands) debe eliminarse.
+    // El punto (decimal) debe mantenerse.
 
     const lastComma = clean.lastIndexOf(",");
     const lastDot = clean.lastIndexOf(".");
 
-    if (lastComma > lastDot) {
-      // Caso: 1.234,56 o 1234,56 -> La coma es el decimal
+    if (lastDot > lastComma) {
+      // Caso estándar Excel (PE/US): 1,310.50
+      // Simplemente eliminamos todas las comas
+      clean = clean.replace(/,/g, "");
+    } else if (lastComma > lastDot) {
+      // Caso por si alguien pega formato europeo: 1.310,50
+      // Eliminamos puntos y cambiamos coma por punto
       clean = clean.replace(/\./g, "").replace(",", ".");
-    } else if (lastDot > lastComma) {
-      // Caso: 1,234.56 o 1234.56 -> El punto es el decimal
-      clean = clean.replace(/,/g, "");
     } else {
-      // Caso: No hay ninguno o son iguales (limpieza simple)
-      clean = clean.replace(/,/g, "");
+      // Caso: Solo hay un separador.
+      // Si es una coma sola (ej. "5,50"), la convertimos a punto decimal
+      if (lastComma !== -1 && lastDot === -1) {
+        clean = clean.replace(",", ".");
+      }
     }
 
     const num = parseFloat(clean);
@@ -328,14 +335,14 @@ function TablaGridBase<T extends BaseRow>({
 
         const combinedIds = [...currentVisualIds, ...newIds];
 
-        gridData.forEach((rowData, i) => {
+        gridData.forEach((rowData, i: number) => {
           const targetRowId = combinedIds[startRowIdx + i];
           if (targetRowId === undefined) return;
 
           const rowToUpdate = rowsMap.get(targetRowId);
           if (!rowToUpdate) return;
 
-          rowData.forEach((value, j) => {
+          rowData.forEach((value, j: number) => {
             const colIndex = startColIdx + j;
             const column = columns[colIndex];
 

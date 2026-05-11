@@ -1,5 +1,5 @@
 from typing import List
-from datetime import date
+from datetime import date, datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -83,18 +83,25 @@ async def crear_pago(pago: RegistroPagoCreate, db: AsyncSession = Depends(get_se
     monto_final = pago.monto_pagado
     
     if pago_existente:
-        # Si ya existía un pago parcial, sumamos el nuevo abono
         monto_final = float(pago_existente.monto_pagado) + float(pago.monto_pagado)
         pago_existente.monto_pagado = monto_final
         pago_existente.estado_pago = "TOTAL" if monto_final >= obligacion.monto_esperado else "PARCIAL"
-        pago_existente.fecha_pago = pago.fecha_pago # Actualizar a la última fecha de abono
+        
+        # CORRECCIÓN AQUÍ: Cambiar fecha_pago por fecha_operacion
+        pago_existente.fecha_operacion = datetime.now() 
+        
         objeto_final = pago_existente
     else:
-        # Si es el primer pago del mes, creamos el registro
         estado = "TOTAL" if pago.monto_pagado >= obligacion.monto_esperado else "PARCIAL"
+        
+        # CORRECCIÓN AQUÍ: Asegúrate de que el diccionario no lleve "estado_pago" 
+        # y asigna manualmente la fecha_operacion
+        nuevo_data = pago.dict(exclude={"estado_pago"})
+        
         nuevo_pago = RegistroCuentasPorPagar(
-            **pago.dict(exclude={"estado_pago"}), 
-            estado_pago=estado
+            **nuevo_data,
+            estado_pago=estado,
+            fecha_operacion=datetime.now() # Coincide con tu modelo de SQLAlchemy
         )
         db.add(nuevo_pago)
         objeto_final = nuevo_pago

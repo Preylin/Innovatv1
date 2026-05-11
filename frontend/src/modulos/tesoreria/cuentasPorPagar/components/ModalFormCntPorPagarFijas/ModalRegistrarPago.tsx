@@ -107,7 +107,7 @@ export function ModalRegistrarPago({
                 <input
                   type="number"
                   step="0.01"
-                  value={field.state.value.toFixed(2)}
+                  value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.valueAsNumber)}
                   className="w-full border border-slate-200 bg-slate-50/50 rounded-md p-2 pl-14 font-mono font-black text-xl text-slate-800 focus:ring-4 focus:ring-indigo-500/10 outline-none focus:border-indigo-500 transition-all"
                 />

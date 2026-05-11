@@ -1,5 +1,14 @@
-import { useState } from "react";
-import { format, getDate } from "date-fns"; // Importamos getDate para comparar días
+import { useMemo, useState } from "react";
+import {
+  addMonths,
+  format,
+  getDate,
+  isBefore,
+  isSameMonth,
+  startOfMonth,
+  startOfYear,
+} from "date-fns";
+import { es } from "date-fns/locale";
 import {
   useCuentasPorPagarResumenMensual,
   useDeleteObligacionPagar,
@@ -11,34 +20,43 @@ import type { CuentasPorPagarResumenMensualSchemaApiOutType } from "../../data/a
 import { useToggle, useUpdateModal } from "../../../../../hooks/Toggle";
 import ButtomNew from "../../../../../components/molecules/botons/BottomNew";
 import { TbFileDescription } from "react-icons/tb";
-import { FaMoneyBillTrendUp } from "react-icons/fa6";
-import { MdOutlineIncompleteCircle } from "react-icons/md";
 import { App, Dropdown, Popconfirm, type MenuProps } from "antd";
 import ButtonUpdate from "../../../../../components/molecules/botons/BottonUpdate";
 import ButtonDelete from "../../../../../components/molecules/botons/BottonDelete";
 import { ModalEditarCntsPagarFijas } from "./EditarRegistrosCntPagarFijas";
 
-const FECHA_SIMULADA = new Date("2026-05-04");
+// const FECHA_SIMULADA = new Date("2026-05-04");
+const checkIsVencido = (
+  item: any,
+  mesVisualizado: Date,
+  fechaReferencia: Date,
+) => {
+  if (item.estado_pago === "TOTAL") return false;
+  const inicioMesUI = startOfMonth(mesVisualizado);
+  const inicioMesReal = startOfMonth(fechaReferencia);
+  if (isBefore(inicioMesUI, inicioMesReal)) return true;
+  if (isSameMonth(inicioMesUI, inicioMesReal)) {
+    return getDate(fechaReferencia) > item.dia_pago;
+  }
+  return false;
+};
+
+interface ObligacionItemProps {
+  item: CuentasPorPagarResumenMensualSchemaApiOutType;
+  estaVencido: boolean; // Recibido del padre
+  hoy: Date; // Recibido del padre para cálculos de días
+}
 
 export function ObligacionItem({
   item,
-}: {
-  item: CuentasPorPagarResumenMensualSchemaApiOutType;
-}) {
-  //   const hoy = new Date();
-  const hoy = FECHA_SIMULADA;
-
+  estaVencido,
+  hoy,
+}: ObligacionItemProps) {
   const diaActual = getDate(hoy);
-
   const montoPagado = item.monto_pagado_actual || 0;
   const diferencia = item.monto_esperado - montoPagado;
-
   const esParcial = item.estado_pago === "PARCIAL";
   const estaIncompleto = item.estado_pago !== "TOTAL";
-  const estaVencido = diaActual > item.dia_pago && estaIncompleto;
-
-  // CÁLCULO DE DÍAS
-  // Math.abs para obtener el número positivo siempre
   const diasDiferencia = Math.abs(diaActual - item.dia_pago);
 
   return (
@@ -49,7 +67,6 @@ export function ObligacionItem({
         >
           {item.empresa}
         </h4>
-
         <div className="w-5/12 flex flex-row gap-1 justify-end">
           <span
             className={`text-[9px] px-2 py-0.5 rounded-md font-black uppercase truncate tracking-tighter ${
@@ -64,15 +81,9 @@ export function ObligacionItem({
               ? `Pagar día ${item.dia_pago}`
               : item.estado_pago}
           </span>
-
-          {/* CONTADOR DE DÍAS DINÁMICO */}
           {estaIncompleto && (
             <div
-              className={`flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-tighter shadow-sm truncate overflow-hidden ${
-                estaVencido
-                  ? "bg-red-500 text-white animate-pulse"
-                  : "bg-emerald-500 text-white"
-              }`}
+              className={`flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-tighter shadow-sm truncate ${estaVencido ? "bg-red-500 text-white animate-pulse" : "bg-emerald-500 text-white"}`}
             >
               <span className="opacity-80">
                 {estaVencido ? "Retraso:" : "Faltan:"}
@@ -92,9 +103,10 @@ export function ObligacionItem({
               Categoría
             </p>
             <p className={`text-xs font-mono font-black`}>
-              {item.categoria ? item.categoria : "Servicio basicos"}
+              {item.categoria ? item.categoria : "Servicios básicos"}
             </p>
           </div>
+
           <div className="text-center">
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
               Deuda
@@ -131,12 +143,6 @@ export function ObligacionItem({
               </p>
             </div>
           )}
-
-          {esParcial && !estaVencido && (
-            <span className="text-[9px] text-pink-500 font-bold">
-              *(Abono incompleto)
-            </span>
-          )}
         </div>
 
         {/* Barra de progreso */}
@@ -156,36 +162,42 @@ export function ObligacionItem({
         </div>
       </div>
 
-      <div className="px-2 py-1 text-[9px] font-mono shadow-xs shadow-mist-300 rounded-xs">
-        {item.detalle !== "" && (
+      {item.detalle && (
+        <div className="px-2 py-1 text-[9px] font-mono shadow-xs shadow-mist-300 rounded-xs">
           <div className="flex flex-row gap-2">
-            <TbFileDescription fontSize={15} />{" "}
+            <TbFileDescription fontSize={15} />
             <p className="text-slate-500">{item.detalle}</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export function CuentasPorPagarFijas() {
-  //   const [mesActual] = useState(format(new Date(), "yyyy-MM-01"));
-  //prueba
-  const [mesActual] = useState("2027-08-01");
-  const [itemAPagar, setItemAPagar] =
-    useState<CuentasPorPagarResumenMensualSchemaApiOutType | null>(null);
-  const { data, isLoading } = useCuentasPorPagarResumenMensual(mesActual);
-  const registrarPago = useRegistrarPago(mesActual);
-  const { mutate } = useDeleteObligacionPagar();
+  const [mesActual, setMesActual] = useState(startOfMonth(new Date()));
+  const mesActualString = format(mesActual, "yyyy-MM-01");
   const { message } = App.useApp();
 
+  // Generar meses del año (useMemo para no recalcular en cada render)
+  const mesesDelAño = useMemo(() => {
+    const inicio = startOfYear(mesActual);
+    return Array.from({ length: 12 }, (_, i) => {
+      const fecha = addMonths(inicio, i);
+      return { fecha, etiqueta: format(fecha, "MMM", { locale: es }) };
+    });
+  }, [mesActual.getFullYear()]); // Solo cambia si cambias de año
+
+  const [itemAPagar, setItemAPagar] =
+    useState<CuentasPorPagarResumenMensualSchemaApiOutType | null>(null);
+  const { data, isLoading } = useCuentasPorPagarResumenMensual(mesActualString);
+  const registrarPago = useRegistrarPago(mesActualString);
+  const { mutate } = useDeleteObligacionPagar();
   const ModalRegistrar = useToggle();
   const ModalEditar = useUpdateModal<number>();
 
   const handleConfirmarPago = (payload: any) => {
-    registrarPago.mutate(payload, {
-      onSuccess: () => setItemAPagar(null),
-    });
+    registrarPago.mutate(payload, { onSuccess: () => setItemAPagar(null) });
   };
 
   const items = (id: number): MenuProps["items"] => [
@@ -196,34 +208,22 @@ export function CuentasPorPagarFijas() {
     {
       key: "delete",
       label: (
-        <div>
-          <Popconfirm
-            title="¿Eliminar registro?"
-            description="Esta acción no se puede deshacer"
-            onConfirm={() =>
-              mutate(id, {
-                onSuccess: () => message.success("Registro eliminado"),
-                onError: (err) => message.error(err.message),
-              })
-            }
-            okText="Eliminar"
-            cancelText="Cancelar"
-            okButtonProps={{ danger: true }}
-          >
-            <ButtonDelete style={{ margin: "0px" }} />
-          </Popconfirm>
-        </div>
+        <Popconfirm
+          title="¿Eliminar?"
+          onConfirm={() =>
+            mutate(id, { onSuccess: () => message.success("Eliminado") })
+          }
+        >
+          <ButtonDelete style={{ margin: "0px" }} />
+        </Popconfirm>
       ),
     },
   ];
 
   if (isLoading)
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <div className="w-12 h-12 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin" />
-        <p className="text-slate-500 font-black text-xs uppercase tracking-widest">
-          Sincronizando Tesorería...
-        </p>
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        ...Cargando...
       </div>
     );
 
@@ -239,90 +239,85 @@ export function CuentasPorPagarFijas() {
                   (itemAPagar.monto_pagado_actual || 0)
                 : itemAPagar.monto_esperado,
           }}
-          mesActual={mesActual}
+          mesActual={mesActualString}
           isPending={registrarPago.isPending}
           onClose={() => setItemAPagar(null)}
           onSuccess={handleConfirmarPago}
         />
       )}
 
-      <div className=" mx-auto">
-        <header className="flex flex-col justify-between items-start md:items-center mb-3 gap-3 sticky top-0 z-10 w-full bg-mist-50 px-1 pb-3 md:px-2 rounded-bl-md rounded-br-md shadow-sm shadow-mist-300">
-          <div className="flex flex-row gap-2 justify-between w-full items-center">
-            <div className="text-2xl font-black text-slate-900 tracking-tighter italic">
-              OBLIGACIONES <span className="text-indigo-600">FIJAS</span>
-            </div>
-            <div className="bg-slate-900 text-white px-3 py-1 rounded-xl shadow-lg font-black text-sm uppercase tracking-widest text-center">
-              {format(new Date(mesActual), "MMMM yyyy")}
-            </div>
-          </div>
-          <div className="flex flex-row gap-2 justify-between w-full items-center">
-            <div className="text-slate-400 text-[12px] md:text-[14px] italic font-black uppercase tracking-[0.2em] text-shadow-2xs">
-              Estado de Obligaciones Mensuales
-            </div>
-            <div>
-              <ButtomNew onClick={ModalRegistrar.toggle}></ButtomNew>
-              <FormNuevaObligacion
-                mesActual={mesActual}
-                open={ModalRegistrar.isToggled}
-                onClose={ModalRegistrar.toggle}
-              />
+      <header className="sticky top-0 z-10 w-full bg-mist-50 px-1 pb-3 md:px-4 rounded-b-xl shadow-md flex flex-col gap-4">
+        <div className="flex flex-wrap justify-between items-center gap-2">
+          <div className="flex flex-1 gap-2 items-center">
+            <h2 className="text-2xl font-black text-slate-900 italic uppercase">
+              Obligaciones <span className="text-indigo-600">Fijas</span>
+            </h2>
+            <div className="bg-slate-900 text-white px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest text-center">
+              {format(mesActual, "MMMM yyyy", { locale: es })}
             </div>
           </div>
-        </header>
+          <div className="">
+            <ButtomNew onClick={ModalRegistrar.toggle} />
+          </div>
+        </div>
 
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        {/* TABS DE MESES */}
+        <div className="bg-white p-1 rounded-xl shadow-inner border border-slate-100">
+          <div className="flex justify-between gap-1 overflow-x-auto no-scrollbar">
+            {mesesDelAño.map((mes) => {
+              const isActive = isSameMonth(mes.fecha, mesActual);
+              return (
+                <button
+                  key={mes.etiqueta}
+                  onClick={() => setMesActual(mes.fecha)}
+                  className={`flex-1 min-w-13.75 py-2 rounded-lg text-[10px] font-black uppercase transition-all duration-200 ${
+                    isActive
+                      ? "bg-indigo-600 text-white shadow-md"
+                      : "text-slate-400 hover:bg-slate-50"
+                  }`}
+                >
+                  {mes.etiqueta}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </header>
+
+      <main className="px-1 md:px-4 py-2">
+        <div className="grid gap-2 grid-cols-1 lg:grid-cols-2">
           {data?.map((ob) => {
-            const estaVencido =
-              getDate(new Date()) > ob.dia_pago && ob.estado_pago !== "TOTAL";
-
+            const fechaHoy = new Date();
+            const estaVencido = checkIsVencido(ob, mesActual, fechaHoy);
             return (
               <Dropdown
+                key={ob.id}
                 menu={{ items: items(ob.id) }}
                 trigger={["contextMenu"]}
               >
                 <div
-                  key={ob.id}
-                  className={`group flex flex-col items-center justify-between p-3 rounded-md border transition-all duration-300 gap-2 ${
+                  className={`p-4 rounded-xl border transition-all ${
                     ob.estado_pago === "TOTAL"
-                      ? "bg-slate-50/50 border-slate-100 opacity-80"
+                      ? "bg-slate-50 border-slate-100 opacity-75"
                       : estaVencido
                         ? "bg-white border-red-200 shadow-lg shadow-red-50"
-                        : "bg-white border-slate-200 hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-50"
+                        : "bg-white border-slate-200 hover:shadow-xl"
                   }`}
                 >
-                  <div className="w-full">
-                    <ObligacionItem item={ob} />
-                  </div>
-
-                  <div className="mt-2 md:mt-0">
-                    {ob.estado_pago === "TOTAL" ? (
-                      <div className="flex items-center justify-center gap-2 text-emerald-600 font-black text-[10px] bg-emerald-50 border border-emerald-100 py-1 px-2 rounded-md">
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse truncate" />
-                        COMPLETADO
-                      </div>
-                    ) : (
+                  <ObligacionItem
+                    item={ob}
+                    estaVencido={estaVencido}
+                    hoy={fechaHoy}
+                  />
+                  <div className="mt-4 flex justify-end">
+                    {ob.estado_pago !== "TOTAL" && (
                       <button
                         onClick={() => setItemAPagar(ob)}
-                        className={`px-2 py-1 rounded-md text-[10px] font-black tracking-widest uppercase shadow-lg transition-all transform active:scale-95 ${
-                          estaVencido
-                            ? "bg-red-600 hover:bg-red-700 text-white shadow-red-200"
-                            : "bg-slate-900 hover:bg-indigo-600 text-white shadow-slate-200"
-                        }`}
+                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase text-white shadow-lg ${estaVencido ? "bg-red-600" : "bg-slate-900"}`}
                       >
-                        {ob.estado_pago === "PARCIAL" ? (
-                          <div className="flex gap-1 items-center">
-                            {" "}
-                            <MdOutlineIncompleteCircle className="animate-bounce" />
-                            <p>Completar Pago</p>
-                          </div>
-                        ) : (
-                          <div className="flex gap-1 items-center">
-                            {" "}
-                            <FaMoneyBillTrendUp className="animate-bounce" />
-                            <p>Pagar</p>
-                          </div>
-                        )}
+                        {ob.estado_pago === "PARCIAL"
+                          ? "Completar Pago"
+                          : "Pagar Ahora"}
                       </button>
                     )}
                   </div>
@@ -331,13 +326,19 @@ export function CuentasPorPagarFijas() {
             );
           })}
         </div>
-        <ModalEditarCntsPagarFijas
-          id={ModalEditar.data ?? 0}
-          open={ModalEditar.isToggled}
-          onClose={ModalEditar.handlerClose}
-          mesActual={mesActual}
-        />
-      </div>
+      </main>
+
+      <FormNuevaObligacion
+        mesActual={mesActualString}
+        open={ModalRegistrar.isToggled}
+        onClose={ModalRegistrar.toggle}
+      />
+      <ModalEditarCntsPagarFijas
+        id={ModalEditar.data ?? 0}
+        open={ModalEditar.isToggled}
+        onClose={ModalEditar.handlerClose}
+        mesActual={mesActualString}
+      />
     </div>
   );
 }

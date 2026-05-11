@@ -114,7 +114,7 @@ const getColumns = (
     name: "Fecha",
     width: 150,
     renderHeaderCell: CustomHeader,
-    renderCell: ({ row }) => (
+    renderCell: ({ row }: RenderCellProps<Row>) => (
       <input
         className="w-full h-full bg-transparent outline-none px-2 focus:bg-blue-50 transition-colors"
         type="date"
@@ -128,7 +128,7 @@ const getColumns = (
     key: "descripcion",
     name: "Descripción",
     renderHeaderCell: CustomHeader,
-    renderCell: ({ row }) => (
+    renderCell: ({ row }: RenderCellProps<Row>) => (
       <input
         className="w-full h-full bg-transparent outline-none px-2 focus:bg-blue-50 transition-colors"
         type="text"
@@ -142,7 +142,7 @@ const getColumns = (
     key: "referencia",
     name: "Referencia",
     renderHeaderCell: CustomHeader,
-    renderCell: ({ row }) => (
+    renderCell: ({ row }: RenderCellProps<Row>) => (
       <input
         className="w-full h-full bg-transparent outline-none px-2 focus:bg-blue-50 transition-colors"
         type="text"
@@ -157,7 +157,7 @@ const getColumns = (
     width: 120,
     headerCellClass: "text-right",
     renderHeaderCell: CustomHeader,
-    renderCell: ({ row }) => (
+    renderCell: ({ row }: RenderCellProps<Row>) => (
       <div className="text-right pr-4 font-medium text-green-700">
         {new Intl.NumberFormat("es-PE", {
           style: "currency",
@@ -174,7 +174,7 @@ const getColumns = (
     width: 120,
     headerCellClass: "text-right",
     renderHeaderCell: CustomHeader,
-    renderCell: ({ row }) => (
+    renderCell: ({ row }: RenderCellProps<Row>) => (
       <div className="text-right pr-4 font-medium text-red-700">
         {new Intl.NumberFormat("es-PE", {
           style: "currency",
@@ -191,7 +191,7 @@ const getColumns = (
     width: 130,
     headerCellClass: "text-right",
     renderHeaderCell: CustomHeader,
-    renderCell: ({ row }) => (
+    renderCell: ({ row }: RenderCellProps<Row>) => (
       <div
         className={`text-right pr-4 font-bold ${row.saldo < 0 ? "text-red-600" : "text-blue-700"}`}
       >
@@ -206,7 +206,7 @@ const getColumns = (
     key: "adicionales",
     name: "Adicionales",
     renderHeaderCell: CustomHeader,
-    renderCell: ({ row }) => (
+    renderCell: ({ row }: RenderCellProps<Row>) => (
       <input
         className="w-full h-full bg-transparent outline-none px-2 focus:bg-blue-50 transition-colors"
         type="text"
@@ -305,7 +305,6 @@ function FirsComponetsdataGrid() {
     },
   });
 
-
   // para guardar los datos haciendo uso del boton guardar
 
   const hadlerSave = async () => {
@@ -345,7 +344,7 @@ function FirsComponetsdataGrid() {
     let saldoAcumulado = 0;
     return baseRows.map((row) => {
       saldoAcumulado += (Number(row.ingreso) || 0) - (Number(row.egreso) || 0);
-return { ...row, saldo: saldoAcumulado };
+      return { ...row, saldo: saldoAcumulado };
     });
   }, [rows, sortColumns]);
 
@@ -355,7 +354,7 @@ return { ...row, saldo: saldoAcumulado };
       const updatedWithEmpty = [...newRows];
 
       // Registrar todas las filas afectadas
-      data.indexes.forEach((index) => {
+      data.indexes.forEach((index: number) => {
         const updatedRow = updatedWithEmpty[index];
         const isNew = !apiData?.some((apiR) => apiR.id === updatedRow.id);
         changeManager.current.registerChange(updatedRow.id, updatedRow, isNew);
@@ -407,14 +406,14 @@ return { ...row, saldo: saldoAcumulado };
         }
 
         // 2. Procesar el pegado fila por fila
-        gridData.forEach((rowData, i) => {
+        gridData.forEach((rowData, i: number) => {
           const rowIndex = activeCell.rowIdx + i;
           if (rowIndex >= updatedRows.length) return;
 
           // Clonamos la fila actual para no mutar el estado directamente
           const updatedRow = { ...updatedRows[rowIndex] };
 
-          rowData.forEach((value, j) => {
+          rowData.forEach((value, j: number) => {
             const colIndex = activeCell.colIdx + j;
             const column = columns[colIndex];
 
@@ -459,10 +458,8 @@ return { ...row, saldo: saldoAcumulado };
     [sortedRows], // Cambiado de rows a sortedRows
   );
 
-    if (isLoading) return <div>Cargando...</div>;
-    if (isError) return <div>Error al cargar los datos</div>;
-
-
+  if (isLoading) return <div>Cargando...</div>;
+  if (isError) return <div>Error al cargar los datos</div>;
 
   return (
     <div
