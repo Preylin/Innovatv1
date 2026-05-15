@@ -1,5 +1,8 @@
-import { Modal } from "antd";
-import { CuentasPorPagarCreateUISchema } from "./StructureFormDataCntPagarFijas";
+import { App, Modal } from "antd";
+import {
+  CuentasPorPagarCreateUISchema,
+  isUsuarioFieldCuentasPorPagarFijas,
+} from "./StructureFormDataCntPagarFijas";
 import { useAppForm } from "../formulario/components/core/form";
 import { useQueryClient } from "@tanstack/react-query";
 import type {
@@ -9,6 +12,8 @@ import type {
 import { FromCntsPorPabarFijas } from "./ComposeUICntPagarFijas";
 import { useUpdateObligacionPagar } from "../../data/api.cuentasPorPagar";
 import { RxUpdate } from "react-icons/rx";
+import { ApiError } from "../../../../../api/normalizeError";
+import { setFormErrors } from "../../../../../helpers/formHelpers";
 
 interface Props {
   id: number;
@@ -37,7 +42,8 @@ export function ModalEditarCntsPagarFijas({
   onClose,
   mesActual,
 }: Props) {
-  // 1. Todos los Hooks se declaran arriba del todo
+  const { message } = App.useApp();
+
   const { mutate, isPending } = useUpdateObligacionPagar(id as number);
   const data = useCntsPorPagarFijasFromCache(id as number, mesActual);
 
@@ -64,10 +70,21 @@ export function ModalEditarCntsPagarFijas({
           categoria: value.categoria.trim().toUpperCase(),
         };
         await mutate(payload);
+        message.success("Actualizado exitosamente");
         formApi.reset();
         onClose();
       } catch (err) {
-        alert(err);
+
+        if (err instanceof ApiError) {
+          setFormErrors(err, formApi, isUsuarioFieldCuentasPorPagarFijas);
+
+          if (err.kind !== "validation") {
+            message.error(err.message);
+          }
+        } else {
+          message.error("Error inesperado. Intente de nuevo.");
+          console.error("Form Error:", err);
+        }
       }
     },
   });
@@ -94,7 +111,7 @@ export function ModalEditarCntsPagarFijas({
           }}
         >
           <div className="flex flex-col gap-2">
-            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2 dark:text-mist-100">
               <span className="bg-slate-800 text-white p-1.5 rounded-lg text-sm">
                 <RxUpdate className="animate-spin" />
               </span>

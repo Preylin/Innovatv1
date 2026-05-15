@@ -1,4 +1,5 @@
 import axios from "axios";
+import { ZodError } from "zod"; // IMPORTANTE: Agregar esta importación
 import {
   ValidationErrorSchema,
   type ValidationErrorType,
@@ -8,14 +9,13 @@ import {
    Tipos y Configuración
    ====================================================== */
 
-// Códigos que tu API usa para errores de lógica/validación estructurados
 const VALIDATION_STATUS_CODES = [400, 409, 412, 422, 500] as const;
 type ValidationStatus = typeof VALIDATION_STATUS_CODES[number];
 
 export type NormalizedApiError =
   | {
       kind: "validation";
-      httpStatus: ValidationStatus;
+      httpStatus: ValidationStatus | 422; // 422 es el estándar para Zod local
       message: string;
       data: ValidationErrorType[];
       raw: unknown;
@@ -39,16 +39,33 @@ export type NormalizedApiError =
 
 const extractMessage = (error: any): string => {
   const data = error.response?.data;
-  // Prioridad: message personalizado -> detail (si es string) -> mensaje de axios -> default
   if (data?.message) return data.message;
   if (typeof data?.detail === "string") return data.detail;
   return error.message || "Error de comunicación con el servidor";
 };
 
 /* ======================================================
-   normalizeError (Refactorizado)
+   normalizeError (Refactorizado con soporte Zod)
    ====================================================== */
 export function normalizeError(error: unknown): NormalizedApiError {
+  
+  // --- MEJORA 1: Manejo de errores de Zod (Client-side o Output validation) ---
+  if (error instanceof ZodError) {
+    return {
+      kind: "validation",
+      httpStatus: 422, // Unprocessable Entity simulado para el cliente
+      message: "Error de validación en los datos de entrada",
+      // Transformamos el path de Zod al formato [loc] que espera tu helper
+      data: error.issues.map((e) => ({
+        loc: e.path as string[], 
+        msg: e.message,
+        type: e.code,
+      })),
+      raw: error,
+    };
+  }
+
+  // --- MEJORA 2: Verificación de Axios ---
   if (!axios.isAxiosError(error)) {
     return {
       kind: "unknown",
@@ -61,23 +78,24 @@ export function normalizeError(error: unknown): NormalizedApiError {
   const status = error.response?.status ?? null;
   const detail = error.response?.data?.detail;
 
-  // 1. Intentar normalizar como error de VALIDACIÓN/ESTRUCTURADO
+  // --- MEJORA 3: Validación del Servidor (FastAPI / Nest / etc) ---
   const isValidationStatus = status !== null && (VALIDATION_STATUS_CODES as readonly number[]).includes(status);
 
+  // Si el servidor devuelve el array de errores estándar en 'detail'
   if (isValidationStatus && Array.isArray(detail)) {
     const parsed = ValidationErrorSchema.array().safeParse(detail);
     if (parsed.success) {
       return {
         kind: "validation",
         httpStatus: status as ValidationStatus,
-        message: "Error de validación en los datos",
+        message: "Error de validación en el servidor",
         data: parsed.data,
         raw: error,
       };
     }
   }
 
-  // 2. Normalizar como error HTTP GENÉRICO (401, 403, 404, 500...)
+  // 2. Normalizar como error HTTP GENÉRICO
   return {
     kind: "http",
     httpStatus: status,
@@ -87,7 +105,7 @@ export function normalizeError(error: unknown): NormalizedApiError {
 }
 
 /* ======================================================
-   ApiError (Clase de Excepción)
+   ApiError (Clase de Excepción) - Sin cambios, ya es robusta
    ====================================================== */
 export class ApiError extends Error {
   public readonly httpStatus: number | null;
@@ -110,9 +128,6 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Punto de entrada para convertir cualquier error en un ApiError estandarizado
- */
 export function toApiError(err: unknown): ApiError {
   return new ApiError(normalizeError(err));
 }

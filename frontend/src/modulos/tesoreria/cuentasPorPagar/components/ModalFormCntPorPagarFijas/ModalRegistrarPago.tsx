@@ -1,10 +1,12 @@
 import { useForm } from "@tanstack/react-form";
 import type { CuentasPorPagarRegistroPagoCreateSchemaApiType } from "../../data/api.shemaCuentasPorCobar";
-import { Modal } from "antd";
+import { App, Modal } from "antd";
 import z from "zod";
 import FieldInfo from "../formulario/components/core/errors";
 import { FaCheck } from "react-icons/fa";
-
+import { ApiError } from "../../../../../api/normalizeError";
+import { setFormErrors } from "../../../../../helpers/formHelpers";
+import { createFieldChecker } from "../../../../../helpers/isFieldMapErrorsInputsUI";
 
 const CuentasPorPagarRegistroPagoCreateUISchema = z.object({
   obligacion_id: z.number(),
@@ -15,6 +17,9 @@ const CuentasPorPagarRegistroPagoCreateUISchema = z.object({
   metodo_pago: z.string(),
   observaciones: z.string(),
 });
+
+export const isUsuarioFieldCuentasPorPagarFijasRegistroPago = createFieldChecker(CuentasPorPagarRegistroPagoCreateUISchema);
+
 
 interface Props {
   obligacion: any;
@@ -31,6 +36,8 @@ export function ModalRegistrarPago({
   onSuccess,
   isPending,
 }: Props) {
+  const { message } = App.useApp();
+
   const form = useForm({
     defaultValues: {
       obligacion_id: obligacion.id as number,
@@ -49,15 +56,25 @@ export function ModalRegistrarPago({
         const payload: CuentasPorPagarRegistroPagoCreateSchemaApiType = {
           ...value,
           comprobante: value.comprobante || null,
-          metodo_pago: value.metodo_pago || null,
+          metodo_pago: value.metodo_pago || "TRANSFERENCIA",
           observaciones: value.observaciones || null,
         };
 
         await onSuccess(payload);
+        message.success("Registrado exitosamente");
         formApi.reset();
         onClose();
       } catch (err) {
-        console.error(err);
+        if (err instanceof ApiError) {
+          setFormErrors(err, formApi, isUsuarioFieldCuentasPorPagarFijasRegistroPago);
+
+          if (err.kind !== "validation") {
+            message.error(err.message);
+          }
+        } else {
+          message.error("Error inesperado. Intente de nuevo.");
+          console.error("Form Error:", err);
+        }
       }
     },
   });
@@ -223,8 +240,7 @@ export function ModalRegistrarPago({
               </>
             ) : (
               <div className="flex gap-2 items-center">
-                <FaCheck  className="animate-bounce" />{" "}
-                <p>CONFIRMAR PAGO</p>
+                <FaCheck className="animate-bounce" /> <p>CONFIRMAR PAGO</p>
               </div>
             )}
           </button>

@@ -1,6 +1,6 @@
 import { createLazyFileRoute, Outlet } from "@tanstack/react-router";
 import ResumenSaldoEfectivo from "../../modulos/tesoreria/efectivo/components/PanelResumenSaldos";
-import PanelResumenPorCobrar from "../../modulos/tesoreria/cuentasPorCobrar/components/PanelResumenPorPagar";
+import PanelResumenPorCobrar from "../../modulos/tesoreria/components/PanelResumenPorPagar";
 
 export const Route = createLazyFileRoute("/tesoreria/")({
   component: RouteComponent,

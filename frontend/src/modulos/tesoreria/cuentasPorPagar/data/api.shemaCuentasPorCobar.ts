@@ -10,6 +10,7 @@ export const CuentasPorPagarResumenMensualSchemaApiOut = z.object({
   categoria: z.string().nullable(),
   estado_pago: z.enum(["TOTAL", "PARCIAL", "ADELANTADO", "PENDIENTE"]),
   monto_pagado_actual: z.number().optional().default(0),
+  fecha_creacion: z.iso.datetime(),
 });
 
 export type CuentasPorPagarResumenMensualSchemaApiOutType = z.infer<

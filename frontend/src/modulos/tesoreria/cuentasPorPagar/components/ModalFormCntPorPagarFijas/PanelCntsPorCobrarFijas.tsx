@@ -43,8 +43,8 @@ const checkIsVencido = (
 
 interface ObligacionItemProps {
   item: CuentasPorPagarResumenMensualSchemaApiOutType;
-  estaVencido: boolean; // Recibido del padre
-  hoy: Date; // Recibido del padre para cálculos de días
+  estaVencido: boolean;
+  hoy: Date;
 }
 
 export function ObligacionItem({
@@ -228,7 +228,7 @@ export function CuentasPorPagarFijas() {
     );
 
   return (
-    <div className="">
+    <div>
       {itemAPagar && (
         <ModalRegistrarPago
           obligacion={{
@@ -284,47 +284,58 @@ export function CuentasPorPagarFijas() {
         </div>
       </header>
 
-      <main className="px-1 md:px-4 py-2">
-        <div className="grid gap-2 grid-cols-1 lg:grid-cols-2">
-          {data?.map((ob) => {
-            const fechaHoy = new Date();
-            const estaVencido = checkIsVencido(ob, mesActual, fechaHoy);
-            return (
-              <Dropdown
-                key={ob.id}
-                menu={{ items: items(ob.id) }}
-                trigger={["contextMenu"]}
-              >
-                <div
-                  className={`p-4 rounded-xl border transition-all ${
-                    ob.estado_pago === "TOTAL"
-                      ? "bg-slate-50 border-slate-100 opacity-75"
-                      : estaVencido
-                        ? "bg-white border-red-200 shadow-lg shadow-red-50"
-                        : "bg-white border-slate-200 hover:shadow-xl"
-                  }`}
+      <main className="px-1 md:px-2 py-2">
+        <div className="grid gap-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3" >
+          {data
+            ?.filter((ob) => {
+              const inicioMesCreacion = startOfMonth(
+                new Date(ob.fecha_creacion),
+              );
+              const inicioMesVisualizado = startOfMonth(mesActual);
+              return !isBefore(inicioMesVisualizado, inicioMesCreacion);
+            })
+            .map((ob) => {
+              const fechaHoy = new Date();
+              const estaVencido = checkIsVencido(ob, mesActual, fechaHoy);
+
+              return (
+                <Dropdown
+                  key={ob.id}
+                  menu={{ items: items(ob.id) }}
+                  trigger={["contextMenu"]}
                 >
-                  <ObligacionItem
-                    item={ob}
-                    estaVencido={estaVencido}
-                    hoy={fechaHoy}
-                  />
-                  <div className="mt-4 flex justify-end">
-                    {ob.estado_pago !== "TOTAL" && (
-                      <button
-                        onClick={() => setItemAPagar(ob)}
-                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase text-white shadow-lg ${estaVencido ? "bg-red-600" : "bg-slate-900"}`}
-                      >
-                        {ob.estado_pago === "PARCIAL"
-                          ? "Completar Pago"
-                          : "Pagar Ahora"}
-                      </button>
-                    )}
+                  <div
+                    className={`p-4 rounded-xl border transition-all ${
+                      ob.estado_pago === "TOTAL"
+                        ? "bg-slate-50 border-slate-100 opacity-75"
+                        : estaVencido
+                          ? "bg-white border-red-200 shadow-lg shadow-red-50"
+                          : "bg-white border-slate-200 hover:shadow-xl"
+                    }`}
+                  >
+                    <ObligacionItem
+                      item={ob}
+                      estaVencido={estaVencido}
+                      hoy={fechaHoy}
+                    />
+                    <div className="mt-4 flex justify-end">
+                      {ob.estado_pago !== "TOTAL" && (
+                        <button
+                          onClick={() => setItemAPagar(ob)}
+                          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase text-white shadow-lg ${
+                            estaVencido ? "bg-red-600" : "bg-slate-900"
+                          }`}
+                        >
+                          {ob.estado_pago === "PARCIAL"
+                            ? "Completar Pago"
+                            : "Pagar Ahora"}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </Dropdown>
-            );
-          })}
+                </Dropdown>
+              );
+            })}
         </div>
       </main>
 

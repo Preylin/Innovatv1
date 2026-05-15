@@ -20,8 +20,12 @@ from app.api.v1.routes.modulos.almacen.catalogos.RouterAlmacenSalidaMaterial imp
 from app.api.v1.routes.modulos.gerencia.inicio.RouterGerenciaInicioProvClient import router_clientesGerenciaInicio, router_proveedoresGerenciaInicio
 from app.api.v1.routes.modulos.administracion.ventas.RouterHistorialVentas import router_historialVentas
 from app.api.v1.routes.modulos.administracion.ventas.RouterHistorialCompras import router_historialCompras
-from app.api.v1.routes.modulos.tesoreria.RouterTesoreriaEfectivo import router_cajachica, router_bcpsoles, router_bcpdolares
-from app.api.v1.routes.modulos.tesoreria.RouterTesoreriaCntPorPagar import router_cuentasporpagar
+from app.api.v1.tesoreria.routers.RouterTesoreriaEfectivo import router_cajachica, router_bcpsoles, router_bcpdolares
+from app.api.v1.tesoreria.routers.RouterTesoreriaCntPorPagar import router_cuentasporpagar
+from app.api.v1.contabilidad.ventas.routerVentas import router_contabilidad_ventas
+from app.api.v1.tesoreria.routers.RouterTesoreriaCntPorCobrar import router_tesoreria_cuentasporcobrar
+
+
 
 
 
@@ -144,3 +148,5 @@ app.include_router(router_cajachica)
 app.include_router(router_bcpsoles)
 app.include_router(router_bcpdolares)
 app.include_router(router_cuentasporpagar)
+app.include_router(router_contabilidad_ventas)
+app.include_router(router_tesoreria_cuentasporcobrar)

@@ -1,7 +1,7 @@
 import { useState, type JSX } from "react";
 import { CuentasPorPagarFijas } from "./ModalFormCntPorPagarFijas/PanelCntsPorCobrarFijas";
 import { RxCross2 } from "react-icons/rx";
-import { LuMenu } from "react-icons/lu";
+import { RxDrawingPin } from "react-icons/rx";
 import { MdPublishedWithChanges } from "react-icons/md";
 import { RiExchangeBoxFill } from "react-icons/ri";
 import { VscRequestChanges } from "react-icons/vsc";
@@ -62,7 +62,7 @@ function ShowSidebar({ onSelect, isOpen, toggleMenu }: ShowSidebarProps) {
           onClick={toggleMenu}
           className="text-gray-500 hover:text-red-500 transition-colors text-sm font-bold p-1 border border-gray-200 rounded"
         >
-          {isOpen ? <RxCross2 /> : <LuMenu />}
+          {isOpen ? <RxCross2 /> : <RxDrawingPin />}
         </button>
       </div>
 

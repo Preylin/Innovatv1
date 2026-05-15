@@ -26,6 +26,7 @@ const ContabilidadIndexLazyRouteImport = createFileRoute('/contabilidad/')()
 const AlmacenIndexLazyRouteImport = createFileRoute('/almacen/')()
 const AdministracionIndexLazyRouteImport = createFileRoute('/administracion/')()
 const TesoreriaPagarLazyRouteImport = createFileRoute('/tesoreria/pagar')()
+const TesoreriaCobrarLazyRouteImport = createFileRoute('/tesoreria/cobrar')()
 const ProduccionStockLazyRouteImport = createFileRoute('/produccion/stock')()
 const GerenciaUsuariosLazyRouteImport = createFileRoute('/gerencia/usuarios')()
 const GerenciaOrdenesLazyRouteImport = createFileRoute('/gerencia/ordenes')()
@@ -35,6 +36,9 @@ const GerenciaCotizacionesLazyRouteImport = createFileRoute(
 const GerenciaActivosLazyRouteImport = createFileRoute('/gerencia/activos')()
 const GerenciaActividadesLazyRouteImport = createFileRoute(
   '/gerencia/actividades',
+)()
+const ContabilidadVentasLazyRouteImport = createFileRoute(
+  '/contabilidad/ventas',
 )()
 const AlmacenStockLazyRouteImport = createFileRoute('/almacen/stock')()
 const AlmacenSalidasLazyRouteImport = createFileRoute('/almacen/salidas')()
@@ -180,6 +184,13 @@ const TesoreriaPagarLazyRoute = TesoreriaPagarLazyRouteImport.update({
 } as any).lazy(() =>
   import('./routes/tesoreria/pagar.lazy').then((d) => d.Route),
 )
+const TesoreriaCobrarLazyRoute = TesoreriaCobrarLazyRouteImport.update({
+  id: '/cobrar',
+  path: '/cobrar',
+  getParentRoute: () => TesoreriaRoute,
+} as any).lazy(() =>
+  import('./routes/tesoreria/cobrar.lazy').then((d) => d.Route),
+)
 const ProduccionStockLazyRoute = ProduccionStockLazyRouteImport.update({
   id: '/stock',
   path: '/stock',
@@ -222,6 +233,13 @@ const GerenciaActividadesLazyRoute = GerenciaActividadesLazyRouteImport.update({
   getParentRoute: () => GerenciaRoute,
 } as any).lazy(() =>
   import('./routes/gerencia/actividades.lazy').then((d) => d.Route),
+)
+const ContabilidadVentasLazyRoute = ContabilidadVentasLazyRouteImport.update({
+  id: '/ventas',
+  path: '/ventas',
+  getParentRoute: () => ContabilidadRoute,
+} as any).lazy(() =>
+  import('./routes/contabilidad/ventas.lazy').then((d) => d.Route),
 )
 const AlmacenStockLazyRoute = AlmacenStockLazyRouteImport.update({
   id: '/stock',
@@ -427,12 +445,14 @@ export interface FileRoutesByFullPath {
   '/almacen/ingresos': typeof AlmacenIngresosLazyRoute
   '/almacen/salidas': typeof AlmacenSalidasLazyRoute
   '/almacen/stock': typeof AlmacenStockLazyRoute
+  '/contabilidad/ventas': typeof ContabilidadVentasLazyRoute
   '/gerencia/actividades': typeof GerenciaActividadesLazyRoute
   '/gerencia/activos': typeof GerenciaActivosLazyRoute
   '/gerencia/cotizaciones': typeof GerenciaCotizacionesLazyRouteWithChildren
   '/gerencia/ordenes': typeof GerenciaOrdenesLazyRoute
   '/gerencia/usuarios': typeof GerenciaUsuariosLazyRoute
   '/produccion/stock': typeof ProduccionStockLazyRoute
+  '/tesoreria/cobrar': typeof TesoreriaCobrarLazyRoute
   '/tesoreria/pagar': typeof TesoreriaPagarLazyRoute
   '/administracion/': typeof AdministracionIndexLazyRoute
   '/almacen/': typeof AlmacenIndexLazyRoute
@@ -466,11 +486,13 @@ export interface FileRoutesByTo {
   '/almacen/ingresos': typeof AlmacenIngresosLazyRoute
   '/almacen/salidas': typeof AlmacenSalidasLazyRoute
   '/almacen/stock': typeof AlmacenStockLazyRoute
+  '/contabilidad/ventas': typeof ContabilidadVentasLazyRoute
   '/gerencia/actividades': typeof GerenciaActividadesLazyRoute
   '/gerencia/activos': typeof GerenciaActivosLazyRoute
   '/gerencia/ordenes': typeof GerenciaOrdenesLazyRoute
   '/gerencia/usuarios': typeof GerenciaUsuariosLazyRoute
   '/produccion/stock': typeof ProduccionStockLazyRoute
+  '/tesoreria/cobrar': typeof TesoreriaCobrarLazyRoute
   '/tesoreria/pagar': typeof TesoreriaPagarLazyRoute
   '/administracion': typeof AdministracionIndexLazyRoute
   '/almacen': typeof AlmacenIndexLazyRoute
@@ -511,12 +533,14 @@ export interface FileRoutesById {
   '/almacen/ingresos': typeof AlmacenIngresosLazyRoute
   '/almacen/salidas': typeof AlmacenSalidasLazyRoute
   '/almacen/stock': typeof AlmacenStockLazyRoute
+  '/contabilidad/ventas': typeof ContabilidadVentasLazyRoute
   '/gerencia/actividades': typeof GerenciaActividadesLazyRoute
   '/gerencia/activos': typeof GerenciaActivosLazyRoute
   '/gerencia/cotizaciones': typeof GerenciaCotizacionesLazyRouteWithChildren
   '/gerencia/ordenes': typeof GerenciaOrdenesLazyRoute
   '/gerencia/usuarios': typeof GerenciaUsuariosLazyRoute
   '/produccion/stock': typeof ProduccionStockLazyRoute
+  '/tesoreria/cobrar': typeof TesoreriaCobrarLazyRoute
   '/tesoreria/pagar': typeof TesoreriaPagarLazyRoute
   '/administracion/': typeof AdministracionIndexLazyRoute
   '/almacen/': typeof AlmacenIndexLazyRoute
@@ -558,12 +582,14 @@ export interface FileRouteTypes {
     | '/almacen/ingresos'
     | '/almacen/salidas'
     | '/almacen/stock'
+    | '/contabilidad/ventas'
     | '/gerencia/actividades'
     | '/gerencia/activos'
     | '/gerencia/cotizaciones'
     | '/gerencia/ordenes'
     | '/gerencia/usuarios'
     | '/produccion/stock'
+    | '/tesoreria/cobrar'
     | '/tesoreria/pagar'
     | '/administracion/'
     | '/almacen/'
@@ -597,11 +623,13 @@ export interface FileRouteTypes {
     | '/almacen/ingresos'
     | '/almacen/salidas'
     | '/almacen/stock'
+    | '/contabilidad/ventas'
     | '/gerencia/actividades'
     | '/gerencia/activos'
     | '/gerencia/ordenes'
     | '/gerencia/usuarios'
     | '/produccion/stock'
+    | '/tesoreria/cobrar'
     | '/tesoreria/pagar'
     | '/administracion'
     | '/almacen'
@@ -641,12 +669,14 @@ export interface FileRouteTypes {
     | '/almacen/ingresos'
     | '/almacen/salidas'
     | '/almacen/stock'
+    | '/contabilidad/ventas'
     | '/gerencia/actividades'
     | '/gerencia/activos'
     | '/gerencia/cotizaciones'
     | '/gerencia/ordenes'
     | '/gerencia/usuarios'
     | '/produccion/stock'
+    | '/tesoreria/cobrar'
     | '/tesoreria/pagar'
     | '/administracion/'
     | '/almacen/'
@@ -784,6 +814,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TesoreriaPagarLazyRouteImport
       parentRoute: typeof TesoreriaRoute
     }
+    '/tesoreria/cobrar': {
+      id: '/tesoreria/cobrar'
+      path: '/cobrar'
+      fullPath: '/tesoreria/cobrar'
+      preLoaderRoute: typeof TesoreriaCobrarLazyRouteImport
+      parentRoute: typeof TesoreriaRoute
+    }
     '/produccion/stock': {
       id: '/produccion/stock'
       path: '/stock'
@@ -825,6 +862,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/gerencia/actividades'
       preLoaderRoute: typeof GerenciaActividadesLazyRouteImport
       parentRoute: typeof GerenciaRoute
+    }
+    '/contabilidad/ventas': {
+      id: '/contabilidad/ventas'
+      path: '/ventas'
+      fullPath: '/contabilidad/ventas'
+      preLoaderRoute: typeof ContabilidadVentasLazyRouteImport
+      parentRoute: typeof ContabilidadRoute
     }
     '/almacen/stock': {
       id: '/almacen/stock'
@@ -1054,10 +1098,12 @@ const AlmacenRouteWithChildren =
   AlmacenRoute._addFileChildren(AlmacenRouteChildren)
 
 interface ContabilidadRouteChildren {
+  ContabilidadVentasLazyRoute: typeof ContabilidadVentasLazyRoute
   ContabilidadIndexLazyRoute: typeof ContabilidadIndexLazyRoute
 }
 
 const ContabilidadRouteChildren: ContabilidadRouteChildren = {
+  ContabilidadVentasLazyRoute: ContabilidadVentasLazyRoute,
   ContabilidadIndexLazyRoute: ContabilidadIndexLazyRoute,
 }
 
@@ -1118,6 +1164,7 @@ const ProduccionRouteWithChildren = ProduccionRoute._addFileChildren(
 )
 
 interface TesoreriaRouteChildren {
+  TesoreriaCobrarLazyRoute: typeof TesoreriaCobrarLazyRoute
   TesoreriaPagarLazyRoute: typeof TesoreriaPagarLazyRoute
   TesoreriaIndexLazyRoute: typeof TesoreriaIndexLazyRoute
   TesoreriaMovimientoCajaLazyRoute: typeof TesoreriaMovimientoCajaLazyRoute
@@ -1127,6 +1174,7 @@ interface TesoreriaRouteChildren {
 }
 
 const TesoreriaRouteChildren: TesoreriaRouteChildren = {
+  TesoreriaCobrarLazyRoute: TesoreriaCobrarLazyRoute,
   TesoreriaPagarLazyRoute: TesoreriaPagarLazyRoute,
   TesoreriaIndexLazyRoute: TesoreriaIndexLazyRoute,
   TesoreriaMovimientoCajaLazyRoute: TesoreriaMovimientoCajaLazyRoute,

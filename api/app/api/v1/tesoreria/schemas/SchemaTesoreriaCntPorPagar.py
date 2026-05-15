@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from datetime import date
+from datetime import date, datetime
 from typing import Optional, List
 
 class ObligacionBase(BaseModel):
@@ -28,8 +28,9 @@ class RegistroPagoCreate(BaseModel):
 
 class ObligacionRead(ObligacionBase):
     id: int
-    estado_pago: str = "PENDIENTE" # Valor por defecto si no hay registro
+    estado_pago: str = "PENDIENTE"
     monto_pagado_actual: Optional[float] = 0.0
+    fecha_creacion: datetime
 
     class Config:
         from_attributes = True

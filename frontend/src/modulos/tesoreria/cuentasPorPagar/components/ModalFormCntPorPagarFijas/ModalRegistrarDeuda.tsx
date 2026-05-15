@@ -1,10 +1,15 @@
 import { type CuentasPorPagarCreateApiType } from "../../data/api.shemaCuentasPorCobar";
 import { useCreateObligacionPagar } from "../../data/api.cuentasPorPagar";
-import { Modal } from "antd";
+import { App, Modal } from "antd";
 import { useAppForm } from "../formulario/components/core/form";
-import { FormOptsCntsPorPagarFijas } from "./StructureFormDataCntPagarFijas";
+import {
+  FormOptsCntsPorPagarFijas,
+  isUsuarioFieldCuentasPorPagarFijas,
+} from "./StructureFormDataCntPagarFijas";
 import { FromCntsPorPabarFijas } from "./ComposeUICntPagarFijas";
 import { FaPlus } from "react-icons/fa";
+import { ApiError } from "../../../../../api/normalizeError";
+import { setFormErrors } from "../../../../../helpers/formHelpers";
 
 interface Props {
   open: boolean;
@@ -13,9 +18,9 @@ interface Props {
 }
 
 export function FormNuevaObligacion({ open, onClose, mesActual }: Props) {
-  const { mutate, isPending } = useCreateObligacionPagar(mesActual);
+  const { mutateAsync, isPending } = useCreateObligacionPagar(mesActual);
+  const { message } = App.useApp();
 
-  // Inicialización de TanStack Form
   const form = useAppForm({
     ...FormOptsCntsPorPagarFijas,
     onSubmit: async ({ value, formApi }) => {
@@ -28,11 +33,22 @@ export function FormNuevaObligacion({ open, onClose, mesActual }: Props) {
           dia_pago: value.dia_pago,
           categoria: value.categoria.trim().toUpperCase(),
         };
-        await mutate(payload);
+        await mutateAsync(payload);
+        message.success("Registrado exitosamente");
         formApi.reset();
         onClose();
       } catch (err) {
-        alert(err);
+
+        if (err instanceof ApiError) {
+          setFormErrors(err, formApi, isUsuarioFieldCuentasPorPagarFijas);
+
+          if (err.kind !== "validation") {
+            message.error(err.message);
+          }
+        } else {
+          message.error("Error inesperado. Intente de nuevo.");
+          console.error("Form Error:", err);
+        }
       }
     },
   });
@@ -62,10 +78,10 @@ export function FormNuevaObligacion({ open, onClose, mesActual }: Props) {
           </h3>
           <FromCntsPorPabarFijas form={form} />
           <form.AppForm>
-              <div className="flex justify-end mt-4">
-                <form.SubscribeButton label="Registrar" isPending={isPending} />
-              </div>
-            </form.AppForm>
+            <div className="flex justify-end mt-4">
+              <form.SubscribeButton label="Registrar" isPending={isPending} />
+            </div>
+          </form.AppForm>
         </div>
       </form>
     </Modal>

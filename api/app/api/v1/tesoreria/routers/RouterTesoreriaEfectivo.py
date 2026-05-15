@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user
 from app.core.db import get_session
-from app.api.v1.schemas.modulos.tesoreria.SchemaTesoreriaEfectivo import DeleteRequest, EfectivoOut, SaldosIndependientes, SyncPayload, SyncResponse
-from app.models.modulos.tesoreria.ModelsTesoreriaEfectivo import CajaChica, Bcpsoles, Bcpdolares
+from app.api.v1.tesoreria.schemas.SchemaTesoreriaEfectivo import DeleteRequest, EfectivoOut, SaldosIndependientes, SyncPayload, SyncResponse
+from app.api.v1.tesoreria.models.ModelsTesoreriaEfectivo import CajaChica, Bcpsoles, Bcpdolares
 
 # router caja chica
 router_cajachica = APIRouter(

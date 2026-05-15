@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { UseComercialesIconsLO } from "../../../../components/atoms/icons/OtrasLibs/Comerciales";
+import { UseComercialesIconsLO } from "../../../components/atoms/icons/OtrasLibs/Comerciales";
 
 interface LinkItem {
   to: string;

@@ -1,5 +1,6 @@
 import { formOptions } from '@tanstack/react-form'
 import z from 'zod';
+import { createFieldChecker } from '../../../../../helpers/isFieldMapErrorsInputsUI';
 
 
 export const CuentasPorPagarCreateUISchema = z.object({
@@ -10,6 +11,7 @@ export const CuentasPorPagarCreateUISchema = z.object({
   dia_pago: z.number().min(1, "Debe ser mayor a 0").max(30, "Debe ser menor o igual a 30"),
   categoria: z.string().min(3, "Requerido mínimo 3 caracteres").max(50, "Máximo 50 caracteres"),
 });
+export const isUsuarioFieldCuentasPorPagarFijas = createFieldChecker(CuentasPorPagarCreateUISchema);
 
 
 export const FormOptsCntsPorPagarFijas = formOptions({

@@ -10,6 +10,7 @@ export const setFormErrors = (err: ApiError, formApi: any, fieldChecker?: (f: st
       if (typeof rawField === "string" && fieldChecker?.(rawField)) {
         formApi.setFieldMeta(rawField, (meta: any) => ({
           ...meta,
+          isTouched: true,
           errorMap: { ...meta.errorMap, onSubmit: e.msg },
         }));
       }
