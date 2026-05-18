@@ -2,6 +2,7 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
 import { getToken } from "./token";
+import { normalizeError } from "./normalizeError";
 
 /**
  * La URL base para la API.
@@ -53,10 +54,39 @@ api.interceptors.request.use((cfg) => {
 /**
  * Interceptor util para que los errores llegen limpios a la UI
  */
-// Interceptor que transforma y lanza ApiError
 api.interceptors.response.use(
   (res) => res,
-  (err) => Promise.reject(err)
+  (err) => {
+    // 1. Obtenemos el objeto estructurado gracias a tu función normalizeError
+    const normalized = normalizeError(err);
+    
+    // 2. Extraemos los datos crudos del error de Axios por si acaso
+    const backendData = err.response?.data;
+
+    // --- CASO 1: Es un error de validación (Array de FastAPI/Pydantic/Zod) ---
+    if (normalized.kind === "validation" && normalized.data?.length > 0) {
+      err.message = normalized.data.map(d => d.msg).join(" | ");
+    } 
+    // --- CASO 2: El backend respondió con un objeto 'detail' que es un String directo ---
+    else if (backendData && typeof backendData.detail === "string") {
+      err.message = backendData.detail;
+    } 
+    // --- CASO 3: El backend respondió con una propiedad 'message' personalizada ---
+    else if (backendData && typeof backendData.message === "string") {
+      err.message = backendData.message;
+    } 
+    // --- CASO 4: Cualquier otro error (Error de red, 500 sin cuerpo, etc.) ---
+    else {
+      err.message = normalized.message;
+    }
+
+    // Asegurar que React Query mantenga la respuesta por si la necesitas en el futuro
+    if (!err.response && (err as any).raw?.response) {
+      err.response = (err as any).raw.response;
+    }
+
+    return Promise.reject(err);
+  }
 );
 
 /**

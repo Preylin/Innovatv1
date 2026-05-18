@@ -1,23 +1,24 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import delete, desc, func, select, text
 import pandas as pd
 import io
 
 # Importaciones de tus archivos
-from app.api.v1.contabilidad.ventas.modelVentas import Venta, ClienteVentas
+from app.api.v1.contabilidad.ventas.modelVentas import Venta
+from app.api.v1.administracion.globalClienteProveedor.models.modelGlobalCliente import GlobalCliente
 from app.api.v1.contabilidad.ventas.schemaVentas import VentaBase, ResponseVentaLista, DeleteVentasPayload, SyncVentasPayload
 from app.core.deps import get_current_user
 from app.core.db import get_session
 
 router_contabilidad_ventas = APIRouter(
     prefix="/contabilidad/ventas",
-    tags=["Procesos Masivos"],
+    tags=["contabilidad/ventas"],
     dependencies=[Depends(get_current_user)]
 )
 
 
-@router_contabilidad_ventas.post("/sync-ventas", status_code=201)
+@router_contabilidad_ventas.post("/sync-ventas", status_code=status.HTTP_201_CREATED)
 async def sync_ventas(payload: SyncVentasPayload, db: AsyncSession = Depends(get_session)):
     todas_las_ventas = payload.created + payload.updates
     if not todas_las_ventas:
@@ -29,8 +30,8 @@ async def sync_ventas(payload: SyncVentasPayload, db: AsyncSession = Depends(get
             v.nro_documento for v in todas_las_ventas if v.nro_documento}
 
         res_clientes = await db.execute(
-            select(ClienteVentas).where(
-                ClienteVentas.nro_documento.in_(documentos))
+            select(GlobalCliente).where(
+                GlobalCliente.nro_documento.in_(documentos))
         )
         mapeo_clientes = {
             c.nro_documento: c for c in res_clientes.scalars().all()}
@@ -40,7 +41,7 @@ async def sync_ventas(payload: SyncVentasPayload, db: AsyncSession = Depends(get
             if v.nro_documento and v.nro_documento not in mapeo_clientes:
                 # Solo creamos si tenemos los datos mínimos
                 if v.razon_social and v.tipo_documento:
-                    nuevo_cliente = ClienteVentas(
+                    nuevo_cliente = GlobalCliente(
                         tipo_documento=v.tipo_documento,
                         nro_documento=v.nro_documento,
                         razon_social=v.razon_social
@@ -95,7 +96,7 @@ async def sync_ventas(payload: SyncVentasPayload, db: AsyncSession = Depends(get
             status_code=500, detail=f"Error en sincronización masiva: {str(e)}")
 
 
-@router_contabilidad_ventas.post("/importar-ventas-excel", status_code=201)
+@router_contabilidad_ventas.post("/importar-ventas-excel", status_code=status.HTTP_201_CREATED)
 async def importar_ventas_excel(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_session)
@@ -120,7 +121,15 @@ async def importar_ventas_excel(
         missing = [col for col in required_cols if col not in df.columns]
         if missing:
             raise HTTPException(
-                status_code=400, detail=f"Columnas faltantes: {', '.join(missing)}")
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail = [
+                    {
+                        "loc": ["body"],
+                        "msg": f"Columnas faltantes: {', '.join(missing)}, se recomienda al usuario revisar correctamente el archivo",
+                        "type": "value_error"
+                    }
+                ]
+            )
 
         # Limpieza masiva de NaN y formatos de string
         df = df.replace({pd.NA: None, float('nan'): None})
@@ -137,8 +146,8 @@ async def importar_ventas_excel(
         lista_nros = df_clientes['nro_documento'].tolist()
 
         # Consultamos de un solo golpe qué clientes YA existen en la DB
-        stmt_existentes = select(ClienteVentas).where(
-            ClienteVentas.nro_documento.in_(lista_nros))
+        stmt_existentes = select(GlobalCliente).where(
+            GlobalCliente.nro_documento.in_(lista_nros))
         res_existentes = await db.execute(stmt_existentes)
         clientes_db = {
             c.nro_documento: c for c in res_existentes.scalars().all()}
@@ -148,7 +157,7 @@ async def importar_ventas_excel(
         for _, row in df_clientes.iterrows():
             nro = row['nro_documento']
             if nro not in clientes_db:
-                nuevo = ClienteVentas(
+                nuevo = GlobalCliente(
                     tipo_documento=row['tipo_documento'],
                     nro_documento=nro,
                     razon_social=row['razon_social']
@@ -198,7 +207,8 @@ async def importar_ventas_excel(
                 ventas_para_insertar.append(nueva_venta)
             except Exception as ve:
                 raise HTTPException(
-                    status_code=422, detail=f"Error en Fila {index + 2}: {str(ve)}")
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail=f"Error en Fila {index + 2}: {str(ve)}")
 
         # 4. Inserción Masiva Final
         db.add_all(ventas_para_insertar)
@@ -215,7 +225,8 @@ async def importar_ventas_excel(
     except Exception as e:
         await db.rollback()
         raise HTTPException(
-            status_code=500, detail=f"Error crítico en importación: {str(e)}")
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error crítico en importación: {str(e)}")
 
 
 @router_contabilidad_ventas.get("/get-years", response_model=list[str])
@@ -234,9 +245,9 @@ async def get_years(db: AsyncSession = Depends(get_session)):
 async def get_lista_ventas(db: AsyncSession = Depends(get_session), periodo: str = None):
     query = select(
         Venta.id, Venta.periodo, Venta.fecha_emision, Venta.fecha_vencimiento, Venta.tipo_cp_codigo, Venta.serie, Venta.numero,
-        ClienteVentas.tipo_documento, ClienteVentas.nro_documento, ClienteVentas.razon_social,
+        GlobalCliente.tipo_documento, GlobalCliente.nro_documento, GlobalCliente.razon_social,
         Venta.base_imponible, Venta.igv, Venta.total, Venta.moneda, Venta.tipo_cambio, Venta.categoria, Venta.descripcion_comprobante, Venta.link_pdf
-    ).join(ClienteVentas, Venta.cliente_id == ClienteVentas.id, isouter=True)
+    ).join(GlobalCliente, Venta.cliente_id == GlobalCliente.id, isouter=True)
 
     if periodo:
         query = query.where(Venta.periodo == periodo)

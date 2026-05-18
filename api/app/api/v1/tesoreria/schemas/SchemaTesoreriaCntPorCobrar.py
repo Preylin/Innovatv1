@@ -15,10 +15,10 @@ class CuentasPorCobrarMensualRead(BaseModel):
     total: Decimal = Field(default=Decimal("0.00"))
     moneda: str
     tipo_cambio: Decimal = Field(default=Decimal("1.000"))
-    fecha_pago: date
+    fecha_pago: Optional[date] = None 
     monto_pagado: Decimal = Field(default=Decimal("0.00"))
     status_cobro: str
-    link_pdf: str
+    link_pdf: Optional[str] = None 
 
     class Config:
         from_attributes = True

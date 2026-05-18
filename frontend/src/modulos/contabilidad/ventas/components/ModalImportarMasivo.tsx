@@ -44,10 +44,6 @@ const HistorialVentasImportSchema = z.object({
   igv: z.coerce.number(),
   total: z.coerce.number(),
   // Administrativo
-  monto_retencion: z.coerce.number().default(0),
-  monto_detraccion: z.coerce.number().default(0),
-  nro_orden_compra: z.string().optional(),
-  nro_guia_remision: z.string().optional(),
   descripcion_comprobante: z.string().optional(),
   categoria: z.string().optional(),
 });
@@ -70,12 +66,8 @@ const EXPECTED_HEADERS = [
   "base_imponible",
   "igv",
   "total",
-  "monto_retencion",
-  "monto_detraccion",
   "descripcion_comprobante",
   "categoria",
-  "nro_orden_compra",
-  "nro_guia_remision",
 ];
 
 export default function HistorialVentasImportMasivaExcel({
@@ -184,18 +176,21 @@ export default function HistorialVentasImportMasivaExcel({
 
   const mutation = useMutation<void, ApiError, FormData>({
     mutationFn: (fd) =>
-      api.post("/contabilidad/importar-ventas-excel", fd, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
+      api.post("/contabilidad/ventas/importar-ventas-excel", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
     onMutate: () => setStatus("uploading"),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["historialCompras"] });
+      qc.invalidateQueries({ queryKey: ["historial-ventas"] });
       message.success("Importación completada correctamente");
     },
-    onError: (err) => {
-      setStatus("error");
-      message.error(err.message || "Error en el servidor");
-    },
+    onError: (err: any) => {
+    setStatus("error");
+    // Al haber arreglado el interceptor, err.message ya contiene el texto realizado por el validador
+    const finalMessage = err.message || "Error en el servidor";
+
+    message.error(finalMessage);
+  },
   });
 
   const onSubmit = () => {

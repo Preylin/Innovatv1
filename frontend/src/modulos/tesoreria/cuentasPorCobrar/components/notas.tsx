@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import {
   type Column,
   type ColumnDef,
@@ -12,7 +11,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-
 import { type RankingInfo } from "@tanstack/match-sorter-utils";
 
 declare module "@tanstack/react-table" {
@@ -30,7 +28,7 @@ interface Props<T> {
   fuzzyFilter: FilterFn<any>;
 }
 
-export function TableBaseFuzzyCntasPorCobrar<T>({
+export function TableBaseFuzzyCntasPorPagar<T>({
   data,
   columns,
   fuzzyFilter,
@@ -42,7 +40,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
     data,
     columns,
     filterFns: {
-      fuzzy: fuzzyFilter, //define as a filter function that can be used in column definitions
+      fuzzy: fuzzyFilter,
     },
     state: {
       columnFilters,
@@ -55,16 +53,15 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    debugTable: true,
-    debugHeaders: true,
-    debugColumns: false,
+    debugTable: false,
   });
 
-  //apply the fuzzy sort if the fullName column is being filtered
+  // Aplica ordenamiento automático si se está filtrando por la columna principal (Proveedor)
   useEffect(() => {
-    if (table.getState().columnFilters[0]?.id === "fullName") {
-      if (table.getState().sorting[0]?.id !== "fullName") {
-        table.setSorting([{ id: "fullName", desc: false }]);
+    const firstFilterId = table.getState().columnFilters[0]?.id;
+    if (firstFilterId === "proveedor_razon_social") {
+      if (table.getState().sorting[0]?.id !== "proveedor_razon_social") {
+        table.setSorting([{ id: "proveedor_razon_social", desc: false }]);
       }
     }
   }, [table.getState().columnFilters[0]?.id]);
@@ -80,73 +77,62 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
         />
         <div className="text-sm font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
           {table.getPrePaginationRowModel().rows.length} Registros Encontrados
-        </div>{" "}
+        </div>
       </div>
+
       <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider">
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr className="" key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <th
-                      className="p-2"
-                      key={header.id}
-                      colSpan={header.colSpan}
-                    >
-                      {header.isPlaceholder ? null : (
-                        <>
-                          <div
-                            {...{
-                              className: header.column.getCanSort()
-                                ? "cursor-pointer select-none"
-                                : "",
-                              onClick: header.column.getToggleSortingHandler(),
-                            }}
-                          >
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                            {{
-                              asc: " 🔼",
-                              desc: " 🔽",
-                            }[header.column.getIsSorted() as string] ?? null}
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th className="p-3" key={header.id} colSpan={header.colSpan}>
+                    {header.isPlaceholder ? null : (
+                      <div className="flex flex-col gap-1">
+                        <div
+                          className={`flex items-center gap-1 ${
+                            header.column.getCanSort()
+                              ? "cursor-pointer select-none hover:text-gray-900"
+                              : ""
+                          }`}
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                          {{
+                            asc: " 🔼",
+                            desc: " 🔽",
+                          }[header.column.getIsSorted() as string] ?? null}
+                        </div>
+                        {header.column.getCanFilter() ? (
+                          <div className="mt-1">
+                            <Filter column={header.column} />
                           </div>
-                          {header.column.getCanFilter() ? (
-                            <div>
-                              <Filter column={header.column} />
-                            </div>
-                          ) : null}
-                        </>
-                      )}
-                    </th>
-                  );
-                })}
+                        ) : null}
+                      </div>
+                    )}
+                  </th>
+                ))}
               </tr>
             ))}
           </thead>
           <tbody className="bg-white divide-y divide-gray-200 text-sm text-gray-700">
-            {table.getRowModel().rows.map((row) => {
-              return (
-                <tr className="hover:bg-gray-100" key={row.id}>
-                  {row.getVisibleCells().map((cell) => {
-                    return (
-                      <td className="p-2 border border-gray-200 truncate" key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
+            {table.getRowModel().rows.map((row) => (
+              <tr className="hover:bg-gray-50 transition-colors" key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <td className="p-3 whitespace-nowrap" key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
+      {/* Paginación */}
       <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-gray-100">
         <div className="flex items-center gap-2">
           <button
@@ -226,7 +212,6 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   );
 }
 
-// A typical debounced input react component
 function DebouncedInput({
   value: initialValue,
   onChange,
@@ -247,9 +232,8 @@ function DebouncedInput({
     const timeout = setTimeout(() => {
       onChange(value);
     }, debounce);
-
     return () => clearTimeout(timeout);
-  }, [value]);
+  }, [value, debounce, onChange]);
 
   return (
     <input

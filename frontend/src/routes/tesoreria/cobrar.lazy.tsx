@@ -1,5 +1,5 @@
 import { createLazyFileRoute } from '@tanstack/react-router'
-import TablaMostarCntPorPagar from '../../modulos/tesoreria/cuentasPorCobrar/components/TablaMostrarCntPorCobrar'
+import TablaMostrarCntPorCobrar from '../../modulos/tesoreria/cuentasPorCobrar/components/TablaMostrarCntPorCobrar'
 
 export const Route = createLazyFileRoute('/tesoreria/cobrar')({
   component: RouteComponent,
@@ -8,7 +8,7 @@ export const Route = createLazyFileRoute('/tesoreria/cobrar')({
 function RouteComponent() {
   return(
     <div>
-        <TablaMostarCntPorPagar />
+        <TablaMostrarCntPorCobrar />
     </div>
   )
 }
