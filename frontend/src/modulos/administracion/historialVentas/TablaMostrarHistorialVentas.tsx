@@ -20,6 +20,7 @@ import { useToggle } from "../../../hooks/Toggle";
 import ButtomNew from "../../../components/molecules/botons/BottomNew";
 import HistorialVentasImportMasiva from "./ModalImportacionMasivaHV";
 import isoToDDMMYYYY from "../../../helpers/Fechas";
+import { rankItem } from "@tanstack/match-sorter-utils";
 
 const { Text } = Typography;
 
@@ -41,7 +42,9 @@ interface DataTable {
   tc: number;
 }
 
-const mapHistorialVentasTable = (historialVentasData: HistorialVentasOutApiType[]): DataTable[] => {
+const mapHistorialVentasTable = (
+  historialVentasData: HistorialVentasOutApiType[],
+): DataTable[] => {
   return historialVentasData.map((w, i) => ({
     id: i + 1,
     fecha: isoToDDMMYYYY(w.fecha) ?? "-",
@@ -60,21 +63,34 @@ const mapHistorialVentasTable = (historialVentasData: HistorialVentasOutApiType[
 };
 
 // --- FILTRO PERSONALIZADO PARA NÚMEROS ---
-
+const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
+  const itemRank = rankItem(row.getValue(columnId), value);
+  addMeta({ itemRank });
+  return itemRank.passed;
+};
 const numericFilterFn: FilterFn<DataTable> = (row, columnId, filterValue) => {
   const cellValue = row.getValue(columnId);
   if (filterValue === "" || filterValue === undefined) return true;
   // Convertimos el número a string para permitir búsqueda parcial (ej: escribir "12" y que encuentre "120.50")
-  return String(cellValue).toLowerCase().includes(String(filterValue).toLowerCase());
+  return String(cellValue)
+    .toLowerCase()
+    .includes(String(filterValue).toLowerCase());
 };
 
 // --- COMPONENTE PRINCIPAL ---
 
 export function HistorialVentasTable() {
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
   const openModal = useToggle();
 
-  const { data: sales = [], isLoading, isError, error } = useHistorialVentasListaList();
+  const {
+    data: sales = [],
+    isLoading,
+    isError,
+    error,
+  } = useHistorialVentasListaList();
 
   const dataSource = useMemo(() => {
     if (!sales) return [];
@@ -86,7 +102,11 @@ export function HistorialVentasTable() {
       {
         accessorKey: "fecha",
         header: "Fecha",
-        cell: (info) => <Text style={{ fontSize: "10px" }} className="text-gray-600">{info.getValue()}</Text>,
+        cell: (info) => (
+          <Text style={{ fontSize: "10px" }} className="text-gray-600">
+            {info.getValue()}
+          </Text>
+        ),
         size: 80,
         meta: { textAlign: "center" },
       },
@@ -94,7 +114,11 @@ export function HistorialVentasTable() {
         accessorKey: "descripcion",
         header: "Descripción",
         cell: (info) => (
-          <Text style={{ fontSize: "10px" }} ellipsis={{ tooltip: info.getValue() }} className="text-gray-600">
+          <Text
+            style={{ fontSize: "10px" }}
+            ellipsis={{ tooltip: info.getValue() }}
+            className="text-gray-600"
+          >
             {info.getValue()}
           </Text>
         ),
@@ -105,7 +129,11 @@ export function HistorialVentasTable() {
         accessorKey: "cliente",
         header: "Cliente",
         cell: (info) => (
-          <Text style={{ fontSize: "10px" }} ellipsis={{ tooltip: info.getValue() }} className="text-gray-600">
+          <Text
+            style={{ fontSize: "10px" }}
+            ellipsis={{ tooltip: info.getValue() }}
+            className="text-gray-600"
+          >
             {info.getValue()}
           </Text>
         ),
@@ -116,7 +144,9 @@ export function HistorialVentasTable() {
         accessorKey: "ruc",
         header: "RUC",
         size: 100,
-        cell: (info) => <Text style={{ fontSize: "10px" }}>{info.getValue()}</Text>,
+        cell: (info) => (
+          <Text style={{ fontSize: "10px" }}>{info.getValue()}</Text>
+        ),
         meta: { textAlign: "center" },
       },
       {
@@ -124,28 +154,38 @@ export function HistorialVentasTable() {
         header: "Categoría",
         size: 90,
         meta: { filterVariant: "select", textAlign: "left" },
-        cell: (info) => <Text style={{ fontSize: "10px" }}>{info.getValue().toUpperCase()}</Text>,
+        cell: (info) => (
+          <Text style={{ fontSize: "10px" }}>
+            {info.getValue().toUpperCase()}
+          </Text>
+        ),
       },
       {
         accessorKey: "tipo",
         header: "Tipo",
         size: 60,
         meta: { filterVariant: "select", textAlign: "center" },
-        cell: (info) => <Text style={{ fontSize: "10px" }}>{info.getValue()}</Text>,
+        cell: (info) => (
+          <Text style={{ fontSize: "10px" }}>{info.getValue()}</Text>
+        ),
       },
       {
         accessorKey: "serie",
         header: "Serie",
         size: 70,
         meta: { textAlign: "center" },
-        cell: (info) => <Text style={{ fontSize: "10px" }}>{info.getValue()}</Text>,
+        cell: (info) => (
+          <Text style={{ fontSize: "10px" }}>{info.getValue()}</Text>
+        ),
       },
       {
         accessorKey: "numero",
         header: "Número",
         size: 70,
         meta: { textAlign: "center" },
-        cell: (info) => <Text style={{ fontSize: "10px" }}>{info.getValue()}</Text>,
+        cell: (info) => (
+          <Text style={{ fontSize: "10px" }}>{info.getValue()}</Text>
+        ),
       },
       {
         accessorKey: "subtotal",
@@ -196,7 +236,7 @@ export function HistorialVentasTable() {
         ),
       },
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -211,23 +251,43 @@ export function HistorialVentasTable() {
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     initialState: {
-      pagination: { pageSize: 15 }
+      pagination: { pageSize: 15 },
+    },
+    filterFns: {
+      fuzzy: fuzzyFilter, //define as a filter function that can be used in column definitions
     },
   });
 
-  if (isLoading) return <div className="flex justify-center p-20"><Skeleton active paragraph={{ rows: 20 }} /></div>;
-  if (isError) return <Card className="m-4 border-red-200 bg-red-50 text-red-600">Error: {(error as any)?.message}</Card>;
+  if (isLoading)
+    return (
+      <div className="flex justify-center p-20">
+        <Skeleton active paragraph={{ rows: 20 }} />
+      </div>
+    );
+  if (isError)
+    return (
+      <Card className="m-4 border-red-200 bg-red-50 text-red-600">
+        Error: {(error as any)?.message}
+      </Card>
+    );
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-bold dark:text-white">Historial de Ventas 2018 - 2025</h2>
-          <p className="text-[10px] text-gray-400 font-medium uppercase">Total: {dataSource.length}</p>
+          <h2 className="text-xl font-bold dark:text-white">
+            Historial de Ventas 2018 - 2025
+          </h2>
+          <p className="text-[10px] text-gray-400 font-medium uppercase">
+            Total: {dataSource.length}
+          </p>
         </div>
         <div className="flex gap-2">
           <ButtomNew onClick={openModal.toggle} />
-          <HistorialVentasImportMasiva open={openModal.isToggled} onClose={openModal.setOff} />
+          <HistorialVentasImportMasiva
+            open={openModal.isToggled}
+            onClose={openModal.setOff}
+          />
         </div>
       </div>
 
@@ -237,15 +297,25 @@ export function HistorialVentasTable() {
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const align = (header.column.columnDef.meta as any)?.textAlign || "left";
+                  const align =
+                    (header.column.columnDef.meta as any)?.textAlign || "left";
                   return (
-                    <th key={header.id} className="p-3 border-b font-bold" style={{ width: header.getSize() }}>
+                    <th
+                      key={header.id}
+                      className="p-3 border-b font-bold"
+                      style={{ width: header.getSize() }}
+                    >
                       <div
                         className={`flex items-center gap-1 ${align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"} ${header.column.getCanSort() ? "cursor-pointer select-none hover:text-pink-600" : ""}`}
                         onClick={header.column.getToggleSortingHandler()}
                       >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {{ asc: " 🔼", desc: " 🔽" }[header.column.getIsSorted() as string] ?? null}
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                        {{ asc: " 🔼", desc: " 🔽" }[
+                          header.column.getIsSorted() as string
+                        ] ?? null}
                       </div>
                       {header.column.getCanFilter() && (
                         <div className="mt-2 font-normal lowercase">
@@ -261,16 +331,26 @@ export function HistorialVentasTable() {
           <tbody className="divide-y divide-gray-50">
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="dark:hover:bg-blue-50/20 hover:bg-slate-200 transition-all">
+                <tr
+                  key={row.id}
+                  className="dark:hover:bg-blue-50/20 hover:bg-slate-200 transition-all"
+                >
                   {row.getVisibleCells().map((cell) => {
-                    const align = (cell.column.columnDef.meta as any)?.textAlign || "left";
+                    const align =
+                      (cell.column.columnDef.meta as any)?.textAlign || "left";
                     return (
                       <td
                         key={cell.id}
                         className="p-2 whitespace-nowrap overflow-hidden"
-                        style={{ textAlign: align as any, width: cell.column.getSize() }}
+                        style={{
+                          textAlign: align as any,
+                          width: cell.column.getSize(),
+                        }}
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
                       </td>
                     );
                   })}
@@ -279,7 +359,10 @@ export function HistorialVentasTable() {
             ) : (
               <tr>
                 <td colSpan={columns.length} className="py-20 text-center">
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No hay registros" />
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description="No hay registros"
+                  />
                 </td>
               </tr>
             )}
@@ -289,11 +372,27 @@ export function HistorialVentasTable() {
 
       <div className="flex items-center justify-between p-2 border rounded-lg">
         <div className="flex gap-1">
-          <button className="px-3 py-1 border rounded text-xs disabled:opacity-30 hover:bg-teal-400 cursor-pointer" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Anterior</button>
-          <button className="px-3 py-1 border rounded text-xs disabled:opacity-30 hover:bg-teal-400 cursor-pointer" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Siguiente</button>
+          <button
+            className="px-3 py-1 border rounded text-xs disabled:opacity-30 hover:bg-teal-400 cursor-pointer"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Anterior
+          </button>
+          <button
+            className="px-3 py-1 border rounded text-xs disabled:opacity-30 hover:bg-teal-400 cursor-pointer"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Siguiente
+          </button>
         </div>
         <div className="text-[11px] font-bold text-gray-400">
-          Pág. <span className="text-blue-600">{table.getState().pagination.pageIndex + 1}</span> de {table.getPageCount()}
+          Pág.{" "}
+          <span className="text-blue-600">
+            {table.getState().pagination.pageIndex + 1}
+          </span>{" "}
+          de {table.getPageCount()}
         </div>
       </div>
     </div>
@@ -308,10 +407,11 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 
   const sortedUniqueValues = React.useMemo(
     () => Array.from(column.getFacetedUniqueValues().keys()).sort(),
-    [column.getFacetedUniqueValues()]
+    [column.getFacetedUniqueValues()],
   );
 
-  const inputStyle = "border border-gray-400 rounded px-2 py-1 text-[9px] w-full bg-white outline-none focus:border-blue-300 transition-all";
+  const inputStyle =
+    "border border-gray-400 rounded px-2 py-1 text-[9px] w-full bg-white outline-none focus:border-blue-300 transition-all";
 
   if (filterVariant === "select") {
     return (
@@ -327,8 +427,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
           })),
         ]}
         size="small"
-      >
-      </Select>
+      ></Select>
     );
   }
 

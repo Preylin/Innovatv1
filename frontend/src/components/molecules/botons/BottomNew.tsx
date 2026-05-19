@@ -7,7 +7,6 @@ interface Props {
     disabled?: boolean;
     name?: string;
 }
-<LoadingOutlined />
 
 
 function ButtomNew({disabled, name = "Nuevo", ...props}: Props){

@@ -50,6 +50,7 @@ class Venta(Base):
     nro_guia_remision: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     descripcion_comprobante: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     categoria: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    is_active: Mapped[str] = mapped_column(CHAR(1), server_default=text("'1'"), default="1")
     link_pdf: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"), nullable=False)

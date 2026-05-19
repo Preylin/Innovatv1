@@ -20,6 +20,7 @@ import isoToDDMMYYYY from "../../../helpers/Fechas";
 import { useHistorialComprasListaList } from "../../../api/queries/modulos/administracion/ventas/compras/historialCompras.api";
 import type { HistorialComprasOutApiType } from "../../../api/queries/modulos/administracion/ventas/compras/historialCompras.api.schema";
 import HistorialComprasImportMasiva from "./ModalImportacionMasivaHC";
+import { rankItem } from "@tanstack/match-sorter-utils";
 
 const { Text } = Typography;
 
@@ -64,6 +65,12 @@ const mapHistorialVentasTable = (
 };
 
 // --- FILTRO PERSONALIZADO PARA NÚMEROS ---
+const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
+  const itemRank = rankItem(row.getValue(columnId), value);
+  addMeta({ itemRank });
+  return itemRank.passed;
+}
+
 
 const numericFilterFn: FilterFn<DataTable> = (row, columnId, filterValue) => {
   const cellValue = row.getValue(columnId);
@@ -262,6 +269,9 @@ export function HistorialComprasTable() {
     getFacetedUniqueValues: getFacetedUniqueValues(),
     initialState: {
       pagination: { pageSize: 15 },
+    },
+    filterFns: {
+      fuzzy: fuzzyFilter, //define as a filter function that can be used in column definitions
     },
   });
 

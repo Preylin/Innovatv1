@@ -115,7 +115,7 @@ async def importar_ventas_excel(
         required_cols = [
             'periodo', 'fecha_emision', 'tipo_cp_codigo', 'serie', 'numero',
             'nro_documento', 'razon_social', 'tipo_documento',
-            'base_imponible', 'igv', 'total'
+            'base_imponible', 'igv', 'total', 'categoria'
         ]
 
         missing = [col for col in required_cols if col not in df.columns]
@@ -134,6 +134,9 @@ async def importar_ventas_excel(
         # Limpieza masiva de NaN y formatos de string
         df = df.replace({pd.NA: None, float('nan'): None})
 
+        # conversion de tipos
+        df['is_active'] = pd.to_numeric(df['is_active'], errors='coerce').fillna(0).astype(int).astype(str)
+
         # Vectorización: Limpieza de documentos sin loops
         for col in ['nro_documento', 'tipo_documento']:
             df[col] = df[col].astype(str).str.replace(
@@ -142,7 +145,7 @@ async def importar_ventas_excel(
         # 2. Sincronización de Clientes (OPTIMIZADO)
         # Obtenemos solo los clientes únicos del Excel
         df_clientes = df[['tipo_documento', 'nro_documento',
-                          'razon_social']].drop_duplicates(subset=['nro_documento'])
+                        'razon_social']].drop_duplicates(subset=['nro_documento'])
         lista_nros = df_clientes['nro_documento'].tolist()
 
         # Consultamos de un solo golpe qué clientes YA existen en la DB
@@ -246,7 +249,7 @@ async def get_lista_ventas(db: AsyncSession = Depends(get_session), periodo: str
     query = select(
         Venta.id, Venta.periodo, Venta.fecha_emision, Venta.fecha_vencimiento, Venta.tipo_cp_codigo, Venta.serie, Venta.numero,
         GlobalCliente.tipo_documento, GlobalCliente.nro_documento, GlobalCliente.razon_social,
-        Venta.base_imponible, Venta.igv, Venta.total, Venta.moneda, Venta.tipo_cambio, Venta.categoria, Venta.descripcion_comprobante, Venta.link_pdf
+        Venta.base_imponible, Venta.igv, Venta.total, Venta.moneda, Venta.tipo_cambio, Venta.categoria, Venta.descripcion_comprobante, Venta.is_active, Venta.link_pdf
     ).join(GlobalCliente, Venta.cliente_id == GlobalCliente.id, isouter=True)
 
     if periodo:

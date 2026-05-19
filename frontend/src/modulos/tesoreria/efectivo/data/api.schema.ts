@@ -40,5 +40,12 @@ export const SaldoEfectivoSchemaOutApi = z.object({
 export type SaldoEfectivoSchemaOutApiType = z.infer<typeof SaldoEfectivoSchemaOutApi>;
 
 
+export const listasUnicasResponseSchema = z.object({
+  descripciones: z.array(z.string()).default([]),
+  referencias: z.array(z.string()).default([]),
+  adicionales: z.array(z.string()).default([]),
+});
+export type ListasUnicasResponseSchemaType = z.infer<typeof listasUnicasResponseSchema>;
+
 
 

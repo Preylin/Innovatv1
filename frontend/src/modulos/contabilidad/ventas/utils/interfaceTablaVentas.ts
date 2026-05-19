@@ -17,5 +17,6 @@ export interface RowTableVentas {
   tipo_cambio: number;
   categoria: string;
   descripcion: string;
+  is_active: string;
   link_pdf: string | null;
 }

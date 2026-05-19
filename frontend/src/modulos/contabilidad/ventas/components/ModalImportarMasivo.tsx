@@ -45,6 +45,7 @@ const HistorialVentasImportSchema = z.object({
   total: z.coerce.number(),
   // Administrativo
   descripcion_comprobante: z.string().optional(),
+  is_active: z.string().optional(),
   categoria: z.string().optional(),
 });
 
@@ -68,6 +69,7 @@ const EXPECTED_HEADERS = [
   "total",
   "descripcion_comprobante",
   "categoria",
+  "is_active",
 ];
 
 export default function HistorialVentasImportMasivaExcel({
@@ -181,7 +183,7 @@ export default function HistorialVentasImportMasivaExcel({
       }),
     onMutate: () => setStatus("uploading"),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["historial-ventas"] });
+      qc.invalidateQueries({ queryKey: ["years-contabilidad-ventas"] });
       message.success("Importación completada correctamente");
     },
     onError: (err: any) => {

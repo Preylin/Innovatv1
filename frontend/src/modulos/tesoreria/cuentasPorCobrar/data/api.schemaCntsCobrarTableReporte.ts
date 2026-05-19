@@ -8,6 +8,8 @@ export const ReporteCntsPorCobrarSchemaApi = z.object({
   nro_documento: z.string(),
   razon_social: z.string(),
   total: z.coerce.number(),
+  monto_retencion: z.coerce.number(),
+  monto_detraccion: z.coerce.number(),
   moneda: z.string(),
   tipo_cambio: z.coerce.number(),
   fecha_pago: z.coerce.date().nullish(),

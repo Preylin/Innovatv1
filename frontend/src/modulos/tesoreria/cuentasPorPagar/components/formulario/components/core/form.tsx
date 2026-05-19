@@ -7,6 +7,7 @@ import { Button } from "antd";
 import SelectFormFields from "../inputs/select-fields.tsx";
 import SelectFormWithInputFields from "../inputs/selectWithInput-fields.tsx";
 import TextAreaField from "../inputs/textArea-fields.tsx";
+import NumberFloatField from "../inputs/numberFloat-fields.tsx";
 
 function SubscribeButton({
   label,
@@ -40,6 +41,7 @@ export const { useAppForm, withForm, withFieldGroup } = createFormHook({
     SelectFormFields,
     SelectFormWithInputFields,
     TextAreaField,
+    NumberFloatField,
   },
   formComponents: {
     SubscribeButton,

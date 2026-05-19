@@ -18,6 +18,7 @@ export const TablaVentasSchemaApiOut = z.object({
   tipo_cambio: z.coerce.number(),
   categoria: z.string().nullable(),
   descripcion_comprobante: z.string().nullable(),
+  is_active: z.string(),
   link_pdf: z.string().nullable(),
 });
 

@@ -8,7 +8,6 @@ interface Props {
     loading?: boolean;
     style?: React.CSSProperties;
 }
-<LoadingOutlined />
 
 
 function ButtonDelete(props: Props){

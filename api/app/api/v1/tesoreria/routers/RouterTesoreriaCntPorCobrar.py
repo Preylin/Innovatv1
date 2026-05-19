@@ -1,7 +1,7 @@
 from typing import List
 from datetime import date, datetime
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, select, update
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user
@@ -22,7 +22,9 @@ router_tesoreria_cuentasporcobrar = APIRouter(
 
 
 @router_tesoreria_cuentasporcobrar.get("/resumen-mensual", response_model=List[CuentasPorCobrarMensualRead])
-async def get_resumen(periodo: str, db: AsyncSession = Depends(get_session)):
+async def get_resumen(year: str, db: AsyncSession = Depends(get_session)):
+    periodo_like = f"{year}%" 
+
     query = (
         select(
             Venta.id,
@@ -32,17 +34,22 @@ async def get_resumen(periodo: str, db: AsyncSession = Depends(get_session)):
             GlobalCliente.nro_documento,
             GlobalCliente.razon_social,
             Venta.total,
+            Venta.monto_retencion,
+            Venta.monto_detraccion,
             Venta.moneda,
             Venta.tipo_cambio,
             CajaMovimientoVenta.fecha_pago,
-            func.coalesce(CajaMovimientoVenta.monto_pagado, 0.0).label("monto_pagado"),
+            func.coalesce(CajaMovimientoVenta.monto_pagado, 0.00).label("monto_pagado"),
             func.coalesce(CajaMovimientoVenta.status_cobro, 'PENDIENTE').label("status_cobro"),
             Venta.link_pdf
         )
         .join(GlobalCliente, Venta.cliente_id == GlobalCliente.id)
         .outerjoin(CajaMovimientoVenta, Venta.id == CajaMovimientoVenta.venta_id)
-        .where(Venta.periodo == periodo)
-        .order_by(Venta.fecha_emision.desc())
+        .where(
+            Venta.periodo.like(periodo_like),
+            Venta.is_active == '1',
+        )
+        .order_by(Venta.fecha_emision.asc())
     )
 
     result = await db.execute(query)

@@ -88,6 +88,11 @@ const OPT_MONEDAS = [
   { value: "USD", label: "USD" },
 ];
 
+const OPT_ESTADO = [
+  { value: "1", label: "Activo" },
+  { value: "0", label: "Inactivo" },
+];
+
 function CustomHeaderCell() {
   const { isIndeterminate, isRowSelected, onRowSelectionChange } =
     useHeaderRowSelection();
@@ -371,7 +376,7 @@ const getColumns = (
     name: "Nombre Empresa",
     resizable: true,
     editable: true,
-    minWidth: 250,
+    minWidth: 200,
     renderEditCell: renderTextEditor,
     renderHeaderCell: (props: {
       column: Column<RowTableVentas>;
@@ -490,6 +495,7 @@ const getColumns = (
       <CellInput
         value={row.moneda}
         onChange={(val) => updateCell(row.id, "moneda", val)}
+        className="text-center"
       />
     ),
     cellClass: (row) => {
@@ -554,7 +560,7 @@ const getColumns = (
     name: "Descripción",
     resizable: true,
     editable: true,
-    minWidth: 200,
+    minWidth: 150,
     renderEditCell: renderTextEditor,
     renderHeaderCell: (props: {
       column: Column<RowTableVentas>;
@@ -573,6 +579,32 @@ const getColumns = (
     },
   },
   {
+    key: "is_active",
+    name: "Estado",
+    editable: true,
+    width: 60,
+    headerCellClass: "text-center",
+    renderEditCell: (props) => (
+      <DropdownEditor {...props} options={OPT_ESTADO} />
+    ),
+    renderHeaderCell: (props: {
+      column: Column<RowTableVentas>;
+      sortDirection: any;
+      priority: any;
+    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
+    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
+      <CellInput
+        value={row.is_active || ""}
+        onChange={(val) => updateCell(row.id, "is_active", val)}
+        className="text-center"
+      />
+    ),
+    cellClass: (row) => {
+      if (row.is_active === "") return "bg-red-100";
+      return "";
+    },
+  },
+  {
     key: "link_pdf",
     name: "Link PDF",
     resizable: true,
@@ -587,7 +619,7 @@ const getColumns = (
     renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
       <CellInput
         value={row.link_pdf || ""}
-        onChange={(val) => updateCell(row.id, "descripcion", val)}
+        onChange={(val) => updateCell(row.id, "link_pdf", val)}
       />
     ),
     cellClass: (row) => {
@@ -617,6 +649,7 @@ const mapDataApi = (data: TablaVentasSchemaApiOutType[]): RowTableVentas[] => {
     tipo_cambio: item.tipo_cambio,
     categoria: item.categoria || "",
     descripcion: item.descripcion_comprobante || "",
+    is_active: item.is_active || "",
     link_pdf: item.link_pdf,
   }));
 };
@@ -652,6 +685,7 @@ const createEmptyRow = (id: number): RowTableVentas => ({
   tipo_cambio: 0,
   categoria: "",
   descripcion: "",
+  is_active: "",
   link_pdf: "",
 });
 
@@ -716,6 +750,7 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
           tipo_cambio: Number(row.tipo_cambio) || 0,
           categoria: row.categoria.trim() || null,
           descripcion_comprobante: row.descripcion.trim() || null,
+          is_active: row.is_active.trim() || "1",
           link_pdf: row.link_pdf || null,
         })),
 
@@ -737,6 +772,7 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
         tipo_cambio: Number(row.tipo_cambio) || 0,
         categoria: row.categoria.trim() || null,
         descripcion_comprobante: row.descripcion.trim() || null,
+        is_active: row.is_active.trim() || "1",
         link_pdf: row.link_pdf || null,
       })),
     };

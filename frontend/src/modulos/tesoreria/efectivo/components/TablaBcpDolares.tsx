@@ -4,10 +4,11 @@ import {
   useRowSelection,
   type Column,
   type RenderCellProps,
+  type RenderEditCellProps,
 } from "react-data-grid";
 import type { Row } from "../data/interfaceTabla";
 import TablaGridBase, { type Filters } from "./TablaGridBase";
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import dayjs from "dayjs";
 import { UseComercialesIconsLO } from "../../../../components/atoms/icons/OtrasLibs/Comerciales";
 import type { EfectivoSchemaOutApiType } from "../data/api.schema";
@@ -16,6 +17,82 @@ import {
   useDeletebBcpdolares,
   useSyncbBcpdolares,
 } from "../data/api.bcpdolares";
+
+interface DatalistEditorProps<TRow> extends RenderEditCellProps<TRow> {
+  externalSource: string[] | string;
+}
+
+export function DatalistEditor<TRow>({
+  row,
+  column,
+  onRowChange,
+  onClose,
+  externalSource,
+}: DatalistEditorProps<TRow>) {
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (Array.isArray(externalSource)) {
+      setSuggestions(externalSource);
+    } else if (typeof externalSource === "string") {
+      fetch(externalSource)
+        .then((res) => res.json())
+        .then((data) => {
+          if (isMounted) setSuggestions(Array.isArray(data) ? data : []);
+        })
+        .catch((err) => console.error("Error en DatalistEditor:", err));
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [externalSource]);
+
+  useLayoutEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const rowId = (row as any).id ?? (row as any)._id ?? "fallback-id";
+  const datalistId = `list-${column.key}-${rowId}`;
+
+  const value = (row[column.key as keyof TRow] as unknown as string) ?? "";
+
+  return (
+    <div className="w-full h-full relative flex items-center bg-blue-50">
+      <input
+        ref={inputRef}
+        type="text"
+        list={datalistId}
+        className="w-full h-full px-2 bg-transparent outline-none border-none text-[12px]"
+        value={value}
+        placeholder="Escriba o seleccione..."
+        onChange={(event) => {
+          onRowChange({ ...row, [column.key]: event.target.value });
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            onClose(true);
+          }
+          if (event.key === "Escape") {
+            onClose(false);
+          }
+        }}
+      />
+
+      <datalist id={datalistId}>
+        {suggestions.map((option, index) => (
+          <option key={`${option}-${index}`} value={option} />
+        ))}
+      </datalist>
+    </div>
+  );
+}
+
+const SUGERENCIAS_REFERENCIAS = ["TRANSFERENCIA", "BCP", "YAPE"];
+const SUGERENCIAS_DESCRIPCION = ["COMPRAS", "PAGOS", "VENTAS"];
 
 function CustomSelectCell({ row }: RenderCellProps<Row>) {
   const { isRowSelectionDisabled, isRowSelected, onRowSelectionChange } =
@@ -141,21 +218,23 @@ const getColumns = (
     resizable: true,
     editable: true,
     minWidth: 200,
-    renderEditCell: renderTextEditor,
+    renderEditCell: (props) => (
+      <DatalistEditor {...props} externalSource={SUGERENCIAS_DESCRIPCION} />
+    ),
     renderHeaderCell: (props: {
       column: Column<Row>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }: RenderCellProps<Row>) => (
-      <input
-        className="w-full h-full bg-transparent outline-none px-2 focus:bg-blue-50 transition-colors text-[10px] md:text-[12px]"
-        type="text"
-        placeholder="Añadir descripción..."
-        value={row.descripcion}
-        onChange={(e) => updateCell(row.id, "descripcion", e.target.value)}
-        maxLength={700}
-      />
+      <div
+        className="px-2 truncate text-[10px] md:text-[12px]"
+        title={row.descripcion}
+      >
+        {row.descripcion || (
+          <span className="text-gray-400 italic">Añadir descripción...</span>
+        )}
+      </div>
     ),
     cellClass: (row) => {
       if (row.descripcion === "") return "bg-red-100";
@@ -167,20 +246,18 @@ const getColumns = (
     name: "Referencia",
     width: 120,
     editable: true,
-    renderEditCell: renderTextEditor,
+    renderEditCell: (props) => (
+      <DatalistEditor {...props} externalSource={SUGERENCIAS_REFERENCIAS} />
+    ),
     renderHeaderCell: (props: {
       column: Column<Row>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }: RenderCellProps<Row>) => (
-      <input
-        className="w-full h-full bg-transparent outline-none px-2 focus:bg-blue-50 transition-colors text-[10px] md:text-[12px]"
-        type="text"
-        value={row.referencia || ""}
-        onChange={(e) => updateCell(row.id, "referencia", e.target.value)}
-        maxLength={100}
-      />
+      <div className="px-2 truncate text-[10px] md:text-[12px]">
+        {row.referencia || ""}
+      </div>
     ),
     cellClass: (row) => {
       if (row.referencia === "") return "bg-red-100";
@@ -274,13 +351,9 @@ const getColumns = (
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }: RenderCellProps<Row>) => (
-      <input
-        className="w-full h-full bg-transparent outline-none text-[10px] md:text-[12px] px-2 focus:bg-blue-50 transition-colors"
-        type="text"
-        value={row.adicionales || ""}
-        onChange={(e) => updateCell(row.id, "adicionales", e.target.value)}
-        maxLength={100}
-      />
+      <div className="px-2 truncate text-[10px] md:text-[12px]">
+        {row.adicionales || ""}
+      </div>
     ),
   },
 ];

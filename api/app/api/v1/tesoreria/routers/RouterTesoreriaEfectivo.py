@@ -1,13 +1,13 @@
 
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import delete, select, text
+from sqlalchemy import delete, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
 from app.core.deps import get_current_user
 from app.core.db import get_session
-from app.api.v1.tesoreria.schemas.SchemaTesoreriaEfectivo import DeleteRequest, EfectivoOut, SaldosIndependientes, SyncPayload, SyncResponse
+from app.api.v1.tesoreria.schemas.SchemaTesoreriaEfectivo import DeleteRequest, EfectivoOut, SaldosIndependientes, SyncPayload, SyncResponse, ListasUnicasResponse
 from app.api.v1.tesoreria.models.ModelsTesoreriaEfectivo import CajaChica, Bcpsoles, Bcpdolares
 
 # router caja chica
@@ -184,7 +184,62 @@ async def delete_bcp_soles(
     except Exception as e:
         await session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+@router_bcpsoles.get("/resumen_columnas", response_model=ListasUnicasResponse)
+async def get_datos_resumen_bcpsoles(db: AsyncSession = Depends(get_session)):
+    desc_cte = (
+        select(
+            Bcpsoles.descripcion,
+            func.row_number().over(order_by=Bcpsoles.descripcion).label('rn')
+        )
+        .where(Bcpsoles.descripcion.is_not(None))
+        .group_by(Bcpsoles.descripcion)
+        .cte('descripciones_unicas')
+    )
+
+    ref_cte = (
+        select(
+            Bcpsoles.referencia,
+            func.row_number().over(order_by=Bcpsoles.referencia).label('rn')
+        )
+        .where(Bcpsoles.referencia.is_not(None))
+        .group_by(Bcpsoles.referencia)
+        .cte('referencias_unicas')
+    )
+
+    adi_cte = (
+        select(
+            Bcpsoles.adicionales,
+            func.row_number().over(order_by=Bcpsoles.adicionales).label('rn')
+        )
+        .where(Bcpsoles.adicionales.is_not(None))
+        .group_by(Bcpsoles.adicionales)
+        .cte('adicionales_unicas')
+    )
+
+    stmt = (
+        select(
+            desc_cte.c.descripcion,
+            ref_cte.c.referencia,
+            adi_cte.c.adicionales
+        )
+        .select_from(desc_cte)
+        .join(ref_cte, desc_cte.c.rn == ref_cte.c.rn, full=True)
+        .join(adi_cte, func.coalesce(desc_cte.c.rn, ref_cte.c.rn) == adi_cte.c.rn, full=True)
+    )
+
+    result = await db.execute(stmt)
+    # Obtenemos todas las filas planas de la base de datos
+    rows = result.all()
+
+    # Procesamos y agrupamos los datos ignorando los valores nulos (None)
+    return {
+        "descripciones": [row.descripcion for row in rows if row.descripcion is not None],
+        "referencias": [row.referencia for row in rows if row.referencia is not None],
+        "adicionales": [row.adicionales for row in rows if row.adicionales is not None]
+    }
+
+
 # router bcpdolares
 
 router_bcpdolares = APIRouter(

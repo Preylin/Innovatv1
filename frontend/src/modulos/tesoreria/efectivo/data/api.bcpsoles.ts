@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createQuery } from "../../../../api/query/createQuery";
 import api from "../../../../api/client";
-import { EfectivoSchemaOutApi, type EfectivoSchemaCrearApiType, type EfectivoShemaUpdateApiType } from "./api.schema";
+import { EfectivoSchemaOutApi, listasUnicasResponseSchema, type EfectivoSchemaCrearApiType, type EfectivoShemaUpdateApiType } from "./api.schema";
 
 
 export function useBcpsolesLista(){
@@ -45,3 +45,14 @@ export function useDeletebBcpsoles() {
     },
   });
 }
+
+
+export function useListasUnicasBcpsolesLista(){
+    return useQuery({
+        queryKey: ["listas_unicas_bcpsoles"],
+        queryFn: createQuery({
+            request: () => api.get("/bcpsoles/resumen_columnas"),
+            schema: listasUnicasResponseSchema,
+        }),
+    })
+};

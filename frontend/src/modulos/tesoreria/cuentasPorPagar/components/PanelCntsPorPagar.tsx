@@ -1,5 +1,5 @@
 import { useState, type JSX } from "react";
-import { CuentasPorPagarFijas } from "./ModalFormCntPorPagarFijas/PanelCntsPorCobrarFijas";
+import { CuentasPorPagarFijas } from "./ModalFormCntPorPagarFijas/PanelCntsPorPagarFijas";
 import { RxCross2 } from "react-icons/rx";
 import { RxDrawingPin } from "react-icons/rx";
 import { MdPublishedWithChanges } from "react-icons/md";

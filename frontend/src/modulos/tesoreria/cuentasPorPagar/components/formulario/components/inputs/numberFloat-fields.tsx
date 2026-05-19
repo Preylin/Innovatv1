@@ -1,4 +1,4 @@
-import { Input } from "antd";
+import { InputNumber } from "antd";
 import FieldInfo from "../core/errors";
 import { useFieldContext } from "../core/form-context";
 
@@ -8,26 +8,28 @@ interface Props {
   maxLength?: number;
 }
 
-export default function NumberField({ label, placeholder, maxLength }: Props) {
+export default function NumberFloatField({ label, placeholder, maxLength }: Props) {
   const field = useFieldContext<number>();
+
   return (
     <div>
       <label className="font-semibold text-xs" htmlFor={field.name}>
         {label}
       </label>
-      <Input
-        type="number"
-        placeholder={placeholder}
+      <InputNumber
         id={field.name}
         name={field.name}
+        placeholder={placeholder}
         value={field.state.value}
-        onChange={(e) => {
-          const val = e.target.valueAsNumber;
-          field.handleChange(Number.isNaN(val) ? 0 : val);
+        maxLength={maxLength}
+        style={{ width: "100%" }}
+        precision={2} 
+        stringMode
+        onChange={(val) => {
+          const numValue = val ? parseFloat(val as unknown as string) : 0;
+          field.handleChange(Number.isNaN(numValue) ? 0 : numValue);
         }}
         onBlur={field.handleBlur}
-        style={{ width: "100%" }}
-        maxLength={maxLength}
       />
       <FieldInfo field={field} />
     </div>

@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS contabilidad.ventas (
     -- Otros del SIRE / Gestión
     descripcion_comprobante TEXT,
     categoria VARCHAR(100),
+    is_active CHAR(1) DEFAULT '1', -- 0 = anulado, 1 = activo
     link_pdf TEXT,
     
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -52,6 +53,7 @@ CREATE TABLE IF NOT EXISTS contabilidad.caja_movimientos_ventas (
     monto_pagado NUMERIC(12,2) NOT NULL,
     medio_pago VARCHAR(20), 
     status_cobro VARCHAR(20) DEFAULT 'PENDIENTE', -- PENDIENTE, PARCIAL, CANCELADO
+    fecha_pago_detraccion_retencion DATE,
     glosa_pago TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -70,4 +72,19 @@ CREATE TABLE IF NOT EXISTS contabilidad.libro_diario_ventas (
     correlativo_asiento VARCHAR(20), -- Nro de voucher
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+
+-- para hacer cambios en caja_movimientos de forma masiva
+-- INSERT INTO contabilidad.caja_movimientos_ventas (
+--     venta_id, fecha_pago, lugar_ingreso, monto_pagado, medio_pago, status_cobro, glosa_pago
+-- )
+-- SELECT 
+--     id,              -- Toma el ID de la tabla ventas
+--     fecha_emision,   -- Usa la misma fecha de emisión como fecha de pago (o CURRENT_DATE)
+--     'BCP',     -- Lugar de ingreso por defecto
+--     total,           -- El monto pagado será igual al total de la venta
+--     'TRANSFERENCIA',   -- Medio de pago por defecto
+--     'CANCELADO',     -- El estatus que necesitas
+--     'estado cancelado' -- Glosa informativa
+-- FROM contabilidad.ventas;
 

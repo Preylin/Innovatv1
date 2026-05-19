@@ -41,3 +41,13 @@ class SaldosIndependientes(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ListasUnicasResponse(BaseModel):
+    descripciones: List[str]
+    referencias: List[str]
+    adicionales: List[str]
+
+    class Config:
+        from_attributes = True
+
+

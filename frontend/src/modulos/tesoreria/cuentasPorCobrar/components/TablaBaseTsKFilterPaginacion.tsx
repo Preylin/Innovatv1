@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   type Column,
@@ -7,6 +7,8 @@ import {
   type FilterFn,
   flexRender,
   getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
@@ -14,6 +16,7 @@ import {
 } from "@tanstack/react-table";
 
 import { type RankingInfo } from "@tanstack/match-sorter-utils";
+import { Empty } from "antd";
 
 declare module "@tanstack/react-table" {
   interface FilterFns {
@@ -28,14 +31,16 @@ interface Props<T> {
   data: T[];
   columns: ColumnDef<T, any>[];
   fuzzyFilter: FilterFn<any>;
+  columFiltersInitialValue?: ColumnFiltersState;
 }
 
 export function TableBaseFuzzyCntasPorCobrar<T>({
   data,
   columns,
   fuzzyFilter,
+  columFiltersInitialValue,
 }: Props<T>) {
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(columFiltersInitialValue ?? []);
   const [globalFilter, setGlobalFilter] = useState("");
 
   const table = useReactTable({
@@ -55,6 +60,8 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
     debugTable: true,
     debugHeaders: true,
     debugColumns: false,
@@ -70,55 +77,49 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
   }, [table.getState().columnFilters[0]?.id]);
 
   return (
-    <div className="p-4 flex flex-col gap-4 w-full">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+    <div className="p-2 flex flex-col gap-2 w-full space-y-1 animate-in fade-in duration-500 ">
+      <div className="flex flex-row sm:flex-row justify-between items-center sm:items-center gap-6 w-full">
         <DebouncedInput
           value={globalFilter ?? ""}
           onChange={(value) => setGlobalFilter(String(value))}
-          className="p-2 text-sm shadow-sm border border-gray-300 rounded-lg w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="p-2 text-sm shadow-sm border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Buscar en todas las columnas..."
         />
-        <div className="text-sm font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-          {table.getPrePaginationRowModel().rows.length} Registros Encontrados
+        <div className="text-sm font-medium text-gray-600 bg-mist-200 px-2 py-1 rounded-md text-center w-40">
+          {table.getPrePaginationRowModel().rows.length} Registros
         </div>{" "}
       </div>
-      <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider">
+      <div className="rounded-xl shadow-sm overflow-auto">
+        <table className="w-full border-collapse text-sm table-fixed">
+          <thead className="text-xs font-semibold text-gray-900 uppercase tracking-wider bg-mist-300">
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr className="" key={headerGroup.id}>
+              <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
+                  const align =
+                    (header.column.columnDef.meta as any)?.textAlign || "left";
                   return (
                     <th
-                      className="p-2"
                       key={header.id}
-                      colSpan={header.colSpan}
+                      className="p-2"
+                      // 2. FIJAR EL ANCHO EN EL ENCABEZADO
+                      style={{ width: header.getSize() }}
                     >
-                      {header.isPlaceholder ? null : (
-                        <>
-                          <div
-                            {...{
-                              className: header.column.getCanSort()
-                                ? "cursor-pointer select-none"
-                                : "",
-                              onClick: header.column.getToggleSortingHandler(),
-                            }}
-                          >
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                            {{
-                              asc: " 🔼",
-                              desc: " 🔽",
-                            }[header.column.getIsSorted() as string] ?? null}
-                          </div>
-                          {header.column.getCanFilter() ? (
-                            <div>
-                              <Filter column={header.column} />
-                            </div>
-                          ) : null}
-                        </>
+                      <div
+                        className={`flex items-center gap-1 ${align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"} ${header.column.getCanSort() ? "cursor-pointer select-none hover:text-pink-600" : ""}`}
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                        {{ asc: " 🔼", desc: " 🔽" }[
+                          header.column.getIsSorted() as string
+                        ] ?? null}
+                      </div>
+                      {header.column.getCanFilter() && (
+                        <div className="mt-2 font-normal lowercase">
+                          <Filter column={header.column} />
+                        </div>
                       )}
                     </th>
                   );
@@ -127,64 +128,112 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
             ))}
           </thead>
           <tbody className="bg-white divide-y divide-gray-200 text-sm text-gray-700">
-            {table.getRowModel().rows.map((row) => {
-              return (
-                <tr className="hover:bg-gray-100" key={row.id}>
-                  {row.getVisibleCells().map((cell) => {
-                    return (
-                      <td className="p-2 border border-gray-200 truncate" key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
+            {table.getRowModel().rows.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length} className="py-20 text-center">
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description="No hay registros"
+                  />
+                </td>
+              </tr>
+            ) : (
+              table.getRowModel().rows.map((row) => {
+                return (
+                  <tr className="hover:bg-gray-100" key={row.id}>
+                    {row.getVisibleCells().map((cell) => {
+                      return (
+                        <td
+                          className="p-2 border border-gray-200 truncate"
+                          key={cell.id}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })
+            )}
           </tbody>
+          <tfoot className="bg-mist-100 font-bold border-t-2 border-gray-300 text-sm text-gray-900 sticky bottom-0">
+            {table.getFooterGroups().map((footerGroup) => (
+              <tr key={footerGroup.id}>
+                {footerGroup.headers.map((footer) => {
+                  const align =
+                    (footer.column.columnDef.meta as any)?.textAlign || "left";
+                  return (
+                    <td
+                      key={footer.id}
+                      className="p-2 border border-gray-200"
+                      style={{ width: footer.column.getSize() }}
+                    >
+                      <div
+                        className={`flex items-center w-full ${
+                          align === "center"
+                            ? "justify-center"
+                            : align === "right"
+                            ? "justify-end"
+                            : "justify-start"
+                        }`}
+                      >
+                        {footer.isPlaceholder
+                          ? null
+                          : flexRender(
+                              footer.column.columnDef.footer,
+                              footer.getContext()
+                            )}
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tfoot>
         </table>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-gray-100">
+      <div className="flex flex-wrap items-center justify-between gap-4 pt-2 px-2 border-t border-gray-100">
         <div className="flex items-center gap-2">
           <button
-            className="px-3 py-1 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white text-sm"
+            className="px-2 py-0.5 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white text-sm"
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
           >
             {"<<"}
           </button>
           <button
-            className="px-3 py-1 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white text-sm"
+            className="px-2 py-0.5 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white text-sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
             {"<"}
           </button>
           <button
-            className="px-3 py-1 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white text-sm"
+            className="px-2 py-0.5 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white text-sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
             {">"}
           </button>
           <button
-            className="px-3 py-1 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white text-sm"
+            className="px-2 py-0.5 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white text-sm"
             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
             disabled={!table.getCanNextPage()}
           >
             {">>"}
           </button>
-          <span className="text-sm text-gray-600">
+          <span className="text-[8px] md:text-[10px] text-gray-600">
             Página <strong>{table.getState().pagination.pageIndex + 1}</strong>{" "}
             de <strong>{table.getPageCount()}</strong>
           </span>
         </div>
 
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-2 text-sm text-gray-600">
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-2 text-[8px] md:text-[10px] text-gray-600">
             Ir a:
             <input
               type="number"
@@ -197,11 +246,11 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
             />
           </span>
           <select
-            className="border border-gray-300 p-1.5 rounded-md text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="border border-gray-300 p-1.5 rounded-md text-[8px] md:text-[10px] bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
             value={table.getState().pagination.pageSize}
             onChange={(e) => table.setPageSize(Number(e.target.value))}
           >
-            {[10, 20, 30, 40, 50].map((pageSize) => (
+            {[12, 15, 20, 25, 30].map((pageSize) => (
               <option key={pageSize} value={pageSize}>
                 Mostrar {pageSize}
               </option>
@@ -214,14 +263,42 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
 }
 
 function Filter({ column }: { column: Column<any, unknown> }) {
+  const { filterVariant } = (column.columnDef.meta as any) ?? {};
   const columnFilterValue = column.getFilterValue();
+
+  const sortedUniqueValues = useMemo(
+    () => Array.from(column.getFacetedUniqueValues().keys()).sort(),
+    [column.getFacetedUniqueValues()],
+  );
+
+  const inputStyle =
+    "w-full p-1 text-[8px] md:text-[10px] border border-gray-300 rounded focus:outline-none focus:ring-1 bg-white focus:ring-mist-500";
+
+  if (filterVariant === "select") {
+    return (
+      <select
+        // CORRECCIÓN: Capturar el evento 'e' y extraer 'e.target.value'
+        onChange={(e) => column.setFilterValue(e.target.value)}
+        value={columnFilterValue?.toString() || ""}
+        className={inputStyle}
+      >
+        <option value="">TODOS</option>
+        {sortedUniqueValues.map((value: any) => (
+          <option key={value} value={value}>
+            {String(value).toUpperCase()}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
   return (
     <DebouncedInput
       type="text"
       value={(columnFilterValue ?? "") as string}
       onChange={(value) => column.setFilterValue(value)}
       placeholder="Filtrar..."
-      className="w-full p-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+      className={inputStyle}
     />
   );
 }
