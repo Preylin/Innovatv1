@@ -26,7 +26,7 @@ export const FromCntsPorPabarFijas = withForm({
         />
         <form.AppField
           name="monto_esperado"
-          children={(field) => <field.NumberFloatField label="Monto Mensual" />}
+          children={(field) => <field.NumberField label="Monto Mensual" />}
         />
         <form.AppField
           name="dia_pago"

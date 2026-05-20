@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createQuery } from "../../../../api/query/createQuery";
 import api from "../../../../api/client";
-import { EfectivoSchemaOutApi, type EfectivoSchemaCrearApiType, type EfectivoShemaUpdateApiType } from "./api.schema";
+import { EfectivoSchemaOutApi, listasUnicasResponseSchema, type EfectivoSchemaCrearApiType, type EfectivoShemaUpdateApiType } from "./api.schema";
 
 
 export function useBcpdolaresLista(){
@@ -45,3 +45,13 @@ export function useDeletebBcpdolares() {
     },
   });
 }
+
+export function useListasUnicasBcpdolaresLista(){
+    return useQuery({
+        queryKey: ["listas_unicas_bcpdolares"],
+        queryFn: createQuery({
+            request: () => api.get("/bcpdolares/resumen_columnas"),
+            schema: listasUnicasResponseSchema,
+        }),
+    })
+};

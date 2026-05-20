@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createQuery } from "../../../../api/query/createQuery";
 import api from "../../../../api/client";
-import { EfectivoSchemaOutApi, SaldoEfectivoSchemaOutApi, type EfectivoSchemaCrearApiType, type EfectivoShemaUpdateApiType } from "./api.schema";
+import { EfectivoSchemaOutApi, listasUnicasResponseSchema, SaldoEfectivoSchemaOutApi, type EfectivoSchemaCrearApiType, type EfectivoShemaUpdateApiType } from "./api.schema";
 
 
 export function useCajaChicaLista(){
@@ -55,3 +55,13 @@ export function useDeleteCajaChica() {
     },
   });
 }
+
+export function useListasUnicasCajaChicaLista(){
+    return useQuery({
+        queryKey: ["listas_unicas_cajachica"],
+        queryFn: createQuery({
+            request: () => api.get("/cajachica/resumen_columnas"),
+            schema: listasUnicasResponseSchema,
+        }),
+    })
+};

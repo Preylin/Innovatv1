@@ -105,6 +105,62 @@ async def obtener_saldos_separados(session: AsyncSession = Depends(get_session))
         
     return row
 
+@router_cajachica.get("/resumen_columnas", response_model=ListasUnicasResponse)
+async def get_datos_resumen_caja_chica(db: AsyncSession = Depends(get_session)):
+    desc_cte = (
+        select(
+            CajaChica.descripcion,
+            func.row_number().over(order_by=CajaChica.descripcion).label('rn')
+        )
+        .where(CajaChica.descripcion.is_not(None))
+        .group_by(CajaChica.descripcion)
+        .cte('descripciones_unicas')
+    )
+
+    ref_cte = (
+        select(
+            CajaChica.referencia,
+            func.row_number().over(order_by=CajaChica.referencia).label('rn')
+        )
+        .where(CajaChica.referencia.is_not(None))
+        .group_by(CajaChica.referencia)
+        .cte('referencias_unicas')
+    )
+
+    adi_cte = (
+        select(
+            CajaChica.adicionales,
+            func.row_number().over(order_by=CajaChica.adicionales).label('rn')
+        )
+        .where(CajaChica.adicionales.is_not(None))
+        .group_by(CajaChica.adicionales)
+        .cte('adicionales_unicas')
+    )
+
+    stmt = (
+        select(
+            desc_cte.c.descripcion,
+            ref_cte.c.referencia,
+            adi_cte.c.adicionales
+        )
+        .select_from(desc_cte)
+        .join(ref_cte, desc_cte.c.rn == ref_cte.c.rn, full=True)
+        .join(adi_cte, func.coalesce(desc_cte.c.rn, ref_cte.c.rn) == adi_cte.c.rn, full=True)
+    )
+
+    result = await db.execute(stmt)
+    # Obtenemos todas las filas planas de la base de datos
+    rows = result.all()
+
+    # Procesamos y agrupamos los datos ignorando los valores nulos (None)
+    return {
+        "descripciones": [row.descripcion for row in rows if row.descripcion is not None],
+        "referencias": [row.referencia for row in rows if row.referencia is not None],
+        "adicionales": [row.adicionales for row in rows if row.adicionales is not None]
+    }
+
+
+
 
 # router bcpsoles
 
@@ -318,3 +374,57 @@ async def delete_bcp_dolares(
     except Exception as e:
         await session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+@router_bcpdolares.get("/resumen_columnas", response_model=ListasUnicasResponse)
+async def get_datos_resumen_bcpdolares(db: AsyncSession = Depends(get_session)):
+    desc_cte = (
+        select(
+            Bcpdolares.descripcion,
+            func.row_number().over(order_by=Bcpdolares.descripcion).label('rn')
+        )
+        .where(Bcpdolares.descripcion.is_not(None))
+        .group_by(Bcpdolares.descripcion)
+        .cte('descripciones_unicas')
+    )
+
+    ref_cte = (
+        select(
+            Bcpdolares.referencia,
+            func.row_number().over(order_by=Bcpdolares.referencia).label('rn')
+        )
+        .where(Bcpdolares.referencia.is_not(None))
+        .group_by(Bcpdolares.referencia)
+        .cte('referencias_unicas')
+    )
+
+    adi_cte = (
+        select(
+            Bcpdolares.adicionales,
+            func.row_number().over(order_by=Bcpdolares.adicionales).label('rn')
+        )
+        .where(Bcpdolares.adicionales.is_not(None))
+        .group_by(Bcpdolares.adicionales)
+        .cte('adicionales_unicas')
+    )
+
+    stmt = (
+        select(
+            desc_cte.c.descripcion,
+            ref_cte.c.referencia,
+            adi_cte.c.adicionales
+        )
+        .select_from(desc_cte)
+        .join(ref_cte, desc_cte.c.rn == ref_cte.c.rn, full=True)
+        .join(adi_cte, func.coalesce(desc_cte.c.rn, ref_cte.c.rn) == adi_cte.c.rn, full=True)
+    )
+
+    result = await db.execute(stmt)
+    # Obtenemos todas las filas planas de la base de datos
+    rows = result.all()
+
+    # Procesamos y agrupamos los datos ignorando los valores nulos (None)
+    return {
+        "descripciones": [row.descripcion for row in rows if row.descripcion is not None],
+        "referencias": [row.referencia for row in rows if row.referencia is not None],
+        "adicionales": [row.adicionales for row in rows if row.adicionales is not None]
+    }

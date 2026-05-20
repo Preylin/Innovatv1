@@ -8,13 +8,14 @@ import {
 } from "react-data-grid";
 import type { Row } from "../data/interfaceTabla";
 import TablaGridBase, { type Filters } from "./TablaGridBase";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import { UseComercialesIconsLO } from "../../../../components/atoms/icons/OtrasLibs/Comerciales";
 import type { EfectivoSchemaOutApiType } from "../data/api.schema";
 import {
   useBcpdolaresLista,
   useDeletebBcpdolares,
+  useListasUnicasBcpdolaresLista,
   useSyncbBcpdolares,
 } from "../data/api.bcpdolares";
 
@@ -61,7 +62,7 @@ export function DatalistEditor<TRow>({
   const value = (row[column.key as keyof TRow] as unknown as string) ?? "";
 
   return (
-    <div className="w-full h-full relative flex items-center bg-blue-50">
+    <div className="w-full h-full relative flex items-center bg-blue-100">
       <input
         ref={inputRef}
         type="text"
@@ -82,7 +83,7 @@ export function DatalistEditor<TRow>({
         }}
       />
 
-      <datalist id={datalistId}>
+      <datalist className="" id={datalistId}>
         {suggestions.map((option, index) => (
           <option key={`${option}-${index}`} value={option} />
         ))}
@@ -90,9 +91,6 @@ export function DatalistEditor<TRow>({
     </div>
   );
 }
-
-const SUGERENCIAS_REFERENCIAS = ["TRANSFERENCIA", "BCP", "YAPE"];
-const SUGERENCIAS_DESCRIPCION = ["COMPRAS", "PAGOS", "VENTAS"];
 
 function CustomSelectCell({ row }: RenderCellProps<Row>) {
   const { isRowSelectionDisabled, isRowSelected, onRowSelectionChange } =
@@ -163,201 +161,6 @@ function FilterHeader({
   );
 }
 
-// --- Configuración de Columnas Actualizada ---
-const getColumns = (
-  updateCell: (rowId: number, field: keyof Row, value: any) => void,
-  filters: Filters, // <--- NUEVO
-  setFilters: React.Dispatch<React.SetStateAction<Filters>>, // <--- NUEVO
-): readonly Column<Row>[] => [
-  {
-    key: "select",
-    name: "",
-    width: 40,
-    renderHeaderCell: () => <CustomHeaderCell />,
-    renderCell: CustomSelectCell,
-    cellClass: "flex items-center justify-center",
-    headerCellClass: "flex items-center justify-center",
-  },
-  {
-    key: "key",
-    name: "Nro",
-    width: 50,
-    headerCellClass: "text-center",
-    renderCell: ({ row }: RenderCellProps<Row>) => {
-      return (
-        <div className="text-center text-[10px] md:text-[12px]">{row.key}</div>
-      );
-    },
-  },
-  {
-    key: "fecha",
-    name: "Fecha",
-    width: 115,
-    editable: true,
-    sortable: true,
-    headerCellClass: "text-center",
-    renderEditCell: renderTextEditor,
-    renderHeaderCell: (props: {
-      column: Column<Row>;
-      sortDirection: any;
-      priority: any;
-    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<Row>) => (
-      <input
-        className="w-full h-full bg-transparent outline-none px-1.5 focus:bg-blue-50 transition-colors text-[10px] md:text-[12px]"
-        type="date"
-        value={row.fecha ? dayjs(row.fecha).format("YYYY-MM-DD") : ""}
-        onChange={(e) => updateCell(row.id, "fecha", e.target.value)}
-      />
-    ),
-    cellClass: (row) => (row.fecha === "" ? "bg-red-100" : ""),
-  },
-  {
-    key: "descripcion",
-    name: "Descripción",
-    resizable: true,
-    editable: true,
-    minWidth: 200,
-    renderEditCell: (props) => (
-      <DatalistEditor {...props} externalSource={SUGERENCIAS_DESCRIPCION} />
-    ),
-    renderHeaderCell: (props: {
-      column: Column<Row>;
-      sortDirection: any;
-      priority: any;
-    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<Row>) => (
-      <div
-        className="px-2 truncate text-[10px] md:text-[12px]"
-        title={row.descripcion}
-      >
-        {row.descripcion || (
-          <span className="text-gray-400 italic">Añadir descripción...</span>
-        )}
-      </div>
-    ),
-    cellClass: (row) => {
-      if (row.descripcion === "") return "bg-red-100";
-      return "";
-    },
-  },
-  {
-    key: "referencia",
-    name: "Referencia",
-    width: 120,
-    editable: true,
-    renderEditCell: (props) => (
-      <DatalistEditor {...props} externalSource={SUGERENCIAS_REFERENCIAS} />
-    ),
-    renderHeaderCell: (props: {
-      column: Column<Row>;
-      sortDirection: any;
-      priority: any;
-    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<Row>) => (
-      <div className="px-2 truncate text-[10px] md:text-[12px]">
-        {row.referencia || ""}
-      </div>
-    ),
-    cellClass: (row) => {
-      if (row.referencia === "") return "bg-red-100";
-      return "";
-    },
-  },
-  {
-    key: "ingreso",
-    name: "Ingreso",
-    width: 120,
-    sortable: true,
-    headerCellClass: "text-center",
-    renderHeaderCell: (props: {
-      column: Column<Row>;
-      sortDirection: any;
-      priority: any;
-    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<Row>) => (
-      <div
-        className={`text-right pr-4 font-medium text-[10px] md:text-[12px] ${row.ingreso >= 0 ? "text-teal-700" : "text-orange-500"}`}
-      >
-        {new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(row.ingreso)}
-      </div>
-    ),
-    editable: true, // Dejamos que este use el editor de texto normal para valores numéricos
-    renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.ingreso !== 0) return "bg-stone-100";
-      return "";
-    },
-  },
-  {
-    key: "egreso",
-    name: "Egreso",
-    width: 120,
-    sortable: true,
-    headerCellClass: "text-center",
-    renderHeaderCell: (props: {
-      column: Column<Row>;
-      sortDirection: any;
-      priority: any;
-    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<Row>) => (
-      <div
-        className={`text-right pr-4 font-medium text-[10px] md:text-[12px] ${row.egreso <= 0 ? "text-rose-600" : "text-cyan-500"}`}
-      >
-        {new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(row.egreso)}
-      </div>
-    ),
-    editable: true,
-    renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.egreso !== 0) return "bg-mauve-100";
-      return "";
-    },
-  },
-  {
-    key: "saldo",
-    name: "Saldo",
-    width: 130,
-    headerCellClass: "text-center bg-gray-100",
-    renderCell: ({ row }: RenderCellProps<Row>) => (
-      <div
-        className={`text-right pr-4 font-semibold text-[11px] md:text-[13px] ${row.saldo < 0 ? "text-rose-600" : "text-sky-700"}`}
-      >
-        {new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(row.saldo)}
-      </div>
-    ),
-    cellClass: (row) => {
-      if (row.saldo === 0) return "bg-red-100";
-      return "bg-gray-100";
-    },
-  },
-  {
-    key: "adicionales",
-    name: "Inf. Adicional",
-    minWidth: 200,
-    renderEditCell: renderTextEditor,
-    renderHeaderCell: (props: {
-      column: Column<Row>;
-      sortDirection: any;
-      priority: any;
-    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<Row>) => (
-      <div className="px-2 truncate text-[10px] md:text-[12px]">
-        {row.adicionales || ""}
-      </div>
-    ),
-  },
-];
-
 const mapDataApi = (data: EfectivoSchemaOutApiType[]): Row[] => {
   return data.map((item, index) => ({
     key: index + 1,
@@ -396,6 +199,7 @@ function TablaBcpDolares() {
   const { data, isLoading, isError } = useBcpdolaresLista();
   const { mutateAsync: syncData } = useSyncbBcpdolares();
   const { mutateAsync: deleteItems } = useDeletebBcpdolares();
+  const { data: dataUnicas } = useListasUnicasBcpdolaresLista();
   const handleSync = async (payload: { created: Row[]; updates: Row[] }) => {
     const formattedPayload = {
       created: payload.created
@@ -421,6 +225,228 @@ function TablaBcpDolares() {
 
     await syncData(formattedPayload);
   };
+
+  const SUGERENCIAS_DESCRIPCION = dataUnicas?.descripciones || [];
+  const SUGERENCIAS_REFERENCIAS = dataUnicas?.referencias || [];
+  const SUGERENCIAS_ADICIONALES = dataUnicas?.adicionales || [];
+
+  const getColumns = useMemo(() => {
+    return (
+      updateCell: (rowId: number, field: keyof Row, value: any) => void,
+      filters: Filters,
+      setFilters: React.Dispatch<React.SetStateAction<Filters>>,
+    ): readonly Column<Row>[] => [
+      {
+        key: "select",
+        name: "",
+        width: 40,
+        renderHeaderCell: () => <CustomHeaderCell />,
+        renderCell: CustomSelectCell,
+        cellClass: "flex items-center justify-center",
+        headerCellClass: "flex items-center justify-center",
+      },
+      {
+        key: "key",
+        name: "Nro",
+        width: 50,
+        headerCellClass: "text-center",
+        renderCell: ({ row }: RenderCellProps<Row>) => {
+          return (
+            <div className="text-center text-[10px] md:text-[12px]">
+              {row.key}
+            </div>
+          );
+        },
+      },
+      {
+        key: "fecha",
+        name: "Fecha",
+        width: 115,
+        editable: true,
+        sortable: true,
+        headerCellClass: "text-center",
+        renderEditCell: renderTextEditor,
+        renderHeaderCell: (props: {
+          column: Column<Row>;
+          sortDirection: any;
+          priority: any;
+        }) => (
+          <FilterHeader {...props} filters={filters} setFilters={setFilters} />
+        ),
+        renderCell: ({ row }: RenderCellProps<Row>) => (
+          <input
+            className="w-full h-full bg-transparent outline-none px-1.5 focus:bg-blue-50 transition-colors text-[10px] md:text-[12px]"
+            type="date"
+            value={row.fecha ? dayjs(row.fecha).format("YYYY-MM-DD") : ""}
+            onChange={(e) => updateCell(row.id, "fecha", e.target.value)}
+          />
+        ),
+        cellClass: (row) => (row.fecha === "" ? "bg-red-100" : ""),
+      },
+      {
+        key: "descripcion",
+        name: "Descripción",
+        resizable: true,
+        editable: true,
+        minWidth: 200,
+        renderEditCell: (props) => (
+          <DatalistEditor {...props} externalSource={SUGERENCIAS_DESCRIPCION} />
+        ),
+        renderHeaderCell: (props: {
+          column: Column<Row>;
+          sortDirection: any;
+          priority: any;
+        }) => (
+          <FilterHeader {...props} filters={filters} setFilters={setFilters} />
+        ),
+        renderCell: ({ row }: RenderCellProps<Row>) => (
+          <div
+            className="px-2 truncate text-[10px] md:text-[12px]"
+            title={row.descripcion}
+          >
+            {row.descripcion || (
+              <span className="text-gray-400 italic">
+                Añadir descripción...
+              </span>
+            )}
+          </div>
+        ),
+        cellClass: (row) => {
+          if (row.descripcion === "") return "bg-red-100";
+          return "";
+        },
+      },
+      {
+        key: "referencia",
+        name: "Referencia",
+        width: 120,
+        editable: true,
+        renderEditCell: (props) => (
+          <DatalistEditor {...props} externalSource={SUGERENCIAS_REFERENCIAS} />
+        ),
+        renderHeaderCell: (props: {
+          column: Column<Row>;
+          sortDirection: any;
+          priority: any;
+        }) => (
+          <FilterHeader {...props} filters={filters} setFilters={setFilters} />
+        ),
+        renderCell: ({ row }: RenderCellProps<Row>) => (
+          <div className="px-2 truncate text-[10px] md:text-[12px]">
+            {row.referencia || ""}
+          </div>
+        ),
+        cellClass: (row) => {
+          if (row.referencia === "") return "bg-red-100";
+          return "";
+        },
+      },
+      {
+        key: "ingreso",
+        name: "Ingreso",
+        width: 120,
+        sortable: true,
+        headerCellClass: "text-center",
+        renderHeaderCell: (props: {
+          column: Column<Row>;
+          sortDirection: any;
+          priority: any;
+        }) => (
+          <FilterHeader {...props} filters={filters} setFilters={setFilters} />
+        ),
+        renderCell: ({ row }: RenderCellProps<Row>) => (
+          <div
+            className={`text-right pr-4 font-medium text-[10px] md:text-[12px] ${row.ingreso >= 0 ? "text-teal-700" : "text-orange-500"}`}
+          >
+            {new Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: "USD",
+            }).format(row.ingreso)}
+          </div>
+        ),
+        editable: true, // Dejamos que este use el editor de texto normal para valores numéricos
+        renderEditCell: renderTextEditor,
+        cellClass: (row) => {
+          if (row.ingreso !== 0) return "bg-stone-100";
+          return "";
+        },
+      },
+      {
+        key: "egreso",
+        name: "Egreso",
+        width: 120,
+        sortable: true,
+        headerCellClass: "text-center",
+        renderHeaderCell: (props: {
+          column: Column<Row>;
+          sortDirection: any;
+          priority: any;
+        }) => (
+          <FilterHeader {...props} filters={filters} setFilters={setFilters} />
+        ),
+        renderCell: ({ row }: RenderCellProps<Row>) => (
+          <div
+            className={`text-right pr-4 font-medium text-[10px] md:text-[12px] ${row.egreso <= 0 ? "text-rose-600" : "text-cyan-500"}`}
+          >
+            {new Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: "USD",
+            }).format(row.egreso)}
+          </div>
+        ),
+        editable: true,
+        renderEditCell: renderTextEditor,
+        cellClass: (row) => {
+          if (row.egreso !== 0) return "bg-mauve-100";
+          return "";
+        },
+      },
+      {
+        key: "saldo",
+        name: "Saldo",
+        width: 130,
+        headerCellClass: "text-center bg-gray-100",
+        renderCell: ({ row }: RenderCellProps<Row>) => (
+          <div
+            className={`text-right pr-4 font-semibold text-[11px] md:text-[13px] ${row.saldo < 0 ? "text-rose-600" : "text-sky-700"}`}
+          >
+            {new Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: "USD",
+            }).format(row.saldo)}
+          </div>
+        ),
+        cellClass: (row) => {
+          if (row.saldo === 0) return "bg-red-100";
+          return "bg-gray-100";
+        },
+      },
+      {
+        key: "adicionales",
+        name: "Inf. Adicional",
+        minWidth: 200,
+        renderEditCell: (props) => (
+          <DatalistEditor {...props} externalSource={SUGERENCIAS_ADICIONALES} />
+        ),
+        renderHeaderCell: (props: {
+          column: Column<Row>;
+          sortDirection: any;
+          priority: any;
+        }) => (
+          <FilterHeader {...props} filters={filters} setFilters={setFilters} />
+        ),
+        renderCell: ({ row }: RenderCellProps<Row>) => (
+          <div className="px-2 truncate text-[10px] md:text-[12px]">
+            {row.adicionales || ""}
+          </div>
+        ),
+      },
+    ];
+  }, [
+    SUGERENCIAS_DESCRIPCION,
+    SUGERENCIAS_REFERENCIAS,
+    SUGERENCIAS_ADICIONALES,
+  ]);
 
   return (
     <TablaGridBase

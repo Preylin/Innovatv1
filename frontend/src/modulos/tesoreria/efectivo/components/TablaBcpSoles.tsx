@@ -230,7 +230,7 @@ function TablaBCPSoles() {
   const SUGERENCIAS_REFERENCIAS = dataUnicas?.referencias || [];
   const SUGERENCIAS_ADICIONALES = dataUnicas?.adicionales || [];
 
-  const getColmns = useMemo(() => {
+  const getColumms = useMemo(() => {
     return (
       updateCell: (rowId: number, field: keyof Row, value: any) => void,
       filters: Filters, // <--- NUEVO
@@ -442,7 +442,11 @@ function TablaBCPSoles() {
         ),
       },
     ];
-  }, []);
+  }, [
+    SUGERENCIAS_DESCRIPCION,
+    SUGERENCIAS_REFERENCIAS,
+    SUGERENCIAS_ADICIONALES,
+  ]);
 
   return (
     <TablaGridBase
@@ -459,7 +463,7 @@ function TablaBCPSoles() {
       moneda="S/"
       deleteItems={deleteItems}
       mapDataApi={mapDataApi}
-      getColumns={getColmns}
+      getColumns={getColumms}
       createEmptyRow={createEmptyRow}
       rowProcessor={rowProcessor}
       syncData={handleSync}
