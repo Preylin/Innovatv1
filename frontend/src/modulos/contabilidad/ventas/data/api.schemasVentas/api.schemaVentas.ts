@@ -4,7 +4,7 @@ export const TablaVentasSchemaApiOut = z.object({
   id: z.number(),
   periodo: z.string(),
   fecha_emision: z.coerce.date(),
-  fecha_vencimiento: z.coerce.date().nullable(),
+  fecha_vencimiento: z.coerce.date(),
   tipo_cp_codigo: z.string(),
   serie: z.string(),
   numero: z.string(),
@@ -18,6 +18,8 @@ export const TablaVentasSchemaApiOut = z.object({
   tipo_cambio: z.coerce.number(),
   categoria: z.string().nullable(),
   descripcion_comprobante: z.string().nullable(),
+  monto_retencion: z.coerce.number(),
+  monto_detraccion: z.coerce.number(),
   is_active: z.string(),
   link_pdf: z.string().nullable(),
 });

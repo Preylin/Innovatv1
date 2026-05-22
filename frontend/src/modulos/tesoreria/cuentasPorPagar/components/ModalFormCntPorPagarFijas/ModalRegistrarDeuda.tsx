@@ -66,6 +66,7 @@ export function FormNuevaObligacion({ open, onClose, mesActual }: Props) {
       <form
         onSubmit={(e) => {
           e.preventDefault();
+          e.stopPropagation();
           form.handleSubmit();
         }}
       >

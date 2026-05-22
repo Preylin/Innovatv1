@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS contabilidad.ventas (
     id BIGSERIAL PRIMARY KEY,
     periodo CHAR(6) NOT NULL, -- YYYYMM
     fecha_emision DATE NOT NULL,
-    fecha_vencimiento DATE,
+    fecha_vencimiento DATE NOT NULL,
     
     -- Datos del Comprobante
     tipo_cp_codigo CHAR(2) NOT NULL, -- 01, 03, 07, etc.
@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS contabilidad.ventas (
     monto_detraccion NUMERIC(12,2) DEFAULT 0.00,
     nro_orden_compra VARCHAR(50),
     nro_guia_remision VARCHAR(50),
+    fecha_pago_detraccion_retencion DATE,
     
     -- Otros del SIRE / Gestión
     descripcion_comprobante TEXT,
@@ -49,11 +50,10 @@ CREATE TABLE IF NOT EXISTS contabilidad.caja_movimientos_ventas (
     id BIGSERIAL PRIMARY KEY,
     venta_id BIGINT REFERENCES contabilidad.ventas(id),
     fecha_pago DATE NOT NULL,
-    lugar_ingreso VARCHAR(50), 
+    lugar_ingreso VARCHAR(20), 
     monto_pagado NUMERIC(12,2) NOT NULL,
     medio_pago VARCHAR(20), 
-    status_cobro VARCHAR(20) DEFAULT 'PENDIENTE', -- PENDIENTE, PARCIAL, CANCELADO
-    fecha_pago_detraccion_retencion DATE,
+    status_cobro VARCHAR(20) DEFAULT 'PENDIENTE', -- PENDIENTE, CANCELADO
     glosa_pago TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

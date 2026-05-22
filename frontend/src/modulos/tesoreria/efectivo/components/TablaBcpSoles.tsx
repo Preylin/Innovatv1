@@ -195,6 +195,11 @@ const createEmptyRow = (id: number): Row => ({
   adicionales: "",
 });
 
+const formatPEN = new Intl.NumberFormat("es-PE", {
+    style: "currency",
+    currency: "PEN",
+  });
+
 function TablaBCPSoles() {
   const { data, isLoading, isError } = useBcpsolesLista();
   const { mutateAsync: syncData } = useSyncbBcpsoles();
@@ -358,10 +363,7 @@ function TablaBCPSoles() {
           <div
             className={`text-right pr-4 font-medium text-[10px] md:text-[12px] ${row.ingreso >= 0 ? "text-teal-700" : "text-orange-500"}`}
           >
-            {new Intl.NumberFormat("es-PE", {
-              style: "currency",
-              currency: "PEN",
-            }).format(row.ingreso)}
+            {formatPEN.format(row.ingreso)}
           </div>
         ),
         editable: true, // Dejamos que este use el editor de texto normal para valores numéricos
@@ -388,10 +390,7 @@ function TablaBCPSoles() {
           <div
             className={`text-right pr-4 font-medium text-[10px] md:text-[12px] ${row.egreso <= 0 ? "text-rose-600" : "text-cyan-500"}`}
           >
-            {new Intl.NumberFormat("es-PE", {
-              style: "currency",
-              currency: "PEN",
-            }).format(row.egreso)}
+            {formatPEN.format(row.egreso)}
           </div>
         ),
         editable: true,
@@ -410,10 +409,7 @@ function TablaBCPSoles() {
           <div
             className={`text-right pr-4 font-semibold text-[11px] md:text-[13px] ${row.saldo < 0 ? "text-rose-600" : "text-sky-700"}`}
           >
-            {new Intl.NumberFormat("es-PE", {
-              style: "currency",
-              currency: "PEN",
-            }).format(row.saldo)}
+            {formatPEN.format(row.saldo)}
           </div>
         ),
         cellClass: (row) => {

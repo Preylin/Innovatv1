@@ -249,7 +249,7 @@ async def get_lista_ventas(db: AsyncSession = Depends(get_session), periodo: str
     query = select(
         Venta.id, Venta.periodo, Venta.fecha_emision, Venta.fecha_vencimiento, Venta.tipo_cp_codigo, Venta.serie, Venta.numero,
         GlobalCliente.tipo_documento, GlobalCliente.nro_documento, GlobalCliente.razon_social,
-        Venta.base_imponible, Venta.igv, Venta.total, Venta.moneda, Venta.tipo_cambio, Venta.categoria, Venta.descripcion_comprobante, Venta.is_active, Venta.link_pdf
+        Venta.base_imponible, Venta.igv, Venta.total, Venta.moneda, Venta.tipo_cambio, Venta.categoria, Venta.descripcion_comprobante,Venta.monto_retencion, Venta.monto_detraccion, Venta.link_pdf
     ).join(GlobalCliente, Venta.cliente_id == GlobalCliente.id, isouter=True)
 
     if periodo:

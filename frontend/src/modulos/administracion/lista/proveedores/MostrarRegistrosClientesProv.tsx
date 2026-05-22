@@ -164,7 +164,7 @@ function MostrarProveedoresList() {
     <div className="flex flex-col gap-4 px-2">
       <div className="sticky top-0 z-10 backdrop-blur-sm pb-4 pt-2 px-6 shadow-sm mb-2">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex-1 min-w-[300px]">
+          <div className="flex-1 min-w-75">
             <SearchBar
               options={SEARCH_OPTIONS}
               onSearch={handleSearch}

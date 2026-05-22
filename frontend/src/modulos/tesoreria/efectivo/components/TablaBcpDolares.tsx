@@ -195,6 +195,11 @@ const createEmptyRow = (id: number): Row => ({
   adicionales: "",
 });
 
+const formatUSD = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
+
 function TablaBcpDolares() {
   const { data, isLoading, isError } = useBcpdolaresLista();
   const { mutateAsync: syncData } = useSyncbBcpdolares();
@@ -358,10 +363,7 @@ function TablaBcpDolares() {
           <div
             className={`text-right pr-4 font-medium text-[10px] md:text-[12px] ${row.ingreso >= 0 ? "text-teal-700" : "text-orange-500"}`}
           >
-            {new Intl.NumberFormat("en-US", {
-              style: "currency",
-              currency: "USD",
-            }).format(row.ingreso)}
+            {formatUSD.format(row.ingreso)}
           </div>
         ),
         editable: true, // Dejamos que este use el editor de texto normal para valores numéricos
@@ -388,10 +390,7 @@ function TablaBcpDolares() {
           <div
             className={`text-right pr-4 font-medium text-[10px] md:text-[12px] ${row.egreso <= 0 ? "text-rose-600" : "text-cyan-500"}`}
           >
-            {new Intl.NumberFormat("en-US", {
-              style: "currency",
-              currency: "USD",
-            }).format(row.egreso)}
+            {formatUSD.format(row.egreso)}
           </div>
         ),
         editable: true,
@@ -410,10 +409,7 @@ function TablaBcpDolares() {
           <div
             className={`text-right pr-4 font-semibold text-[11px] md:text-[13px] ${row.saldo < 0 ? "text-rose-600" : "text-sky-700"}`}
           >
-            {new Intl.NumberFormat("en-US", {
-              style: "currency",
-              currency: "USD",
-            }).format(row.saldo)}
+            {formatUSD.format(row.saldo)}
           </div>
         ),
         cellClass: (row) => {

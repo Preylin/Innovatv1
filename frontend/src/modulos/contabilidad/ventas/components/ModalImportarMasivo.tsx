@@ -28,8 +28,7 @@ const HistorialVentasImportSchema = z.object({
     .pipe(z.date()),
   fecha_vencimiento: z
     .union([z.date(), z.string().transform((v) => new Date(v))])
-    .pipe(z.date())
-    .optional(),
+    .pipe(z.date()),
   tipo_cp_codigo: z.coerce.string().min(1).max(2),
   serie: z.string().min(1).max(4),
   numero: z.coerce.string().min(1),

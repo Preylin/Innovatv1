@@ -27,7 +27,7 @@ class Venta(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     periodo: Mapped[str] = mapped_column(CHAR(6), nullable=False) # NOT NULL
     fecha_emision: Mapped[date] = mapped_column(nullable=False) # NOT NULL
-    fecha_vencimiento: Mapped[Optional[date]] = mapped_column(nullable=True) # NULL
+    fecha_vencimiento: Mapped[Optional[date]] = mapped_column(nullable=False) # NOT NULL
     
     tipo_cp_codigo: Mapped[str] = mapped_column(CHAR(2), nullable=False) # NOT NULL
     serie: Mapped[str] = mapped_column(CHAR(4), nullable=False) # NOT NULL
@@ -45,6 +45,7 @@ class Venta(Base):
     
     monto_retencion: Mapped[float] = mapped_column(Numeric(12, 2), server_default="0.00", default=0.00)
     monto_detraccion: Mapped[float] = mapped_column(Numeric(12, 2), server_default="0.00", default=0.00)
+    fecha_pago_detraccion_retencion: Mapped[Optional[date]] = mapped_column(nullable=True)
     
     nro_orden_compra: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     nro_guia_remision: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
@@ -67,12 +68,13 @@ class CajaMovimientoVenta(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     venta_id: Mapped[Optional[int]] = mapped_column(ForeignKey("contabilidad.ventas.id"), nullable=True)
     fecha_pago: Mapped[date] = mapped_column(nullable=False)
-    lugar_ingreso: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    lugar_ingreso: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     monto_pagado: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     medio_pago: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     status_cobro: Mapped[str] = mapped_column(String(20), server_default="PENDIENTE", default="PENDIENTE")
     glosa_pago: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"), nullable=False)
+
 
     venta: Mapped[Optional["Venta"]] = relationship(back_populates="movimientos_caja")
     asientos: Mapped[List["LibroDiarioVentas"]] = relationship(back_populates="caja")

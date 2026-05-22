@@ -6,7 +6,7 @@ import {
   IoWalletOutline,
   IoDocumentTextOutline,
   IoCheckmarkCircleOutline,
-  IoStopwatchOutline 
+  IoStopwatchOutline,
 } from "react-icons/io5";
 import {
   sortingFns,
@@ -20,25 +20,30 @@ import { compareItems, rankItem } from "@tanstack/match-sorter-utils";
 import { useCuentasPorCobrarResumenMensualCaja } from "../data/api.CntsCobrarTableReporte";
 import type { ReporteCntsPorCobrarSchemaApiType } from "../data/api.schemaCntsCobrarTableReporte";
 import { TableBaseFuzzyCntasPorCobrar } from "./TablaBaseTsKFilterPaginacion";
-import { Select } from "antd";
+import { Select, Spin, Tooltip } from "antd";
 import { useYearsContabilidadVentas } from "../../../contabilidad/ventas/data/api.ventas/api.smallConsultas";
 import { differenceInCalendarDays, isValid } from "date-fns";
+import { ModalRegistroCntsPorCobrar } from "./ModalRegistroCobro";
+import FloatingWindowButton from "./ejemplowindos";
+import { LuListCheck } from "react-icons/lu";
 
 export interface DataTableCntsPorPagar {
   key: number;
   id: number;
   fecha_emision: string | Date;
   fecha_vencimiento: string | Date;
-  status_fecha: string; // Días restantes o de retraso
+  documento: string;
+  nro_documento: string;
   cliente_razon_social: string;
+  status_fecha: string; // Días restantes o de retraso
   total: number;
+  monto_pagado: number;
   monto_detraccion: number;
   monto_retencion: number;
   moneda: string;
   tipo_cambio: number;
-  fecha_pago: string | Date | null;
-  monto_pagado: number;
-  status_pago: string; // PENDIENTE, PARCIAL, CANCELADO
+  fecha_pago_detraccion_retencion: string | Date | null;
+  status_pago: string;
   link_pdf: string;
 }
 
@@ -60,7 +65,7 @@ const fuzzySort: SortingFn<any> = (rowA, rowB, columnId) => {
 };
 function obtenerTextoAlertaVencimiento(
   fechaVencimientoRaw: Date | string | null | undefined,
-  statusPago: string
+  statusPago: string,
 ): string {
   if (statusPago === "CANCELADO") return "Completado";
   if (!fechaVencimientoRaw || fechaVencimientoRaw === "-") return "Sin Fecha";
@@ -81,15 +86,14 @@ function obtenerTextoAlertaVencimiento(
   }
 }
 
-
 const mapDataTable = (
   data: ReporteCntsPorCobrarSchemaApiType[],
 ): DataTableCntsPorPagar[] => {
   return data.map((item, index) => {
     // 🚀 Inyectamos el string generado directamente en el modelo de datos
     const textoStatusFecha = obtenerTextoAlertaVencimiento(
-      item.fecha_vencimiento, 
-      item.status_cobro || "-"
+      item.fecha_vencimiento,
+      item.status_cobro || "-",
     );
 
     return {
@@ -97,16 +101,18 @@ const mapDataTable = (
       id: item.id,
       fecha_emision: item.fecha_emision || "-",
       fecha_vencimiento: item.fecha_vencimiento || "-",
-      status_fecha: textoStatusFecha, // Guardado como String legible
+      documento: `${item.serie || "-"}-${item.numero || "-"}`,
+      status_fecha: textoStatusFecha,
       nro_documento: item.nro_documento || "-",
       cliente_razon_social: item.razon_social || "-",
       total: item.total / item.tipo_cambio || 0,
+      monto_pagado: item.monto_pagado || 0,
       monto_detraccion: item.monto_detraccion || 0,
       monto_retencion: item.monto_retencion || 0,
+      fecha_pago_detraccion_retencion:
+        item.fecha_pago_detraccion_retencion || "-",
       moneda: item.moneda || "-",
-      tipo_cambio: item.tipo_cambio || 0,
-      fecha_pago: item.fecha_pago || null,
-      monto_pagado: item.monto_pagado / item.tipo_cambio || 0,
+      tipo_cambio: item.tipo_cambio || 1,
       status_pago: item.status_cobro || "-",
       link_pdf: item.link_pdf || "-",
     };
@@ -121,7 +127,11 @@ interface PropsComponent {
 // componente para dar estilo a los datos de las columnas
 const StyleDataCell: React.FC<PropsComponent> = ({ children, className }) => {
   return (
-    <span className={`text-[8px] md:text-[10px] text-center block ${className}`}>{children}</span>
+    <span
+      className={`text-[8px] md:text-[10px] text-center block ${className}`}
+    >
+      {children}
+    </span>
   );
 };
 
@@ -135,13 +145,11 @@ const dateFilterFn: FilterFn<DataTableCntsPorPagar> = (
 
   if (!cellValue) return false;
 
-  // Transformamos el valor de la celda al mismo formato visible "dd/mm/yyyy"
   const d = new Date(cellValue as string | Date);
   if (isNaN(d.getTime())) return false;
 
   const formattedCellDate = d.toLocaleDateString("es-PE", { timeZone: "UTC" });
 
-  // Comparamos si lo que escribe el usuario está incluido en la fecha formateada
   return formattedCellDate
     .toLowerCase()
     .includes(String(filterValue).toLowerCase());
@@ -154,16 +162,27 @@ const numericFilterFn: FilterFn<DataTableCntsPorPagar> = (
 ) => {
   const cellValue = row.getValue(columnId);
   if (filterValue === "" || filterValue === undefined) return true;
-  // Convertimos el número a string para permitir búsqueda parcial (ej: escribir "12" y que encuentre "120.50")
   return String(cellValue)
     .toLowerCase()
     .includes(String(filterValue).toLowerCase());
 };
 
+const formatPEN = new Intl.NumberFormat("es-PE", {
+  style: "currency",
+  currency: "PEN",
+});
+const formatUSD = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
+
 function TablaMostrarCntPorCobrar() {
   // const year = new Date().getFullYear();
   // const [selectedYear, setSelectedYear] = useState<string>(year.toString())
   const [selectedYear, setSelectedYear] = useState<string>("2025");
+
+  const [selectedCobroId, setSelectedCobroId] = useState<number | null>(null);
+  const [selectDay, setSelectDay] = useState<string>("");
 
   const { data: years } = useYearsContabilidadVentas();
 
@@ -174,21 +193,17 @@ function TablaMostrarCntPorCobrar() {
     },
   ]);
 
-  // 1. Obtención de datos desde la API
   const {
     data: apiData,
     isLoading,
     isError,
   } = useCuentasPorCobrarResumenMensualCaja(selectedYear);
 
-
-  // 2. Mapeo y transformación profesional de Datos para Adaptar los Tipos
   const tableData = useMemo(() => {
     if (!apiData) return [];
     return mapDataTable(apiData);
   }, [apiData]);
 
-  // Formateador auxiliar de Moneda
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat("es-PE", {
       style: "currency",
@@ -205,12 +220,57 @@ function TablaMostrarCntPorCobrar() {
       : d.toLocaleDateString("es-PE", { timeZone: "UTC" });
   };
 
+  //usememo para cualcular datos para panel resumen para soles y dolares para status pendiente por vencer y vencidas solo considerar datos (total, monto_pagado, tipo_cambio)
+  //paso 1: solo filtrar datos con status_pago = "PENDIENTE"
+
+  const summaryPanel = useMemo(() => {
+    // Inicializamos nuestra estructura de acumuladores
+    const summary = {
+      PEN: { porVencer: 0, vencido: 0, total: 0 },
+      USD: { porVencer: 0, vencido: 0, total: 0 },
+    };
+
+    if (!apiData) return summary;
+
+    const hoy = new Date();
+
+    return apiData.reduce((acc, item) => {
+      const PagoMaximo = Number(item?.total / item?.tipo_cambio);
+
+      // Paso 1: Solo considerar status_cobro "PENDIENTE"
+      if (item.status_cobro !== "PENDIENTE") return acc;
+
+      // Identificar la moneda (solo manejamos PEN y USD según tu requerimiento)
+      const moneda = item.moneda as "PEN" | "USD";
+      if (!acc[moneda]) return acc; // Por si llega otra moneda que no sea PEN o USD
+
+      // Paso 2: Calcular el saldo pendiente real de este documento
+      const saldoPendiente = PagoMaximo - (item.monto_pagado || 0);
+
+      // Paso 3: Clasificar por fecha de vencimiento
+      const fechaVencimiento = new Date(item.fecha_vencimiento);
+
+      if (fechaVencimiento >= hoy) {
+        // Pendiente por vencer
+        acc[moneda].porVencer += saldoPendiente;
+      } else {
+        // Vencida
+        acc[moneda].vencido += saldoPendiente;
+      }
+
+      // calcular total
+      acc[moneda].total += saldoPendiente;
+
+      return acc;
+    }, summary);
+  }, [apiData]);
+
   // 3. Definición de Columnas (apuntando a los nuevos campos mapeados)
   const columns = useMemo<ColumnDef<DataTableCntsPorPagar, any>[]>(
     () => [
       {
         accessorKey: "key",
-        size: 70,
+        size: 50,
         meta: { textAlign: "center" },
         header: () => (
           <span className="flex text-[8px] md:text-[10px] items-center gap-1">
@@ -252,11 +312,11 @@ function TablaMostrarCntPorCobrar() {
         accessorKey: "status_fecha",
         size: 100,
         // 🚀 Cambiado a text para que busque coincidencias de caracteres ("Vencido", "Faltan", "Hoy")
-        filterFn: "includesString", 
+        filterFn: "includesString",
         meta: { textAlign: "center" },
         header: () => (
           <span className="flex text-[8px] md:text-[10px] items-center gap-1">
-            <IoStopwatchOutline  className="text-gray-500" /> Estado Venc.
+            <IoStopwatchOutline className="text-gray-500" /> Estado Venc.
           </span>
         ),
         cell: (info) => {
@@ -266,7 +326,7 @@ function TablaMostrarCntPorCobrar() {
           if (textoEstado === "Completado") {
             return (
               <div className="flex justify-center">
-                <span className="px-2 py-1 text-[8px] md:text-[10px] font-semibold rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                <span className="p-1 text-[8px] md:text-[10px] font-semibold rounded-md bg-blue-50 text-blue-700 border border-blue-200">
                   Completado
                 </span>
               </div>
@@ -276,7 +336,7 @@ function TablaMostrarCntPorCobrar() {
           if (textoEstado === "Vence Hoy") {
             return (
               <div className="flex justify-center">
-                <span className="px-2 py-1 text-[8px] md:text-[10px] font-bold rounded-md bg-amber-50 text-amber-700 border border-amber-300 animate-pulse">
+                <span className="p-1 text-[8px] md:text-[10px] font-bold rounded-md bg-amber-50 text-amber-700 border border-amber-300 animate-pulse">
                   Vence Hoy
                 </span>
               </div>
@@ -286,7 +346,7 @@ function TablaMostrarCntPorCobrar() {
           if (textoEstado.startsWith("Faltan")) {
             return (
               <div className="flex justify-center">
-                <span className="px-2 py-1 text-[8px] md:text-[10px] font-semibold rounded-md bg-green-50 text-green-700 border border-green-200">
+                <span className="p-1 text-[8px] md:text-[10px] font-semibold rounded-md bg-green-50 text-green-700 border border-green-200">
                   {textoEstado}
                 </span>
               </div>
@@ -296,7 +356,7 @@ function TablaMostrarCntPorCobrar() {
           if (textoEstado.startsWith("Vencido")) {
             return (
               <div className="flex justify-center">
-                <span className="px-2 py-1 text-[8px] md:text-[10px] font-semibold rounded-md bg-red-50 text-red-700 border border-red-200">
+                <span className="p-1 text-[8px] md:text-[10px] font-semibold rounded-md bg-red-50 text-red-700 border border-red-200">
                   {textoEstado}
                 </span>
               </div>
@@ -310,6 +370,19 @@ function TablaMostrarCntPorCobrar() {
             </div>
           );
         },
+      },
+      {
+        accessorKey: "documento",
+        size: 100,
+        meta: { textAlign: "center" },
+        header: () => (
+          <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+            <IoPersonOutline className="text-gray-500" /> Documento
+          </span>
+        ),
+        cell: (info) => <StyleDataCell>{info.getValue()}</StyleDataCell>,
+        filterFn: "fuzzy",
+        sortingFn: fuzzySort,
       },
       {
         accessorKey: "nro_documento",
@@ -367,52 +440,7 @@ function TablaMostrarCntPorCobrar() {
 
           return (
             <span className="text-[8px] md:text-[10px] font-extrabold text-gray-900 block w-full text-end">
-              {new Intl.NumberFormat("es-PE", {
-              }).format(totalFiltrado)}
-            </span>
-          );
-        },
-      },
-      {
-        accessorKey: "fecha_pago",
-        size: 100,
-        filterFn: dateFilterFn,
-        meta: { textAlign: "center" },
-        header: () => (
-          <span className="flex text-[8px] md:text-[10px] items-center gap-1">
-            <IoCalendarOutline className="text-gray-500" /> F. Pago
-          </span>
-        ),
-        cell: (info) => (
-          <StyleDataCell>{formatDate(info.getValue())}</StyleDataCell>
-        ),
-      },
-      {
-        accessorKey: "monto_pagado",
-        size: 100,
-        filterFn: numericFilterFn,
-        meta: { textAlign: "center" },
-        header: () => (
-          <span className="flex text-[8px] md:text-[10px] items-center gap-1">
-            <IoWalletOutline className="text-gray-500" /> M. Pagado
-          </span>
-        ),
-        cell: (info) => (
-          <StyleDataCell className="text-end">
-            {formatCurrency(info.getValue(), info.row.original.moneda)}
-          </StyleDataCell>
-        ),
-        footer: ({ table }) => {
-          const totalPagadoFiltrado = table
-            .getFilteredRowModel()
-            .rows.reduce((sum, row) => {
-              return sum + (Number(row.getValue("monto_pagado")) || 0);
-            }, 0);
-
-          return (
-            <span className="text-[8px] md:text-[10px] font-extrabold text-gray-900 block w-full text-end">
-              {new Intl.NumberFormat("es-PE", {
-              }).format(totalPagadoFiltrado)}
+              {new Intl.NumberFormat("es-PE", {}).format(totalFiltrado)}
             </span>
           );
         },
@@ -433,15 +461,13 @@ function TablaMostrarCntPorCobrar() {
           const badgeStyles =
             estado === "pendiente"
               ? "bg-yellow-100 text-yellow-800"
-              : estado === "parcial"
-                ? "bg-orange-300 text-orange-900"
-                : estado === "cancelado"
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-100 text-gray-800";
+              : estado === "cancelado"
+                ? "bg-green-500 text-white"
+                : "bg-gray-100 text-gray-800";
 
           return (
             <span
-              className={`flex items-center px-2 py-0.5 text-[8px] md:text-[10px] justify-center font-semibold rounded-md ${badgeStyles}`}
+              className={`flex items-center px-2 py-1 text-[8px] md:text-[10px] justify-center font-semibold rounded-md ${badgeStyles}`}
             >
               {valorOriginal}
             </span>
@@ -457,13 +483,25 @@ function TablaMostrarCntPorCobrar() {
             <IoDocumentTextOutline className="text-gray-500" /> PDF
           </span>
         ),
-        cell: (info) => (
-          <div className="flex justify-center">
-            <a href={info.getValue()} target="_blank" rel="noopener noreferrer">
-              <IoDocumentTextOutline size={14} className="hover:text-red-700" />
-            </a>
-          </div>
-        ),
+        cell: (info) => {
+          const valor = info.getValue();
+          const styles =
+            valor !== "-" ? " text-teal-500" : "text-red-800 hidden";
+          return (
+            <div className="flex justify-center">
+              <a
+                href={info.getValue()}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <IoDocumentTextOutline
+                  size={14}
+                  className={` ${styles} rounded-md text-center `}
+                />
+              </a>
+            </div>
+          );
+        },
         enableColumnFilter: false,
         enableSorting: false,
       },
@@ -479,7 +517,10 @@ function TablaMostrarCntPorCobrar() {
         ),
         cell: (info) => (
           <StyleDataCell className="text-end">
-            {info.getValue()}
+            {new Intl.NumberFormat("es-PE", {
+              style: "currency",
+              currency: "PEN",
+            }).format(info.getValue())}
           </StyleDataCell>
         ),
         footer: ({ table }) => {
@@ -491,8 +532,7 @@ function TablaMostrarCntPorCobrar() {
 
           return (
             <span className="text-[8px] md:text-[10px] font-extrabold text-gray-900 block w-full text-end">
-              {new Intl.NumberFormat("es-PE", {
-              }).format(totalPagadoFiltrado)}
+              {formatPEN.format(totalPagadoFiltrado)}
             </span>
           );
         },
@@ -509,7 +549,10 @@ function TablaMostrarCntPorCobrar() {
         ),
         cell: (info) => (
           <StyleDataCell className="text-end">
-            {info.getValue()}
+            {new Intl.NumberFormat("es-PE", {
+              style: "currency",
+              currency: "PEN",
+            }).format(info.getValue())}
           </StyleDataCell>
         ),
         footer: ({ table }) => {
@@ -521,11 +564,26 @@ function TablaMostrarCntPorCobrar() {
 
           return (
             <span className="text-[8px] md:text-[10px] font-extrabold text-gray-900 block w-full text-end">
-              {new Intl.NumberFormat("es-PE", {
-              }).format(totalPagadoFiltrado)}
+              {formatPEN.format(totalPagadoFiltrado)}
             </span>
           );
         },
+      },
+      {
+        accessorKey: "fecha_pago_detraccion_retencion",
+        size: 80,
+        filterFn: dateFilterFn,
+        meta: { textAlign: "center" },
+        header: () => (
+          <Tooltip title={"Fecha de Pago de Detracción o Retención"}>
+            <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+              <IoCalendarOutline className="text-gray-500" /> F. Pago
+            </span>
+          </Tooltip>
+        ),
+        cell: (info) => (
+          <StyleDataCell>{formatDate(info.getValue())}</StyleDataCell>
+        ),
       },
       {
         accessorKey: "actions",
@@ -539,34 +597,31 @@ function TablaMostrarCntPorCobrar() {
         cell: (info) => (
           <div className="flex justify-center">
             <button
-              className="px-1"
+              className="cursor-pointer hover:text-cyan-500"
               onClick={() => {
-                window.open(info.getValue(), "_blank");
+                setSelectedCobroId(info.row.original.id);
+                setSelectDay(info.row.original.status_fecha);
               }}
             >
-              click
+              <LuListCheck fontSize={16}/>
             </button>
           </div>
         ),
         enableColumnFilter: false,
         enableSorting: false,
-      }
+      },
     ],
     [],
   );
 
-  if (isLoading)
-    return (
-      <div className="p-6 text-center text-gray-500">
-        Cargando cuentas por pagar...
-      </div>
-    );
+  if (isLoading) return <Spin spinning={isLoading} />;
+
   if (isError)
     return <div className="p-6 text-center text-red-500">{isError}</div>;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-58px)] w-full gap-1">
-      <header className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+    <div className="flex flex-col w-full h-[calc(100vh-58px)] gap-1">
+      <header className="bg-white p-2 rounded-md shadow-sm border border-gray-100 flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-gray-800 tracking-tight">
             Control de Cuentas por Cobrar
@@ -575,26 +630,97 @@ function TablaMostrarCntPorCobrar() {
             Gestión de derechos de cobros a clientes
           </p>
         </div>
-        <div>
+
+        <div className="flex flex-row items-center gap-2">
           <Select
             className="w-30"
             placeholder="Año"
             value={selectedYear}
             onChange={setSelectedYear}
             options={years?.map((y) => ({ value: y, label: y }))}
-          />{" "}
+          />
+          <FloatingWindowButton
+            titleButtom="Resumen"
+            titleWindow="Resumen de cuentas por cobrar"
+            heightWindow={250}
+            children={
+              <div className="p-1 w-full scroll-auto overflow-auto">
+                <table className="w-full text-[11px] text-slate-600 border-collapse">
+                  <thead>
+                    <tr className=" bg-mist-500 font-semibold uppercase tracking-wider text-mist-50">
+                      <th className="p-4 text-left font-medium">Concepto</th>
+                      <th className="p-4 text-right font-medium">
+                        Soles (PEN)
+                      </th>
+                      <th className="p-4 text-right font-medium">
+                        Dólares (USD)
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-mono">
+                    {/* Fila: Por Vencer */}
+                    <tr className="hover:bg-mist-200 transition-colors">
+                      <td className="p-4 text-left font-sans font-medium text-slate-700 capitalize">
+                        Por vencer
+                      </td>
+                      <td className="p-4 text-right text-emerald-600 font-semibold">
+                        {formatPEN.format(summaryPanel.PEN.porVencer)}
+                      </td>
+                      <td className="p-4 text-right text-emerald-600 font-semibold">
+                        {formatUSD.format(summaryPanel.USD.porVencer)}
+                      </td>
+                    </tr>
+
+                    {/* Fila: Vencido */}
+                    <tr className="hover:bg-mist-200 transition-colors">
+                      <td className="p-4 text-left font-sans font-medium text-slate-700 capitalize">
+                        Vencido
+                      </td>
+                      <td className="p-4 text-right text-rose-600 font-semibold">
+                        {formatPEN.format(summaryPanel.PEN.vencido)}
+                      </td>
+                      <td className="p-4 text-right text-rose-600 font-semibold">
+                        {formatUSD.format(summaryPanel.USD.vencido)}
+                      </td>
+                    </tr>
+
+                    {/* Fila: Total General */}
+                    <tr className="bg-mist-300 font-bold border-t-2 border-slate-200">
+                      <td className="p-4 text-left text-slate-900 uppercase tracking-wider">
+                        Total Pendiente
+                      </td>
+                      <td className="p-4 text-right text-slate-950 border-t border-slate-200">
+                        {formatPEN.format(summaryPanel.PEN.total)}
+                      </td>
+                      <td className="p-4 text-right text-slate-950 border-t border-slate-200">
+                        {formatUSD.format(summaryPanel.USD.total)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            }
+          />
         </div>
       </header>
 
-      <main className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 overflow-auto w-full">
+      <main className="bg-white rounded-md shadow-sm border border-gray-100 flex-1 overflow-auto w-full">
         <TableBaseFuzzyCntasPorCobrar<DataTableCntsPorPagar>
           data={tableData}
           columns={columns}
           fuzzyFilter={fuzzyFilter}
           columFiltersInitialValue={columnFilters}
+          cantidadFilas={10}
         />
       </main>
-      
+      {selectedCobroId !== null && (
+        <ModalRegistroCntsPorCobrar
+          id={selectedCobroId}
+          open={selectedCobroId !== null}
+          onClose={() => setSelectedCobroId(null)}
+          day={selectDay}
+        />
+      )}
     </div>
   );
 }

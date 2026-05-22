@@ -569,7 +569,7 @@ const getColumns = (
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
       <CellInput
-        value={row.descripcion}
+        value={row.descripcion || ""}
         onChange={(val) => updateCell(row.id, "descripcion", val)}
       />
     ),
@@ -578,6 +578,63 @@ const getColumns = (
       return "";
     },
   },
+  {
+    key: "monto_detraccion",
+    name: "Detracción",
+    width: 120,
+    sortable: true,
+    headerCellClass: "text-center",
+    renderHeaderCell: (props: {
+      column: Column<RowTableVentas>;
+      sortDirection: any;
+      priority: any;
+    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
+    renderCell: ({ row }) => (
+      <div
+        className={`text-right pr-4 font-medium text-[12px] ${row.monto_detraccion || 0 >= 0 ? "text-teal-700" : "text-orange-500"}`}
+      >
+        {new Intl.NumberFormat("es-PE", {
+          style: "currency",
+          currency: "PEN",
+        }).format(row.monto_detraccion || 0)}
+      </div>
+    ),
+    editable: true, // Dejamos que este use el editor de texto normal para valores numéricos
+    renderEditCell: renderTextEditor,
+    cellClass: (row) => {
+      if (row.monto_detraccion || 0 !== 0) return "bg-stone-100";
+      return "";
+    },
+  },
+  {
+    key: "monto_retencion",
+    name: "Retención",
+    width: 120,
+    sortable: true,
+    headerCellClass: "text-center",
+    renderHeaderCell: (props: {
+      column: Column<RowTableVentas>;
+      sortDirection: any;
+      priority: any;
+    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
+    renderCell: ({ row }) => (
+      <div
+        className={`text-right pr-4 font-medium text-[12px] ${row.monto_retencion >= 0 ? "text-teal-700" : "text-orange-500"}`}
+      >
+        {new Intl.NumberFormat("es-PE", {
+          style: "currency",
+          currency: "PEN",
+        }).format(row.monto_retencion)}
+      </div>
+    ),
+    editable: true, // Dejamos que este use el editor de texto normal para valores numéricos
+    renderEditCell: renderTextEditor,
+    cellClass: (row) => {
+      if (row.monto_retencion!== 0) return "bg-stone-100";
+      return "";
+    },
+  },
+  
   {
     key: "is_active",
     name: "Estado",
@@ -649,6 +706,8 @@ const mapDataApi = (data: TablaVentasSchemaApiOutType[]): RowTableVentas[] => {
     tipo_cambio: item.tipo_cambio,
     categoria: item.categoria || "",
     descripcion: item.descripcion_comprobante || "",
+    monto_retencion: item.monto_retencion || 0,
+    monto_detraccion: item.monto_detraccion || 0,
     is_active: item.is_active || "",
     link_pdf: item.link_pdf,
   }));
@@ -685,6 +744,8 @@ const createEmptyRow = (id: number): RowTableVentas => ({
   tipo_cambio: 0,
   categoria: "",
   descripcion: "",
+  monto_retencion: 0,
+  monto_detraccion: 0,
   is_active: "",
   link_pdf: "",
 });
@@ -719,6 +780,7 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
           // Validamos campos obligatorios de texto (que tengan contenido)
           const hasRequiredText =
             row.fecha_inicio &&
+            row.fecha_fin &&
             row.tipo_comp?.trim() &&
             row.serie_comp?.trim() &&
             row.numero_comp?.trim() &&
@@ -735,7 +797,7 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
         .map((row) => ({
           periodo: row.periodo,
           fecha_emision: new Date(row.fecha_inicio),
-          fecha_vencimiento: row.fecha_fin ? new Date(row.fecha_fin) : null,
+          fecha_vencimiento: new Date(row.fecha_fin),
           tipo_cp_codigo: row.tipo_comp.trim(),
           serie: row.serie_comp.trim(),
           numero: row.numero_comp.trim(),
@@ -749,7 +811,9 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
           moneda: row.moneda.trim(),
           tipo_cambio: Number(row.tipo_cambio) || 0,
           categoria: row.categoria.trim() || null,
-          descripcion_comprobante: row.descripcion.trim() || null,
+          descripcion_comprobante: row.descripcion?.trim() || null,
+          monto_retencion: row.monto_retencion || 0,
+          monto_detraccion: row.monto_detraccion || 0,
           is_active: row.is_active.trim() || "1",
           link_pdf: row.link_pdf || null,
         })),
@@ -758,7 +822,7 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
         id: row.id,
         periodo: row.periodo,
         fecha_emision: new Date(row.fecha_inicio),
-        fecha_vencimiento: row.fecha_fin ? new Date(row.fecha_fin) : null,
+        fecha_vencimiento: new Date(row.fecha_fin),
         tipo_cp_codigo: row.tipo_comp.trim(),
         serie: row.serie_comp.trim(),
         numero: row.numero_comp.trim(),
@@ -771,12 +835,13 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
         moneda: row.moneda.trim(),
         tipo_cambio: Number(row.tipo_cambio) || 0,
         categoria: row.categoria.trim() || null,
-        descripcion_comprobante: row.descripcion.trim() || null,
+        descripcion_comprobante: row.descripcion?.trim() || null,
+        monto_retencion: row.monto_retencion || 0,
+        monto_detraccion: row.monto_detraccion || 0,
         is_active: row.is_active.trim() || "1",
         link_pdf: row.link_pdf || null,
       })),
     };
-    console.log(formattedPayload);
     await syncData(formattedPayload);
     
   };

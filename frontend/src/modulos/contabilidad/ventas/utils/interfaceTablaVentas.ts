@@ -3,7 +3,7 @@ export interface RowTableVentas {
   id: number;
   periodo: string;
   fecha_inicio: Date; 
-  fecha_fin: Date | null;
+  fecha_fin: Date;
   tipo_comp: string;
   serie_comp: string;
   numero_comp: string;
@@ -16,7 +16,9 @@ export interface RowTableVentas {
   moneda: string;
   tipo_cambio: number;
   categoria: string;
-  descripcion: string;
+  descripcion: string | null;
+  monto_retencion: number;
+  monto_detraccion: number;
   is_active: string;
   link_pdf: string | null;
 }

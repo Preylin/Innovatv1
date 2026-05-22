@@ -32,6 +32,7 @@ interface Props<T> {
   columns: ColumnDef<T, any>[];
   fuzzyFilter: FilterFn<any>;
   columFiltersInitialValue?: ColumnFiltersState;
+  cantidadFilas?: number;
 }
 
 export function TableBaseFuzzyCntasPorCobrar<T>({
@@ -39,22 +40,29 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
   columns,
   fuzzyFilter,
   columFiltersInitialValue,
+  cantidadFilas = 10,
 }: Props<T>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(columFiltersInitialValue ?? []);
   const [globalFilter, setGlobalFilter] = useState("");
+    const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: cantidadFilas,
+  });
 
   const table = useReactTable({
     data,
     columns,
     filterFns: {
-      fuzzy: fuzzyFilter, //define as a filter function that can be used in column definitions
+      fuzzy: fuzzyFilter,
     },
     state: {
       columnFilters,
       globalFilter,
+      pagination,
     },
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: setPagination,
     globalFilterFn: "fuzzy",
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -67,7 +75,6 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
     debugColumns: false,
   });
 
-  //apply the fuzzy sort if the fullName column is being filtered
   useEffect(() => {
     if (table.getState().columnFilters[0]?.id === "fullName") {
       if (table.getState().sorting[0]?.id !== "fullName") {
@@ -101,7 +108,6 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
                     <th
                       key={header.id}
                       className="p-2"
-                      // 2. FIJAR EL ANCHO EN EL ENCABEZADO
                       style={{ width: header.getSize() }}
                     >
                       <div
@@ -237,7 +243,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
             Ir a:
             <input
               type="number"
-              defaultValue={table.getState().pagination.pageIndex + 1}
+              value={table.getState().pagination.pageIndex + 1}
               onChange={(e) => {
                 const page = e.target.value ? Number(e.target.value) - 1 : 0;
                 table.setPageIndex(page);
@@ -250,7 +256,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
             value={table.getState().pagination.pageSize}
             onChange={(e) => table.setPageSize(Number(e.target.value))}
           >
-            {[12, 15, 20, 25, 30].map((pageSize) => (
+            {[10, 15, 20, 25, 30].map((pageSize) => (
               <option key={pageSize} value={pageSize}>
                 Mostrar {pageSize}
               </option>

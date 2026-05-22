@@ -11,3 +11,21 @@ function isoToDDMMYYYY(isoStr?: string | null): string {
 }
 
 export default isoToDDMMYYYY;
+
+
+// Para trabajar de forma segura con fechas usando la libreria date-fns
+
+import { format } from "date-fns";
+
+export const renderFechaSegura = (
+    fecha: string | null | undefined,
+    formato = "dd/MM/yyyy",
+  ) => {
+    if (!fecha) return "-";
+    try {
+      return format(new Date(fecha), formato);
+    } catch (error) {
+      console.error("Error al formatear fecha:", fecha, error);
+      return "-";
+    }
+  };

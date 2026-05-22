@@ -20,7 +20,7 @@ class ClienteResponse(ClienteBase):
 class VentaBase(BaseModel):
     periodo: str = Field(..., pattern=r"^\d{6}$", example="202605")
     fecha_emision: date
-    fecha_vencimiento: Optional[date] = None
+    fecha_vencimiento: date
     tipo_cp_codigo: str = Field(..., min_length=1, max_length=2)
     serie: str = Field(..., max_length=4)
     numero: str = Field(..., max_length=10)
@@ -67,7 +67,7 @@ class ResponseVentaLista(BaseModel):
     id: int
     periodo: str
     fecha_emision: date
-    fecha_vencimiento: Optional[date] = None
+    fecha_vencimiento: date
     tipo_cp_codigo: str
     serie: str
     numero: str
@@ -82,6 +82,9 @@ class ResponseVentaLista(BaseModel):
     categoria: Optional[str] = None
     is_active: str
     descripcion_comprobante: Optional[str] = None
+    monto_retencion: Decimal
+    monto_detraccion: Decimal
+    is_active: str = '1'
     link_pdf: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
