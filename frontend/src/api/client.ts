@@ -2,7 +2,7 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
 import { getToken } from "./token";
-import { normalizeError } from "./normalizeError";
+import { ApiError, normalizeError } from "./normalizeError";
 
 /**
  * La URL base para la API.
@@ -57,35 +57,30 @@ api.interceptors.request.use((cfg) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    // 1. Obtenemos el objeto estructurado gracias a tu función normalizeError
+    // 1. Normalizamos el error usando tu helper estructurado
     const normalized = normalizeError(err);
     
-    // 2. Extraemos los datos crudos del error de Axios por si acaso
+    // 2. Instanciamos nuestra clase personalizada ApiError
+    const apiError = new ApiError(normalized);
+
+    // 3. Extraemos los datos crudos por si acaso requerimos ajustar el mensaje legible
     const backendData = err.response?.data;
 
-    // --- CASO 1: Es un error de validación (Array de FastAPI/Pydantic/Zod) ---
-    if (normalized.kind === "validation" && normalized.data?.length > 0) {
-      err.message = normalized.data.map(d => d.msg).join(" | ");
-    } 
-    // --- CASO 2: El backend respondió con un objeto 'detail' que es un String directo ---
-    else if (backendData && typeof backendData.detail === "string") {
-      err.message = backendData.detail;
-    } 
-    // --- CASO 3: El backend respondió con una propiedad 'message' personalizada ---
-    else if (backendData && typeof backendData.message === "string") {
-      err.message = backendData.message;
-    } 
-    // --- CASO 4: Cualquier otro error (Error de red, 500 sin cuerpo, etc.) ---
-    else {
-      err.message = normalized.message;
+    if (normalized.kind === "validation" && normalized.data && normalized.data.length > 0) {
+      apiError.message = normalized.data.map(d => d.msg).join(" | ");
+    } else if (backendData && typeof backendData.detail === "string") {
+      apiError.message = backendData.detail;
+    } else if (backendData && typeof backendData.message === "string") {
+      apiError.message = backendData.message;
     }
 
-    // Asegurar que React Query mantenga la respuesta por si la necesitas en el futuro
-    if (!err.response && (err as any).raw?.response) {
-      err.response = (err as any).raw.response;
+    // Aseguramos que la respuesta se mantenga accesible en el objeto final
+    if (!apiError.raw && err.response) {
+      (apiError as any).response = err.response;
     }
 
-    return Promise.reject(err);
+    // RETORNAMOS EL API ERROR: Ahora el "instanceof ApiError" en los componentes dará TRUE
+    return Promise.reject(apiError);
   }
 );
 

@@ -8,6 +8,7 @@ import SelectFormFields from "../inputs/select-fields.tsx";
 import SelectFormWithInputFields from "../inputs/selectWithInput-fields.tsx";
 import TextAreaField from "../inputs/textArea-fields.tsx";
 import NumberFloatField from "../inputs/numberFloat-fields.tsx";
+import ImageField from "../inputs/image-field.tsx";
 
 function SubscribeButton({
   label,
@@ -42,6 +43,7 @@ export const { useAppForm, withForm, withFieldGroup } = createFormHook({
     SelectFormWithInputFields,
     TextAreaField,
     NumberFloatField,
+    ImageField,
   },
   formComponents: {
     SubscribeButton,

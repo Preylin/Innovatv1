@@ -27,17 +27,9 @@ export const UsuarioCreateSchema = z.object({
   email: z.email(),
   cargo: z.string(),
   estado: z.string(),
-  image_byte: z.array(
-    z.object({
-      image_byte: z.string(),
-    }),
-  ),
+  image_byte: z.string(),
   password: z.string(),
-  permisos: z.array(
-    z.object({
-      name_module: z.string(),
-    }),
-  ),
+  permisos: z.array(z.string()),
 });
 
 export type UsuarioCreateType = z.infer<typeof UsuarioCreateSchema>;
@@ -50,13 +42,7 @@ export const UsuarioUpdateSchema = z.object({
   estado: z.enum(["activo", "bloqueado"]).optional(),
   password: z.string().optional(),
   image_byte: z.string().optional(),
-  permisos: z
-    .array(
-      z.object({
-        name_module: z.string(),
-      }),
-    )
-    .optional(),
+  permisos: z.array(z.string()).optional(),
 });
 
 export type UsuarioUpdateType = z.infer<typeof UsuarioUpdateSchema>;

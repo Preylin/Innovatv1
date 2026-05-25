@@ -30,6 +30,8 @@ import {
 } from "../../../api/queries/auth/usuarios";
 import { defaultImage } from "../../../assets/images";
 import getBase64WithPrefix from "../../../helpers/ImagesBase64";
+import { NewModalRegistro } from "./form/ModalcreateNew";
+import { RegistroUpdateUsuario } from "./form/ModalUpdateNew";
 
 
 const { Title } = Typography;
@@ -241,13 +243,13 @@ function UsuarioTable() {
       />
 
       {/* Modales */}
-      <ModalAddNewUser
+      <NewModalRegistro
         open={openCreateModal}
         onClose={() => setOpenCreateModal(false)}
       />
 
       {selectedUserId !== null && (
-        <ModalUpdateUsuario
+        <RegistroUpdateUsuario
           id={selectedUserId}
           open={!!selectedUserId}
           onClose={() => setSelectedUserId(null)}

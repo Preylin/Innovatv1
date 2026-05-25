@@ -25,13 +25,12 @@ export function createMutation<TInput, TOutput>({
         return outputSchema.parse(response.data);
       }
 
-      return undefined as TOutput;
+      return response.data as TOutput;
     } catch (err) {
-      // Si ya es un ApiError (lanzado por Zod o manualmente), lo re-lanzamos
+      // SI YA ES UN ApiError (Lanzado desde el interceptor de Axios), lo dejamos pasar directo
       if (err instanceof ApiError) throw err;
       
-      // Si es un error de Axios o Zod (parse), lo normalizamos y lanzamos como ApiError
-      // Nuestra nueva clase ApiError ahora es mucho más limpia de instanciar:
+      // Si fue un error de parseo de Zod en el cliente, lo normalizamos aquí
       throw new ApiError(normalizeError(err));
     }
   };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, type ReactNode } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { Rnd } from "react-rnd";
 import { createPortal } from "react-dom";
 import { IoClose } from "react-icons/io5";

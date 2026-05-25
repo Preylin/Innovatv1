@@ -5,22 +5,11 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 # --- Tipos Globales ---
 EstadoUsuario = Literal['activo', 'bloqueado']
 
-# --- MODELOS PARA PERMISO ---
-
 class PermisoBase(BaseModel):
-    name_module: str
-
-class PermisoCreate(PermisoBase):
-    usuario_id: int
-
-class PermisoCreateIn(PermisoBase):
-    """Hereda de PermisoBase para evitar repetir name_module"""
-    pass
-
-class PermisoOut(PermisoBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    name_module: str
     usuario_id: int
     created_at: datetime
 
@@ -37,9 +26,15 @@ class UsuarioBase(BaseModel):
     estado: EstadoUsuario = 'bloqueado'
     image_byte: List[Imagen] = Field(default_factory=list)
 
-class UsuarioCreate(UsuarioBase):
+class UsuarioCreate(BaseModel):
+    name: str
+    last_name: str
+    email: EmailStr
+    cargo: str
+    estado: str
     password: str
-    permisos: List[PermisoCreateIn] = Field(default_factory=list)
+    permisos: List[str]
+    image_byte: Optional[str] = None
 
     @field_validator('password')
     @classmethod
@@ -56,7 +51,10 @@ class UsuarioUpdate(BaseModel):
     estado: Optional[EstadoUsuario] = None
     password: Optional[str] = None
     image_byte: Optional[str] = None
-    permisos: Optional[List[PermisoCreateIn]] = None
+    permisos: Optional[List[str]] = None
+
+
+
 
 class UsuarioOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -68,5 +66,5 @@ class UsuarioOut(BaseModel):
     cargo: str
     estado: EstadoUsuario
     image_base64: Optional[str] = None
-    permisos: List[PermisoOut] = Field(default_factory=list)
+    permisos: List[PermisoBase] = Field(default_factory=list)
     created_at: datetime

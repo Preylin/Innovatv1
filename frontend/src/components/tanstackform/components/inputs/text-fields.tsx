@@ -1,5 +1,5 @@
 import { Input } from "antd";
-import FieldInfo from "../core/errors";
+import FieldInfo from "../core/errors"; 
 import { useFieldContext } from "../core/form-context";
 
 interface Props {
@@ -10,13 +10,18 @@ interface Props {
 
 export default function TextField({ label, placeholder, maxLenght }: Props) {
   const field = useFieldContext<string>();
+  const meta = field.state.meta;
+  
+  const hasErrors = meta.errors.length > 0 || !!meta.errorMap?.onSubmit;
+  const isInvalid = meta.isTouched && hasErrors;
+
   return (
-    <div>
+    <div className="flex flex-col w-full gap-1">
       <label className="font-semibold text-xs" htmlFor={field.name}>
         {label}
       </label>
       <Input
-      className="bg-amber-50"
+        className="bg-amber-50"
         type="text"
         placeholder={placeholder}
         id={field.name}
@@ -27,6 +32,7 @@ export default function TextField({ label, placeholder, maxLenght }: Props) {
         style={{ width: "100%" }}
         maxLength={maxLenght}
         allowClear
+        status={isInvalid ? "error" : undefined} 
       />
       <FieldInfo field={field} />
     </div>

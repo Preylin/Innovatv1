@@ -26,17 +26,9 @@ router = APIRouter(
 
 # --- Helpers ---
 
-def decode_base64_image(data: Union[str, list, None]) -> Optional[bytes]:
-    """Decodifica strings base64 manejando prefijos y estructuras de lista."""
-    if not data:
-        return None
-    
-    # Extraer string si viene en formato de lista (compatibilidad Zod/Pydantic)
-    if isinstance(data, list) and data:
-        img_obj = data[0]
-        data = getattr(img_obj, "image_byte", img_obj.get("image_byte") if isinstance(img_obj, dict) else None)
-
-    if not isinstance(data, str):
+def decode_base64_image(data: Optional[str]) -> Optional[bytes]:
+    """Decodifica un string base64 directo manejando el prefijo Data URI."""
+    if not data or not isinstance(data, str):
         return None
 
     try:
@@ -44,6 +36,7 @@ def decode_base64_image(data: Union[str, list, None]) -> Optional[bytes]:
             data = data.split("base64,")[1]
         return base64.b64decode(data)
     except (binascii.Error, ValueError):
+        logger.error("Error al decodificar la imagen en base64")
         return None
 
 def raise_duplicate_email():
@@ -65,20 +58,22 @@ async def crear_usuario(data: UsuarioCreate, session: AsyncSession = Depends(get
             password_hash=hash_password(data.password),
             cargo=data.cargo,
             estado=data.estado,
-            imagen=decode_base64_image(data.image_byte),
+            imagen=decode_base64_image(data.image_byte), # Ahora procesa el string limpio
         )
         session.add(nuevo)
         await session.flush()
 
         if data.permisos:
+            # Si en tu Pydantic 'permisos' pasó a ser una lista de strings (ej: ["almacen"])
+            # lo iteramos directamente mapeándolo al modelo Permiso de SQLAlchemy:
             session.add_all(
-                Permiso(name_module=p.name_module, usuario_id=nuevo.id)
+                Permiso(name_module=p, usuario_id=nuevo.id)
                 for p in data.permisos
             )
 
         await session.commit()
         await session.refresh(nuevo, attribute_names=["permisos"])
-        return nuevo  # Pydantic usa model_validate automáticamente
+        return nuevo
 
     except IntegrityError:
         await session.rollback()
@@ -117,15 +112,15 @@ async def actualizar_usuario(
             if field in update_data:
                 setattr(user, field, update_data[field])
 
-        if "password" in update_data:
+        if "password" in update_data and update_data["password"]:
             user.password_hash = hash_password(update_data["password"])
 
         if "image_byte" in update_data:
             user.imagen = decode_base64_image(update_data["image_byte"])
 
-        # Lógica de Permisos (Sincronización de conjuntos)
+        # Lógica de Permisos Sincronizada (Ahora trabaja puramente con Sets de Strings)
         if "permisos" in update_data:
-            incoming_modules = {p["name_module"] for p in update_data["permisos"] if p}
+            incoming_modules = {p.strip() for p in update_data["permisos"] if p}
             current_modules = {p.name_module for p in user.permisos}
 
             # Agregar nuevos
@@ -143,7 +138,8 @@ async def actualizar_usuario(
                 )
 
         await session.commit()
-        await session.refresh(user)
+        # Forzamos re-fetch de relaciones tras modificaciones directas de delete/insert
+        await session.refresh(user, attribute_names=["permisos"]) 
         return user
 
     except IntegrityError:
@@ -153,6 +149,7 @@ async def actualizar_usuario(
         await session.rollback()
         logger.exception(f"Error actualizando usuario {usuario_id}")
         raise HTTPException(status_code=500, detail="Error interno al actualizar")
+
 
 @router.delete("/{usuario_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def eliminar_usuario(usuario_id: int, session: AsyncSession = Depends(get_session)):
@@ -170,6 +167,8 @@ async def eliminar_usuario(usuario_id: int, session: AsyncSession = Depends(get_
         await session.rollback()
         logger.exception(f"Error eliminando usuario {usuario_id}")
         raise HTTPException(status_code=500, detail="Error interno al eliminar")
+    
+    
 
 @router.get("/online", response_model=List[UsuarioOut])
 async def obtener_usuarios_online(

@@ -6,12 +6,16 @@ import type { ApiError } from "../api/normalizeError";
 export const setFormErrors = (err: ApiError, formApi: any, fieldChecker?: (f: string) => boolean) => {
   if (err.kind === "validation" && err.data) {
     err.data.forEach((e) => {
-      const rawField = e.loc.at(-1);
+      const rawField = e.loc.at(-1); // Ej: "email"
+      
       if (typeof rawField === "string" && fieldChecker?.(rawField)) {
         formApi.setFieldMeta(rawField, (meta: any) => ({
           ...meta,
-          isTouched: true,
-          errorMap: { ...meta.errorMap, onSubmit: e.msg },
+          isTouched: true, // Forzamos a true para activar la condición visual de FieldInfo
+          errorMap: { 
+            ...meta.errorMap, 
+            onSubmit: e.msg // Guardamos el "Email duplicado" aquí
+          },
         }));
       }
     });

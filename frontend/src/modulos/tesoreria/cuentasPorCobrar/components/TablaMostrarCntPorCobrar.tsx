@@ -20,12 +20,14 @@ import { compareItems, rankItem } from "@tanstack/match-sorter-utils";
 import { useCuentasPorCobrarResumenMensualCaja } from "../data/api.CntsCobrarTableReporte";
 import type { ReporteCntsPorCobrarSchemaApiType } from "../data/api.schemaCntsCobrarTableReporte";
 import { TableBaseFuzzyCntasPorCobrar } from "./TablaBaseTsKFilterPaginacion";
-import { Select, Spin, Tooltip } from "antd";
+import { Select, Tooltip } from "antd";
 import { useYearsContabilidadVentas } from "../../../contabilidad/ventas/data/api.ventas/api.smallConsultas";
 import { differenceInCalendarDays, isValid } from "date-fns";
 import { ModalRegistroCntsPorCobrar } from "./ModalRegistroCobro";
 import FloatingWindowButton from "./ejemplowindos";
 import { LuListCheck } from "react-icons/lu";
+import { ApiErrorDisplay } from "../../../../components/Error/ApiErrorDisplay";
+import { SkeletonHeaderTable } from "../../../../components/skeleton/SkeletonHeaderTable";
 
 export interface DataTableCntsPorPagar {
   key: number;
@@ -197,6 +199,7 @@ function TablaMostrarCntPorCobrar() {
     data: apiData,
     isLoading,
     isError,
+    error,
   } = useCuentasPorCobrarResumenMensualCaja(selectedYear);
 
   const tableData = useMemo(() => {
@@ -221,7 +224,6 @@ function TablaMostrarCntPorCobrar() {
   };
 
   //usememo para cualcular datos para panel resumen para soles y dolares para status pendiente por vencer y vencidas solo considerar datos (total, monto_pagado, tipo_cambio)
-  //paso 1: solo filtrar datos con status_pago = "PENDIENTE"
 
   const summaryPanel = useMemo(() => {
     // Inicializamos nuestra estructura de acumuladores
@@ -603,7 +605,7 @@ function TablaMostrarCntPorCobrar() {
                 setSelectDay(info.row.original.status_fecha);
               }}
             >
-              <LuListCheck fontSize={16}/>
+              <LuListCheck fontSize={16} />
             </button>
           </div>
         ),
@@ -614,12 +616,13 @@ function TablaMostrarCntPorCobrar() {
     [],
   );
 
-  if (isLoading) return <Spin spinning={isLoading} />;
+  if (isLoading) return <SkeletonHeaderTable loading={isLoading} />;
 
   if (isError)
-    return <div className="p-6 text-center text-red-500">{isError}</div>;
+    return <ApiErrorDisplay error={error} />;
 
   return (
+    
     <div className="flex flex-col w-full h-[calc(100vh-58px)] gap-1">
       <header className="bg-white p-2 rounded-md shadow-sm border border-gray-100 flex items-center justify-between">
         <div>
