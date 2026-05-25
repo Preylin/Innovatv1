@@ -73,6 +73,10 @@ function TablaGridBaseVentas<T extends BaseRow>({
     colIdx: number;
   } | null>(null);
 
+  // NUEVO: Estados para controlar el botón de guardado de forma reactiva
+  const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
   const changeManager = useRef(new DataChangeManagerVentas<T>([]));
 
   const apiData = useMemo(
@@ -80,20 +84,12 @@ function TablaGridBaseVentas<T extends BaseRow>({
     [data, mapDataApi],
   );
 
-//   useEffect(() => {
-//     if (apiData.length >= 0) {
-//       changeManager.current = new DataChangeManagerVentas<T>(apiData);
-//       const lastId =
-//         apiData.length > 0 ? Math.max(...apiData.map((r) => r.id)) : 0;
-//       setRows([...apiData, createEmptyRow(lastId + 1)]);
-//     }
-//   }, [apiData, createEmptyRow]);
-
   useEffect(() => {
     changeManager.current = new DataChangeManagerVentas<T>(apiData);
     const lastId =
       apiData.length > 0 ? Math.max(...apiData.map((r) => r.id)) : 0;
     setRows([...apiData, createEmptyRow(lastId + 1)]);
+    setHasChanges(false); // Resetear estado de cambios al recargar datos limpios
   }, [apiData, createEmptyRow]);
 
   // --- Lógica de Actualización ---
@@ -105,6 +101,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
             const updated = { ...r, [field]: value };
             const isNew = !apiData?.some((apiR) => apiR.id === rowId);
             changeManager.current.registerChange(rowId, updated, isNew);
+            setHasChanges(changeManager.current.hasChanges()); // Notificar cambio a React
             return updated;
           }
           return r;
@@ -119,77 +116,39 @@ function TablaGridBaseVentas<T extends BaseRow>({
     [getColumns, updateCell, filters],
   );
 
-  // apiData es necesario aquí para saber si la fila es nueva
+  //aviso para guardar datos por salida de browser o pestaña
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (hasChanges) {
+        event.preventDefault();
+      }
+    };
 
-  // --- Envío a la API ---
-//   const handlerSave = async () => {
-//     const pending = changeManager.current.getPendingPayload();
-//     if (!changeManager.current.hasChanges()) {
-//       message.info("No hay cambios pendientes");
-//       return;
-//     }
-//     try {
-//       await syncData(pending);
-//       message.success("Sincronización exitosa");
-//       changeManager.current.clear();
-//     } catch (error) {
-//       message.error("Error al sincronizar");
-//     }
-//   };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasChanges]);
 
   const handlerSave = async () => {
     if (!changeManager.current.hasChanges()) {
       return message.info("No hay cambios pendientes");
     }
     const pending = changeManager.current.getPendingPayload();
+    setIsSaving(true);
     try {
       await syncData(pending);
       message.success("Datos guardados correctamente");
       // Importante: No limpiamos filas manualmente aquí, el useEffect de apiData lo hará al refrescarse el query
+      changeManager.current.clear();
+      setHasChanges(false);
     } catch (error) {
       message.error("Error al sincronizar con el servidor");
+    } finally {
+      setIsSaving(false);
     }
   };
-
-//   const filteredSortedRows = useMemo(() => {
-//     let baseRows = [...rows];
-
-//     // Filtrado
-//     if (Object.keys(filters).length > 0) {
-//       baseRows = baseRows.filter((row) => {
-//         return Object.entries(filters).every(([key, value]) => {
-//           if (!value) return true;
-//           const cellValue = row[key as keyof T];
-//           if (cellValue === null || cellValue === undefined) return false;
-//           return cellValue
-//             .toString()
-//             .toLowerCase()
-//             .includes(value.toLowerCase());
-//         });
-//       });
-//     }
-
-//     // Ordenamiento
-//     if (sortColumns.length > 0) {
-//       baseRows.sort((a, b) => {
-//         for (const sort of sortColumns) {
-//           const { columnKey, direction } = sort;
-//           const aValue = a[columnKey as keyof T] ?? "";
-//           const bValue = b[columnKey as keyof T] ?? "";
-//           if (aValue < bValue) return direction === "ASC" ? -1 : 1;
-//           if (aValue > bValue) return direction === "ASC" ? 1 : -1;
-//         }
-//         return 0;
-//       });
-//     }
-
-//     // Procesamiento adicional (ej: calcular saldos si se provee la función)
-//     if (rowProcessor) {
-//       return rowProcessor(baseRows, apiData);
-//     }
-
-//     return baseRows;
-//   }, [rows, sortColumns, filters, apiData, rowProcessor]);
 
   const filteredSortedRows = useMemo(() => {
     let baseRows = [...rows];
@@ -199,8 +158,10 @@ function TablaGridBaseVentas<T extends BaseRow>({
         Object.entries(filters).every(([key, value]) => {
           if (!value) return true;
           const cellValue = row[key as keyof T];
-          return String(cellValue ?? "").toLowerCase().includes(value.toLowerCase());
-        })
+          return String(cellValue ?? "")
+            .toLowerCase()
+            .includes(value.toLowerCase());
+        }),
       );
     }
 
@@ -221,71 +182,35 @@ function TablaGridBaseVentas<T extends BaseRow>({
     return rowProcessor ? rowProcessor(baseRows, apiData) : baseRows;
   }, [rows, sortColumns, filters, apiData, rowProcessor]);
 
-  // Solución al aviso de 'data' (RowsChangeData) no usado
-  // --- Lógica de Actualización de Filas ---
-//   const handleRowsChange = useCallback(
-//     (newRows: T[], data: RowsChangeData<T>) => {
-//       const updatedRows = [...newRows];
+  const handleRowsChange = useCallback(
+    (newRows: T[], data: RowsChangeData<T>) => {
+      const updatedRows = [...newRows];
 
-//       // 1. Registrar los cambios en el manager
-//       data.indexes.forEach((index: number) => {
-//         const updatedRow = updatedRows[index];
-//         const isNew = !apiData?.some((apiR) => apiR.id === updatedRow.id);
-//         changeManager.current.registerChange(updatedRow.id, updatedRow, isNew);
-//       });
+      data.indexes.forEach((index) => {
+        const updatedRow = updatedRows[index];
+        const isNew = !apiData.some((apiR) => apiR.id === updatedRow.id);
+        changeManager.current.registerChange(updatedRow.id, updatedRow, isNew);
+      });
 
-//       // 2. Lógica inteligente para añadir fila vacía
-//       // Obtenemos la última fila actual
-//       const lastRow = updatedRows[updatedRows.length - 1];
+      setHasChanges(changeManager.current.hasChanges());
 
-//       // Verificamos si la fila que se acaba de editar es la última fila de la lista
-//       const isEditingLastRow = data.indexes.includes(updatedRows.length - 1);
+      const lastRow = updatedRows[updatedRows.length - 1];
+      const isEditingLastRow = data.indexes.includes(updatedRows.length - 1);
 
-//       if (isEditingLastRow) {
-//         // Definimos qué significa que la fila "tenga datos"
-//         // (excluimos campos técnicos como id y key)
-//         const hasData = Object.entries(lastRow).some(([key, value]) => {
-//           if (key === "id" || key === "key") return false;
-//           return (
-//             value !== "" && value !== 0 && value !== null && value !== undefined
-//           );
-//         });
-
-//         // Solo añadimos si la última fila ahora tiene contenido
-//         if (hasData) {
-//           const nextId = Math.max(...updatedRows.map((r) => r.id), 0) + 1;
-//           updatedRows.push(createEmptyRow(nextId));
-//         }
-//       }
-
-//       setRows(updatedRows);
-//     },
-//     [apiData, createEmptyRow],
-//   );
-
-  const handleRowsChange = useCallback((newRows: T[], data: RowsChangeData<T>) => {
-    const updatedRows = [...newRows];
-    
-    data.indexes.forEach((index) => {
-      const updatedRow = updatedRows[index];
-      const isNew = !apiData.some((apiR) => apiR.id === updatedRow.id);
-      changeManager.current.registerChange(updatedRow.id, updatedRow, isNew);
-    });
-
-    const lastRow = updatedRows[updatedRows.length - 1];
-    const isEditingLastRow = data.indexes.includes(updatedRows.length - 1);
-
-    if (isEditingLastRow) {
-      const hasData = Object.entries(lastRow).some(([k, v]) => 
-        !["id", "key"].includes(k) && v !== "" && v !== 0 && v !== null
-      );
-      if (hasData) {
-        const nextId = Math.max(...updatedRows.map((r) => r.id), 0) + 1;
-        updatedRows.push(createEmptyRow(nextId));
+      if (isEditingLastRow) {
+        const hasData = Object.entries(lastRow).some(
+          ([k, v]) =>
+            !["id", "key"].includes(k) && v !== "" && v !== 0 && v !== null,
+        );
+        if (hasData) {
+          const nextId = Math.max(...updatedRows.map((r) => r.id), 0) + 1;
+          updatedRows.push(createEmptyRow(nextId));
+        }
       }
-    }
-    setRows(updatedRows);
-  }, [apiData, createEmptyRow]);
+      setRows(updatedRows);
+    },
+    [apiData, createEmptyRow],
+  );
 
   const cleanNumericValue = (
     value: string | number | null | undefined,
@@ -430,6 +355,9 @@ function TablaGridBaseVentas<T extends BaseRow>({
           rowsMap.set(targetRowId, rowToUpdate);
         });
 
+        setHasChanges(changeManager.current.hasChanges());
+
+
         return Array.from(rowsMap.values());
       });
 
@@ -469,7 +397,8 @@ function TablaGridBaseVentas<T extends BaseRow>({
   };
 
   const handleExportExcel = useCallback(async () => {
-    if (selectedRows.size === 0) return message.warning("Selecciona filas para exportar");
+    if (selectedRows.size === 0)
+      return message.warning("Selecciona filas para exportar");
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Ventas");
@@ -495,7 +424,11 @@ function TablaGridBaseVentas<T extends BaseRow>({
 
     const headerRow = worksheet.getRow(1);
     headerRow.font = { bold: true, color: { argb: "FFFFFF" } };
-    headerRow.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "1e293b" } };
+    headerRow.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "1e293b" },
+    };
 
     const dataToExport = rows.filter((row) => selectedRows.has(row.id));
     const formatStr = `"${moneda}" #,##0.00`;
@@ -504,7 +437,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
       const row = worksheet.addRow({
         ...item,
       });
-      ["base_imponible", "igv", "total"].forEach(key => {
+      ["base_imponible", "igv", "total"].forEach((key) => {
         const cell = row.getCell(key);
         cell.numFmt = formatStr;
         cell.alignment = { horizontal: "right" };
@@ -512,22 +445,17 @@ function TablaGridBaseVentas<T extends BaseRow>({
     });
 
     const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `${excelFileName}_${dayjs().format("YYYYMMDD_HHmm")}.xlsx`;
     a.click();
-  }, [selectedRows, rows, excelFileName, moneda]);// Asegúrate de incluir 'moneda' en las dependencias
+  }, [selectedRows, rows, excelFileName, moneda]); // Asegúrate de incluir 'moneda' en las dependencias
 
-//   const scrollToBottom = useCallback(() => {
-//     if (filteredSortedRows.length > 0 && gridRef.current) {
-//       // Hacemos scroll al índice de la última fila
-//       gridRef.current.scrollToCell({ rowIdx: filteredSortedRows.length - 1 });
-//     }
-//   }, [filteredSortedRows]);
-
-const scrollToBottom = useCallback(() => {
+  const scrollToBottom = useCallback(() => {
     gridRef.current?.scrollToCell({ rowIdx: filteredSortedRows.length - 1 });
   }, [filteredSortedRows.length]);
 
@@ -591,8 +519,8 @@ const scrollToBottom = useCallback(() => {
             size="small"
             type="primary"
             onClick={handlerSave}
-            loading={isLoading}
-            disabled={!changeManager.current.hasChanges()}
+            loading={isSaving}
+            disabled={!hasChanges || isSaving}
           >
             Guardar
           </Button>

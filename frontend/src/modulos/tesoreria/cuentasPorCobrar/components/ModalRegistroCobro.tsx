@@ -15,6 +15,8 @@ import {
   useUpdateFechaDetraccionRetencion,
 } from "../data/api.CntsCobrarTableReporte";
 import type {
+  CuentasPorCobrarDetalleMovimientoCajaVentasSchemaApiType,
+  CuentasPorCobrarDetalleOnetoOneReadSchemaApiType,
   RegistrarCobroSchemaApiType,
   UpdateFechaPagoRetencionDetraccionSchemaApiType,
 } from "../data/api.schemaCntsCobrarTableReporte";
@@ -30,6 +32,73 @@ interface ModalProps {
   day: string;
 }
 
+interface RowTableVentas {
+  id: number;
+  periodo: string;
+  fecha_emision: string;
+  fecha_vencimiento: string;
+  serie: string;
+  numero: string;
+  base_imponible: number;
+  igv: number;
+  total: number;
+  tipo_cambio: number;
+  moneda: string;
+  monto_detraccion: number;
+  monto_retencion: number;
+  nro_orden_compra?: string | null | undefined;
+  nro_guia_remision?: string | null | undefined;
+  fecha_pago_detraccion_retencion?: string | null | undefined;
+  descripcion_comprobante?: string | null | undefined;
+}
+
+interface DataCajaVentas {
+  id: number;
+  monto_pagado: number;
+  fecha_pago?: string | null;
+  lugar_ingreso?: string | null;
+  medio_pago?: string | null;
+  glosa_pago?: string | null;
+}
+
+const mapDataApiVentas = (
+  item: CuentasPorCobrarDetalleOnetoOneReadSchemaApiType,
+): RowTableVentas => {
+  return {
+    id: item.id,
+    periodo: item.periodo || "-",
+    fecha_emision: item.fecha_emision || "-",
+    fecha_vencimiento: item.fecha_vencimiento || "-",
+    serie: item.serie || "-",
+    numero: item.numero || "-",
+    base_imponible: item.base_imponible || 0,
+    igv: item.igv || 0,
+    total: Number(item.total.toFixed(2) || 0) || 0,
+    tipo_cambio: item.tipo_cambio || 1,
+    moneda: item.moneda || "-",
+    monto_detraccion: Number(item.monto_detraccion.toFixed(2) || 0) || 0,
+    monto_retencion: Number(item.monto_retencion.toFixed(2) || 0) || 0,
+    nro_orden_compra: item.nro_orden_compra || "-",
+    nro_guia_remision: item.nro_guia_remision || "-",
+    fecha_pago_detraccion_retencion:
+      item.fecha_pago_detraccion_retencion || "-",
+    descripcion_comprobante: item.descripcion_comprobante || "-",
+  };
+};
+
+const mapDataApiCajaVentas = (
+  data: CuentasPorCobrarDetalleMovimientoCajaVentasSchemaApiType[],
+): DataCajaVentas[] => {
+  return data.map((item) => ({
+    id: item.id,
+    monto_pagado: Number(item.monto_pagado.toFixed(2) || 0) || 0,
+    fecha_pago: item.fecha_pago || "-",
+    lugar_ingreso: item.lugar_ingreso || "-",
+    medio_pago: item.medio_pago || "-",
+    glosa_pago: item.glosa_pago || "-",
+  }));
+};
+
 export function ModalRegistroCntsPorCobrar({
   id,
   open,
@@ -41,11 +110,11 @@ export function ModalRegistroCntsPorCobrar({
   const [FechaActualizar, setFechaActualizar] = useState<string>("");
 
   const {
-    data: Ventas,
+    data: VentasCobrar,
     isLoading,
     isError,
   } = useCuentasPorCobrarIndividualVentas(id);
-  const { data: CajaVentas } =
+  const { data: CajaVentasIndividual } =
     useCuentasPorCobrarDetalleMovimientoCajaVentas(id);
 
   const { mutateAsync, isPending } =
@@ -57,6 +126,16 @@ export function ModalRegistroCntsPorCobrar({
     isPending: isPendingUpdateFechaDetracionRetencion,
   } = useUpdateFechaDetraccionRetencion(id);
 
+  const Ventas = useMemo(() => {
+    if (!VentasCobrar) return null;
+    return mapDataApiVentas(VentasCobrar);
+  }, [VentasCobrar]);
+
+  const CajaVentas = useMemo(() => {
+    if (!CajaVentasIndividual) return null;
+    return mapDataApiCajaVentas(CajaVentasIndividual);
+  }, [CajaVentasIndividual]);
+
   const tieneRetencionODetraccion = Ventas
     ? Ventas.monto_retencion > 0 || Ventas.monto_detraccion > 0
     : false;
@@ -64,8 +143,10 @@ export function ModalRegistroCntsPorCobrar({
   const ValorVenta = ((Ventas?.base_imponible || 0) /
     (Ventas?.tipo_cambio || 1)) as number;
   const IGV = ((Ventas?.igv || 0) / (Ventas?.tipo_cambio || 1)) as number;
-  const PagoMaximo = ((Ventas?.total || 0) /
+  const TotalVentas = ((Ventas?.total || 0) /
     (Ventas?.tipo_cambio || 1)) as number;
+
+  const PagoMaximo = Number(TotalVentas.toFixed(2));
 
   const TotalCobrado = useMemo(() => {
     if (!CajaVentas) return 0;

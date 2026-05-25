@@ -1,7 +1,11 @@
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from pydantic import BaseModel, BeforeValidator, Field, ConfigDict, field_validator
 from datetime import date, datetime
-from typing import List, Optional, Any
+from typing import Annotated, List, Optional, Any
 from decimal import Decimal
+from app.helpers.limpiarStrings import limpiar_texto
+
+TextoLimpio = Annotated[Optional[str], BeforeValidator(limpiar_texto)]
+
 
 # --- Esquema de Clientes ---
 class ClienteBase(BaseModel):
@@ -33,15 +37,15 @@ class VentaBase(BaseModel):
     monto_detraccion: Decimal = Field(default=Decimal("0.00"))
     nro_orden_compra: Optional[str] = None
     nro_guia_remision: Optional[str] = None
-    descripcion_comprobante: Optional[str] = None
+    descripcion_comprobante: TextoLimpio
     is_active: str = '1'
     categoria: Optional[str] = None
     
 
 class VentaCreate(VentaBase):
     id: Optional[int] = None
-    nro_documento: Optional[str] = None
-    razon_social: Optional[str] = None
+    nro_documento: TextoLimpio
+    razon_social: TextoLimpio
     tipo_documento: Optional[str] = None
     link_pdf: Optional[str] = None
 

@@ -118,6 +118,15 @@ async def importar_ventas_excel(
             'base_imponible', 'igv', 'total', 'categoria'
         ]
 
+        df['descripcion_comprobante'] = (df['descripcion_comprobante']
+                    .astype(str)
+                    .str.replace(r'\n|\r', ' ', regex=True)
+                    .str.replace(r'\s+', ' ', regex=True)
+                    .str.strip()
+                    .str.upper())
+
+        df['descripcion_comprobante'] = df['descripcion_comprobante'].replace(["NAN", "NONE", "NAT"], None)
+
         missing = [col for col in required_cols if col not in df.columns]
         if missing:
             raise HTTPException(
@@ -177,7 +186,7 @@ async def importar_ventas_excel(
         # 3. Procesamiento de Ventas
         ventas_para_insertar = []
         numeric_fields = ['base_imponible', 'igv', 'total',
-                          'monto_retencion', 'monto_detraccion', 'tipo_cambio']
+                        'monto_retencion', 'monto_detraccion', 'tipo_cambio']
 
         for index, row in df.iterrows():
             data = row.to_dict()

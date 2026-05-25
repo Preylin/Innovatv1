@@ -58,7 +58,7 @@ async def get_resumen(year: str, db: AsyncSession = Depends(get_session)):
             GlobalCliente.nro_documento,
             GlobalCliente.razon_social
         )
-        .order_by(Venta.fecha_emision.asc())
+        .order_by(Venta.fecha_emision.desc())
     )
 
     try:

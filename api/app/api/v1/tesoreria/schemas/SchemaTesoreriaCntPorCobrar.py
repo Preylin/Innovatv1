@@ -1,5 +1,5 @@
 from datetime import date
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Optional
 
 from pydantic import BaseModel, Field, model_validator
@@ -40,15 +40,14 @@ class CuentasPorCobrarMensualRead(BaseModel):
         monto_pagado = Decimal(str(data.get('monto_pagado', 0.00)))
         moneda = data.get('moneda', 'PEN')
 
-        # OJO AQUÍ: Si la moneda es Dólares (USD), aplicamos la conversión que mencionas.
-        # Si es Soles (PEN) u otra moneda base, asumimos que el tipo_cambio no afecta (o es 1).
         if moneda == 'USD' and tipo_cambio > 0:
             total_esperado = total / tipo_cambio
         else:
             total_esperado = total
 
-        # Consideramos CANCELADO si lo pagado es igual o mayor a lo esperado
-        # (Usamos >= por si hay variaciones mínimas de decimales a favor)
+        total_esperado = total_esperado.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        monto_pagado = monto_pagado.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
         if monto_pagado >= total_esperado:
             data['status_cobro'] = "CANCELADO"
         else:

@@ -20,8 +20,6 @@ import ButtonUpdate from "../../../components/molecules/botons/BottonUpdate";
 import ButtonDelete from "../../../components/molecules/botons/BottonDelete";
 import ButtonNew from "../../../components/molecules/botons/BottomNew";
 import ErrorResultServer from "../../../components/pages/resultado/ErrorResultServer";
-import ModalAddNewUser from "./Crear_usuarios_gerencia";
-import ModalUpdateUsuario from "./Actualizar_usuarios_gerencia";
 
 // Hooks y Tipos
 import {

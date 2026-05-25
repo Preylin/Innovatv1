@@ -74,17 +74,3 @@ CREATE TABLE IF NOT EXISTS contabilidad.libro_diario_ventas (
 );
 
 
--- para hacer cambios en caja_movimientos de forma masiva
--- INSERT INTO contabilidad.caja_movimientos_ventas (
---     venta_id, fecha_pago, lugar_ingreso, monto_pagado, medio_pago, status_cobro, glosa_pago
--- )
--- SELECT 
---     id,              -- Toma el ID de la tabla ventas
---     fecha_emision,   -- Usa la misma fecha de emisión como fecha de pago (o CURRENT_DATE)
---     'BCP',     -- Lugar de ingreso por defecto
---     total,           -- El monto pagado será igual al total de la venta
---     'TRANSFERENCIA',   -- Medio de pago por defecto
---     'CANCELADO',     -- El estatus que necesitas
---     'estado cancelado' -- Glosa informativa
--- FROM contabilidad.ventas;
-
