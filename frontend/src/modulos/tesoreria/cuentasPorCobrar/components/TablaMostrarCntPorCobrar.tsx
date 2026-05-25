@@ -19,7 +19,7 @@ import { compareItems, rankItem } from "@tanstack/match-sorter-utils";
 // Nota: Reemplazar por tu custom hook real de cuentas por pagar cuando exista en tu API
 import { useCuentasPorCobrarResumenMensualCaja } from "../data/api.CntsCobrarTableReporte";
 import type { ReporteCntsPorCobrarSchemaApiType } from "../data/api.schemaCntsCobrarTableReporte";
-import { TableBaseFuzzyCntasPorCobrar } from "./TablaBaseTsKFilterPaginacion";
+import { TableBaseFuzzyCntasPorCobrar } from "../../../../components/tanstack-table/TablaBaseTsKFilterPaginacion";
 import { Select, Tooltip } from "antd";
 import { useYearsContabilidadVentas } from "../../../contabilidad/ventas/data/api.ventas/api.smallConsultas";
 import { differenceInCalendarDays, isValid } from "date-fns";
@@ -49,6 +49,9 @@ export interface DataTableCntsPorPagar {
   link_pdf: string;
 }
 
+const format = new Intl.NumberFormat("es-PE", {
+});
+
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   const itemRank = rankItem(row.getValue(columnId), value);
   addMeta({ itemRank });
@@ -65,6 +68,7 @@ const fuzzySort: SortingFn<any> = (rowA, rowB, columnId) => {
   }
   return dir === 0 ? sortingFns.alphanumeric(rowA, rowB, columnId) : dir;
 };
+
 function obtenerTextoAlertaVencimiento(
   fechaVencimientoRaw: Date | string | null | undefined,
   statusPago: string,
@@ -179,9 +183,9 @@ const formatUSD = new Intl.NumberFormat("en-US", {
 });
 
 function TablaMostrarCntPorCobrar() {
-  // const year = new Date().getFullYear();
-  // const [selectedYear, setSelectedYear] = useState<string>(year.toString())
-  const [selectedYear, setSelectedYear] = useState<string>("2025");
+  const year = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState<string>(year.toString());
+  // const [selectedYear, setSelectedYear] = useState<string>("2025");
 
   const [selectedCobroId, setSelectedCobroId] = useState<number | null>(null);
   const [selectDay, setSelectDay] = useState<string>("");
@@ -442,7 +446,7 @@ function TablaMostrarCntPorCobrar() {
 
           return (
             <span className="text-[8px] md:text-[10px] font-extrabold text-gray-900 block w-full text-end">
-              {new Intl.NumberFormat("es-PE", {}).format(totalFiltrado)}
+              {format.format(totalFiltrado)}
             </span>
           );
         },
@@ -618,11 +622,9 @@ function TablaMostrarCntPorCobrar() {
 
   if (isLoading) return <SkeletonHeaderTable loading={isLoading} />;
 
-  if (isError)
-    return <ApiErrorDisplay error={error} />;
+  if (isError) return <ApiErrorDisplay error={error} />;
 
   return (
-    
     <div className="flex flex-col w-full h-[calc(100vh-58px)] gap-1">
       <header className="bg-white p-2 rounded-md shadow-sm border border-gray-100 flex items-center justify-between">
         <div>

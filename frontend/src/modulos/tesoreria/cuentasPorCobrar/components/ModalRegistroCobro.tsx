@@ -99,6 +99,11 @@ const mapDataApiCajaVentas = (
   }));
 };
 
+const formatPEN = new Intl.NumberFormat("es-PE", {
+  style: "currency",
+  currency: "PEN",
+});
+
 export function ModalRegistroCntsPorCobrar({
   id,
   open,
@@ -142,11 +147,18 @@ export function ModalRegistroCntsPorCobrar({
 
   const ValorVenta = ((Ventas?.base_imponible || 0) /
     (Ventas?.tipo_cambio || 1)) as number;
+
   const IGV = ((Ventas?.igv || 0) / (Ventas?.tipo_cambio || 1)) as number;
+
   const TotalVentas = ((Ventas?.total || 0) /
     (Ventas?.tipo_cambio || 1)) as number;
 
-  const PagoMaximo = Number(TotalVentas.toFixed(2));
+  const TotalCobrar = (Ventas?.total || 0) - ((Ventas?.monto_detraccion || 0) + (Ventas?.monto_retencion || 0));
+
+  const TotalCobrarConvertido = (TotalCobrar / (Ventas?.tipo_cambio || 1)) as number;
+
+
+  const PagoMaximo = Number(TotalCobrarConvertido.toFixed(2));
 
   const TotalCobrado = useMemo(() => {
     if (!CajaVentas) return 0;
@@ -284,7 +296,7 @@ export function ModalRegistroCntsPorCobrar({
                   IGV: {Ventas.moneda} {IGV.toFixed(2)}
                 </div>
                 <div>
-                  Total: {Ventas.moneda} {PagoMaximo.toFixed(2)}
+                  Total: {Ventas.moneda} {TotalVentas.toFixed(2)}
                 </div>
                 {Ventas.moneda === "USD" && (
                   <div>Tipo de Cambio: {Ventas.tipo_cambio}</div>
@@ -301,47 +313,48 @@ export function ModalRegistroCntsPorCobrar({
                 <div className="rounded-md p-3 text-xs flex flex-col gap-1 font-mono shadow shadow-mist-300">
                   {Ventas.monto_detraccion > 0 && (
                     <div>
-                      • Monto Detracción: {Ventas.moneda}{" "}
-                      {Ventas.monto_detraccion.toFixed(2)}
+                      • Monto Detracción:{" "}
+                      {formatPEN.format(Ventas.monto_detraccion)}
                     </div>
                   )}
 
                   {Ventas.monto_retencion > 0 && (
                     <div>
-                      • Monto Retención: {Ventas.moneda}{" "}
-                      {Ventas.monto_retencion.toFixed(2)}
+                      • Monto Retención:{" "}
+                      {formatPEN.format(Ventas.monto_retencion)}
                     </div>
                   )}
-                  {Ventas.fecha_pago_detraccion_retencion && (
-                    <div className="flex items-center justify-between bg-green-100/50 p-1.5 rounded-md group relative">
-                      <div>
-                        Fecha de pago:{" "}
-                        {renderFechaSegura(
-                          Ventas.fecha_pago_detraccion_retencion,
-                        )}
-                      </div>
+                  {Ventas.fecha_pago_detraccion_retencion &&
+                    Ventas.fecha_pago_detraccion_retencion !== "-" && (
+                      <div className="flex items-center justify-between bg-green-100/50 p-1.5 rounded-md group relative">
+                        <div>
+                          Fecha de pago:{" "}
+                          {renderFechaSegura(
+                            Ventas.fecha_pago_detraccion_retencion,
+                          )}
+                        </div>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          Modal.confirm({
-                            title: "¿Remover fecha?",
-                            content:
-                              "Se eliminará la fecha de pago registrada para esta retención/detracción.",
-                            okText: "Sí, remover",
-                            okType: "danger",
-                            cancelText: "Cancelar",
-                            onOk: () =>
-                              handlerUpdateFechaDetracionRetencion(null),
-                          });
-                        }}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 px-1 rounded-md shadow transition-all cursor-pointer text-[8px] font-bold items-center justify-center hidden group-hover:block"
-                        title="Eliminar fecha"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            Modal.confirm({
+                              title: "¿Remover fecha?",
+                              content:
+                                "Se eliminará la fecha de pago registrada para esta retención/detracción.",
+                              okText: "Sí, remover",
+                              okType: "danger",
+                              cancelText: "Cancelar",
+                              onOk: () =>
+                                handlerUpdateFechaDetracionRetencion(null),
+                            });
+                          }}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 px-1 rounded-md shadow transition-all cursor-pointer text-[8px] font-bold items-center justify-center hidden group-hover:block"
+                          title="Eliminar fecha"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
                 </div>
               ) : (
                 <div className="bg-emerald-50 text-emerald-700 rounded-lg px-2 py-1 text-xs font-medium">

@@ -89,8 +89,8 @@ const OPT_MONEDAS = [
 ];
 
 const OPT_ESTADO = [
-  { value: "1", label: "Activo" },
   { value: "0", label: "Inactivo" },
+  { value: "1", label: "Activo" },
 ];
 
 function CustomHeaderCell() {
@@ -630,16 +630,15 @@ const getColumns = (
     editable: true, // Dejamos que este use el editor de texto normal para valores numéricos
     renderEditCell: renderTextEditor,
     cellClass: (row) => {
-      if (row.monto_retencion!== 0) return "bg-stone-100";
+      if (row.monto_retencion !== 0) return "bg-stone-100";
       return "";
     },
   },
-  
   {
     key: "is_active",
     name: "Estado",
     editable: true,
-    width: 60,
+    width: 100,
     headerCellClass: "text-center",
     renderEditCell: (props) => (
       <DropdownEditor {...props} options={OPT_ESTADO} />
@@ -649,15 +648,35 @@ const getColumns = (
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
-      <CellInput
-        value={row.is_active || ""}
-        onChange={(val) => updateCell(row.id, "is_active", val)}
-        className="text-center"
-      />
-    ),
+    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => {
+      // 💡 Buscamos la opción que coincida con el valor del backend (soportando número o string)
+      const estadoEncontrado = OPT_ESTADO.find(
+        (opt) => String(opt.value) === String(row.is_active),
+      );
+
+      return (
+        <CellInput
+          // Muestra "Activo"/"Inactivo" si lo encuentra, si no, usa el valor crudo o vacío
+          value={
+            estadoEncontrado ? estadoEncontrado.label : (row.is_active ?? "")
+          }
+          onChange={(val) => updateCell(row.id, "is_active", val)}
+          className="text-center"
+        />
+      );
+    },
     cellClass: (row) => {
-      if (row.is_active === "") return "bg-red-100";
+      // Si no viene ningún dato válido, se pinta de rojo
+      if (
+        row.is_active === null ||
+        row.is_active === undefined ||
+        row.is_active === ""
+      ) {
+        return "bg-red-100";
+      }
+      // 💡 Tip extra: Si quieres pintar la celda según el estado, puedes agregar esto:
+      // if (String(row.is_active) === "0") return "text-red-600 font-medium";
+      // if (String(row.is_active) === "1") return "text-green-600 font-medium";
       return "";
     },
   },
@@ -843,7 +862,6 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
       })),
     };
     await syncData(formattedPayload);
-    
   };
 
   return (

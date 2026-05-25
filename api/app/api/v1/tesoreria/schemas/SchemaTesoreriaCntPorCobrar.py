@@ -36,9 +36,15 @@ class CuentasPorCobrarMensualRead(BaseModel):
             data = dict(data)
 
         total = Decimal(str(data.get('total', 0.00)))
+        retencion = Decimal(str(data.get('monto_retencion', 0.00)))
+        detraccion = Decimal(str(data.get('monto_detraccion', 0.00)))
         tipo_cambio = Decimal(str(data.get('tipo_cambio', 1.000)))
         monto_pagado = Decimal(str(data.get('monto_pagado', 0.00)))
         moneda = data.get('moneda', 'PEN')
+
+        # en situacion peruana el total a cobrar es del total de la factura menos la retenciones + las detracciones
+
+        total = total - (retencion + detraccion)
 
         if moneda == 'USD' and tipo_cambio > 0:
             total_esperado = total / tipo_cambio

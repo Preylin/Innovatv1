@@ -2,21 +2,23 @@
 
 
 
-drop schema contabilidad cascade;
-drop table administracion.global_clientes;
+-- drop schema contabilidad cascade;
+-- drop table administracion.global_clientes;
+
 
 -- INSERT INTO contabilidad.caja_movimientos_ventas (
 --     venta_id, fecha_pago, lugar_ingreso, monto_pagado, medio_pago, status_cobro, glosa_pago
---     -- , moneda -- <- Si agregas esta columna a tu tabla de caja, descomenta esto
 -- )
 -- SELECT 
 --     v.id, 
 --     v.fecha_emision, 
 --     'BCP', 
---     -- Si la venta fue en USD, dividimos el total en soles entre el TC para obtener los dólares reales
+--     -- Nueva lógica aplicando retenciones y detracciones
 --     CASE 
---         WHEN v.moneda = 'USD' THEN ROUND(v.total / v.tipo_cambio, 2)
---         ELSE v.total -- Si es PEN, pasa el total directo
+--         WHEN v.moneda = 'USD' THEN 
+--             ROUND(v.total / v.tipo_cambio, 2) - (COALESCE(v.monto_retencion, 0) + COALESCE(v.monto_detraccion, 0))
+--         ELSE 
+--             v.total - (COALESCE(v.monto_retencion, 0) + COALESCE(v.monto_detraccion, 0))
 --     END,
 --     'TRANSFERENCIA', 
 --     'CANCELADO', 
@@ -28,3 +30,7 @@ drop table administracion.global_clientes;
 --       SELECT 1 FROM contabilidad.caja_movimientos_ventas c WHERE c.venta_id = v.id
 --   );
 
+
+select * 
+from contabilidad.ventas v
+where v.periodo like '2026%'

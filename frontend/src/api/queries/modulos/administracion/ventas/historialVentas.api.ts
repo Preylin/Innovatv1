@@ -7,7 +7,7 @@ export function useHistorialVentasListaList() {
   return useQuery({
     queryKey: ["historialVentas"],
     queryFn: createQuery({
-      request: () => api.get("/historialVentas"),
+      request: () => api.get("/administracion/historial/ventas"),
       schema: HistorialVentasOutApiSchema.array(),
     }),
   });

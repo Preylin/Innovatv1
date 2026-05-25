@@ -44,7 +44,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
 }: Props<T>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(columFiltersInitialValue ?? []);
   const [globalFilter, setGlobalFilter] = useState("");
-    const [pagination, setPagination] = useState({
+  const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: cantidadFilas,
   });
@@ -70,6 +70,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
     getPaginationRowModel: getPaginationRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    columnResizeMode: "onChange",
     debugTable: true,
     debugHeaders: true,
     debugColumns: false,
@@ -84,7 +85,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
   }, [table.getState().columnFilters[0]?.id]);
 
   return (
-    <div className="p-2 flex flex-col gap-2 w-full space-y-1 animate-in fade-in duration-500 ">
+    <div className="p-2 flex flex-col gap-2 w-full space-y-1 animate-in fade-in duration-500">
       <div className="flex flex-row sm:flex-row justify-between items-center sm:items-center gap-6 w-full">
         <DebouncedInput
           value={globalFilter ?? ""}
@@ -94,38 +95,48 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
         />
         <div className="text-sm font-medium text-gray-600 bg-mist-200 px-2 py-1 rounded-md text-center w-40">
           {table.getPrePaginationRowModel().rows.length} Registros
-        </div>{" "}
+        </div>
       </div>
-      <div className="rounded-xl shadow-sm overflow-auto">
+
+      <div className="rounded-xl shadow-sm overflow-auto border border-gray-200">
         <table className="w-full border-collapse text-sm table-fixed">
           <thead className="text-xs font-semibold text-gray-900 uppercase tracking-wider bg-mist-300">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const align =
-                    (header.column.columnDef.meta as any)?.textAlign || "left";
+                  const align = (header.column.columnDef.meta as any)?.textAlign || "left";
                   return (
                     <th
                       key={header.id}
-                      className="p-2"
+                      className="p-2 relative group border-b border-gray-200 select-none"
                       style={{ width: header.getSize() }}
                     >
                       <div
-                        className={`flex items-center gap-1 ${align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"} ${header.column.getCanSort() ? "cursor-pointer select-none hover:text-pink-600" : ""}`}
+                        className={`flex items-center gap-1 ${
+                          align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"
+                        } ${header.column.getCanSort() ? "cursor-pointer select-none hover:text-pink-600" : ""}`}
                         onClick={header.column.getToggleSortingHandler()}
                       >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                        {{ asc: " 🔼", desc: " 🔽" }[
-                          header.column.getIsSorted() as string
-                        ] ?? null}
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {{ asc: " 🔼", desc: " 🔽" }[header.column.getIsSorted() as string] ?? null}
                       </div>
+
                       {header.column.getCanFilter() && (
                         <div className="mt-2 font-normal lowercase">
                           <Filter column={header.column} />
                         </div>
+                      )}
+
+                      {header.column.getCanResize() && (
+                        <div
+                          {...{
+                            onMouseDown: header.getResizeHandler(),
+                            onTouchStart: header.getResizeHandler(),
+                            className: `absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none touch-none z-10 hover:bg-mist-400 ${
+                              header.column.getIsResizing() ? "bg-blue-600 w-2" : "bg-transparent"
+                            }`,
+                          }}
+                        />
                       )}
                     </th>
                   );
@@ -137,40 +148,30 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
             {table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="py-20 text-center">
-                  <Empty
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    description="No hay registros"
-                  />
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No hay registros" />
                 </td>
               </tr>
             ) : (
-              table.getRowModel().rows.map((row) => {
-                return (
-                  <tr className="hover:bg-gray-100" key={row.id}>
-                    {row.getVisibleCells().map((cell) => {
-                      return (
-                        <td
-                          className="p-2 border border-gray-200 truncate"
-                          key={cell.id}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })
+              table.getRowModel().rows.map((row) => (
+                <tr className="hover:bg-gray-100" key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      className="p-2 border border-gray-200 truncate"
+                      key={cell.id}
+                      style={{ width: cell.column.getSize() }}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))
             )}
           </tbody>
           <tfoot className="bg-mist-100 font-bold border-t-2 border-gray-300 text-sm text-gray-900 sticky bottom-0">
             {table.getFooterGroups().map((footerGroup) => (
               <tr key={footerGroup.id}>
                 {footerGroup.headers.map((footer) => {
-                  const align =
-                    (footer.column.columnDef.meta as any)?.textAlign || "left";
+                  const align = (footer.column.columnDef.meta as any)?.textAlign || "left";
                   return (
                     <td
                       key={footer.id}
@@ -179,19 +180,12 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
                     >
                       <div
                         className={`flex items-center w-full ${
-                          align === "center"
-                            ? "justify-center"
-                            : align === "right"
-                            ? "justify-end"
-                            : "justify-start"
+                          align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"
                         }`}
                       >
                         {footer.isPlaceholder
                           ? null
-                          : flexRender(
-                              footer.column.columnDef.footer,
-                              footer.getContext()
-                            )}
+                          : flexRender(footer.column.columnDef.footer, footer.getContext())}
                       </div>
                     </td>
                   );
@@ -233,8 +227,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
             {">>"}
           </button>
           <span className="text-[8px] md:text-[10px] text-gray-600">
-            Página <strong>{table.getState().pagination.pageIndex + 1}</strong>{" "}
-            de <strong>{table.getPageCount()}</strong>
+            Página <strong>{table.getState().pagination.pageIndex + 1}</strong> de <strong>{table.getPageCount()}</strong>
           </span>
         </div>
 
@@ -268,6 +261,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
   );
 }
 
+
 function Filter({ column }: { column: Column<any, unknown> }) {
   const { filterVariant } = (column.columnDef.meta as any) ?? {};
   const columnFilterValue = column.getFilterValue();
@@ -283,7 +277,6 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   if (filterVariant === "select") {
     return (
       <select
-        // CORRECCIÓN: Capturar el evento 'e' y extraer 'e.target.value'
         onChange={(e) => column.setFilterValue(e.target.value)}
         value={columnFilterValue?.toString() || ""}
         className={inputStyle}
@@ -309,7 +302,6 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   );
 }
 
-// A typical debounced input react component
 function DebouncedInput({
   value: initialValue,
   onChange,
@@ -334,11 +326,5 @@ function DebouncedInput({
     return () => clearTimeout(timeout);
   }, [value]);
 
-  return (
-    <input
-      {...props}
-      value={value}
-      onChange={(e) => setValue(e.target.value)}
-    />
-  );
+  return <input {...props} value={value} onChange={(e) => setValue(e.target.value)} />;
 }
