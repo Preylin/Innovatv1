@@ -92,7 +92,7 @@ interface Props<T extends BaseRow> {
   headerSummary?: (filteredRows: T[]) => ReactNode;
 }
 
-function TablaGridBase<T extends BaseRow>({
+export function TablaGridBase<T extends BaseRow>({
   data,
   isLoading,
   isError,
