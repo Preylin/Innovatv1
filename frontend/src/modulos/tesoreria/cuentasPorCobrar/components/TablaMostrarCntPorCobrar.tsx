@@ -39,7 +39,6 @@ export interface DataTableCntsPorPagar {
   cliente_razon_social: string;
   status_fecha: string; // Días restantes o de retraso
   total: number;
-  monto_pagado: number;
   monto_detraccion: number;
   monto_retencion: number;
   moneda: string;
@@ -83,7 +82,7 @@ function obtenerTextoAlertaVencimiento(
   // Esto simula que "Hoy" también es una fecha pura del backend sin hora.
   const hoyLocal = new Date();
   const hoyUTC = new Date(
-    Date.UTC(hoyLocal.getFullYear(), hoyLocal.getMonth(), hoyLocal.getDate())
+    Date.UTC(hoyLocal.getFullYear(), hoyLocal.getMonth(), hoyLocal.getDate()),
   );
 
   // 3. Extraer solo los componentes de Año, Mes y Día en formato UTC de la fecha de vencimiento.
@@ -92,8 +91,8 @@ function obtenerTextoAlertaVencimiento(
     Date.UTC(
       fechaVencimiento.getUTCFullYear(),
       fechaVencimiento.getUTCMonth(),
-      fechaVencimiento.getUTCDate()
-    )
+      fechaVencimiento.getUTCDate(),
+    ),
   );
 
   // 4. Calculamos la diferencia exacta de días comparando UTC contra UTC
@@ -113,11 +112,20 @@ const mapDataTable = (
   data: ReporteCntsPorCobrarSchemaApiType[],
 ): DataTableCntsPorPagar[] => {
   return data.map((item, index) => {
-    // 🚀 Inyectamos el string generado directamente en el modelo de datos
     const textoStatusFecha = obtenerTextoAlertaVencimiento(
       item.fecha_vencimiento,
       item.status_cobro || "-",
     );
+
+    const Total = item?.total || 0;
+    const TipoCambio = item?.tipo_cambio || 1;
+    const TotalDetraccion = item?.monto_detraccion || 0;
+    const TotalRetencion = item?.monto_retencion || 0;
+    const MontoPagado = item?.monto_pagado || 0;
+    const TotalDescuento = TotalDetraccion + TotalRetencion;
+    const TotalDescontado = Total - TotalDescuento;
+    const PagoMaximo = TotalDescontado / TipoCambio;
+    const SaldoPendiente = PagoMaximo - MontoPagado;
 
     return {
       key: index + 1,
@@ -128,8 +136,7 @@ const mapDataTable = (
       status_fecha: textoStatusFecha,
       nro_documento: item.nro_documento || "-",
       cliente_razon_social: item.razon_social || "-",
-      total: item.total / item.tipo_cambio || 0,
-      monto_pagado: item.monto_pagado || 0,
+      total: SaldoPendiente,
       monto_detraccion: item.monto_detraccion || 0,
       monto_retencion: item.monto_retencion || 0,
       fecha_pago_detraccion_retencion:
@@ -237,14 +244,14 @@ function TablaMostrarCntPorCobrar() {
     }).format(amount);
   };
 
-// Formateador auxiliar de Fechas
-const formatDate = (date: string | Date | null) => {
-  if (!date) return "-";
-  const d = new Date(date);
-  return isNaN(d.getTime())
-    ? "-"
-    : d.toLocaleDateString("es-PE", { timeZone: "UTC" });
-};
+  // Formateador auxiliar de Fechas
+  const formatDate = (date: string | Date | null) => {
+    if (!date) return "-";
+    const d = new Date(date);
+    return isNaN(d.getTime())
+      ? "-"
+      : d.toLocaleDateString("es-PE", { timeZone: "UTC" });
+  };
 
   const summaryPanel = useMemo(() => {
     const summary = {
@@ -525,6 +532,19 @@ const formatDate = (date: string | Date | null) => {
             </span>
           );
         },
+      },
+      {
+        accessorKey: "moneda",
+        size: 65,
+        meta: { textAlign: "center", filterVariant: "select" },
+        header: () => (
+          <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+            Moneda
+          </span>
+        ),
+        cell: (info) => <StyleDataCell>{info.getValue() || "-"}</StyleDataCell>,
+        filterFn: "fuzzy",
+        sortingFn: fuzzySort,
       },
       {
         accessorKey: "link_pdf",

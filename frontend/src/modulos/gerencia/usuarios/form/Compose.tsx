@@ -31,7 +31,7 @@ export const FromUsuarioCreate = withForm({
         <form.AppField
           name="name"
           children={(field) => (
-            <field.TextField label="Nombre" placeholder="Seleccione"/>
+            <field.TextField label="Nombre" placeholder="Nombre"/>
           )}
         />
         <form.AppField
@@ -39,7 +39,7 @@ export const FromUsuarioCreate = withForm({
           children={(field) => (
             <field.TextField
               label="Apellidos"
-              placeholder="Seleccione"
+              placeholder="Apellidos"
             />
           )}
         />
@@ -55,7 +55,7 @@ export const FromUsuarioCreate = withForm({
           children={(field) => (
             <field.TextField
               label="Cargo"
-              placeholder="Técnico"
+              placeholder="Cargo"
             />
           )}
         />

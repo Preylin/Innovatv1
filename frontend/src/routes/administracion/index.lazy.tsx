@@ -16,7 +16,7 @@ function RouteComponent() {
 //  h-[calc(100vh-58px)]
 
 
-export function PanelGeneralAdministracion() {
+function PanelGeneralAdministracion() {
   const secciones = [
     {
       titulo: "Monitoreo de Servicios",
