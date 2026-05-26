@@ -3,8 +3,8 @@ import z from "zod";
 export const TablaVentasSchemaApiOut = z.object({
   id: z.number(),
   periodo: z.string(),
-  fecha_emision: z.coerce.date(),
-  fecha_vencimiento: z.coerce.date(),
+  fecha_emision: z.string(),
+  fecha_vencimiento: z.string(),
   tipo_cp_codigo: z.string(),
   serie: z.string(),
   numero: z.string(),

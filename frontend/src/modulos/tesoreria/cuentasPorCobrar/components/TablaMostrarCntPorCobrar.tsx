@@ -75,11 +75,29 @@ function obtenerTextoAlertaVencimiento(
   if (statusPago === "CANCELADO") return "Completado";
   if (!fechaVencimientoRaw || fechaVencimientoRaw === "-") return "Sin Fecha";
 
+  // 1. Convertir la fecha de vencimiento a un objeto Date (JS la leerá como UTC si viene con guiones)
   const fechaVencimiento = new Date(fechaVencimientoRaw);
   if (!isValid(fechaVencimiento)) return "Fecha Inválida";
 
-  const fechaActual = new Date();
-  const dias = differenceInCalendarDays(fechaVencimiento, fechaActual);
+  // 2. Obtener el 'Hoy' real en Perú, pero forzado a las 00:00:00 en formato UTC
+  // Esto simula que "Hoy" también es una fecha pura del backend sin hora.
+  const hoyLocal = new Date();
+  const hoyUTC = new Date(
+    Date.UTC(hoyLocal.getFullYear(), hoyLocal.getMonth(), hoyLocal.getDate())
+  );
+
+  // 3. Extraer solo los componentes de Año, Mes y Día en formato UTC de la fecha de vencimiento.
+  // Así eliminamos cualquier hora residual (como si viniera de un campo DateTime con horas)
+  const vencimientoUTC = new Date(
+    Date.UTC(
+      fechaVencimiento.getUTCFullYear(),
+      fechaVencimiento.getUTCMonth(),
+      fechaVencimiento.getUTCDate()
+    )
+  );
+
+  // 4. Calculamos la diferencia exacta de días comparando UTC contra UTC
+  const dias = differenceInCalendarDays(vencimientoUTC, hoyUTC);
 
   if (dias > 0) {
     return `Faltan ${dias} ${dias === 1 ? "día" : "días"}`;
@@ -182,9 +200,11 @@ const formatUSD = new Intl.NumberFormat("en-US", {
 });
 
 function TablaMostrarCntPorCobrar() {
-  const year = new Date().getFullYear();
-  const [selectedYear, setSelectedYear] = useState<string>(year.toString());
-  // const [selectedYear, setSelectedYear] = useState<string>("2025");
+  const yearPeru = new Intl.DateTimeFormat("es-PE", {
+    timeZone: "America/Lima",
+    year: "numeric",
+  }).format(new Date());
+  const [selectedYear, setSelectedYear] = useState<string>(yearPeru);
 
   const [selectedCobroId, setSelectedCobroId] = useState<number | null>(null);
   const [selectDay, setSelectDay] = useState<string>("");
@@ -217,19 +237,16 @@ function TablaMostrarCntPorCobrar() {
     }).format(amount);
   };
 
-  // Formateador auxiliar de Fechas
-  const formatDate = (date: string | Date | null) => {
-    if (!date) return "-";
-    const d = new Date(date);
-    return isNaN(d.getTime())
-      ? "-"
-      : d.toLocaleDateString("es-PE", { timeZone: "UTC" });
-  };
-
-  //usememo para cualcular datos para panel resumen para soles y dolares para status pendiente por vencer y vencidas solo considerar datos (total, monto_pagado, tipo_cambio)
+// Formateador auxiliar de Fechas
+const formatDate = (date: string | Date | null) => {
+  if (!date) return "-";
+  const d = new Date(date);
+  return isNaN(d.getTime())
+    ? "-"
+    : d.toLocaleDateString("es-PE", { timeZone: "UTC" });
+};
 
   const summaryPanel = useMemo(() => {
-    // Inicializamos nuestra estructura de acumuladores
     const summary = {
       PEN: {
         CantidadVencer: 0,
@@ -249,46 +266,53 @@ function TablaMostrarCntPorCobrar() {
 
     if (!apiData) return summary;
 
-    const hoy = new Date();
+    // Normalizamos "hoy" a la medianoche en la zona horaria de Perú
+    const formatter = new Intl.DateTimeFormat("fr-CA", {
+      timeZone: "America/Lima",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const [yA, mA, dA] = formatter.format(new Date()).split("-");
+    const hoyPeru = new Date(Number(yA), Number(mA) - 1, Number(dA));
 
     return apiData.reduce((acc, item) => {
+      if (item.status_cobro !== "PENDIENTE") return acc;
+
       const TotalDetraccion = item?.monto_detraccion || 0;
       const TotalRetencion = item?.monto_retencion || 0;
       const TotalDescuento = TotalDetraccion + TotalRetencion;
-
       const Total = item?.total || 0;
       const TipoCambio = item?.tipo_cambio || 1;
-
       const TotalDescontado = Total - TotalDescuento;
-
       const PagoMaximo = TotalDescontado / TipoCambio;
 
-      // Paso 1: Solo considerar status_cobro "PENDIENTE"
-      if (item.status_cobro !== "PENDIENTE") return acc;
-
-      // Identificar la moneda (solo manejamos PEN y USD según tu requerimiento)
       const moneda = item.moneda as "PEN" | "USD";
-      if (!acc[moneda]) return acc; // Por si llega otra moneda que no sea PEN o USD
+      if (!acc[moneda]) return acc;
 
-      // Paso 2: Calcular el saldo pendiente real de este documento
       const saldoPendiente = PagoMaximo - (item.monto_pagado || 0);
 
-      // Paso 3: Clasificar por fecha de vencimiento
-      const fechaVencimiento = new Date(item.fecha_vencimiento);
+      // Normalizamos la fecha de vencimiento del item a la medianoche de Perú
+      const fechaVencRaw = new Date(item.fecha_vencimiento);
+      if (isNaN(fechaVencRaw.getTime())) return acc;
 
-      if (fechaVencimiento >= hoy) {
-        // Pendiente por vencer
+      const [yV, mV, dV] = formatter.format(fechaVencRaw).split("-");
+      const fechaVencimientoPeru = new Date(
+        Number(yV),
+        Number(mV) - 1,
+        Number(dV),
+      );
+
+      // Comparación limpia basada puramente en días de Perú
+      if (fechaVencimientoPeru >= hoyPeru) {
         acc[moneda].porVencer += saldoPendiente;
         acc[moneda].CantidadVencer += 1;
       } else {
-        // Vencida
         acc[moneda].vencido += saldoPendiente;
         acc[moneda].CantidadVencido += 1;
       }
 
-      // calcular total
       acc[moneda].total += saldoPendiente;
-
       return acc;
     }, summary);
   }, [apiData]);
@@ -711,8 +735,8 @@ function TablaMostrarCntPorCobrar() {
                       </td>
                       <td className="p-4 text-right text-rose-600 font-semibold">
                         <div>
-                          {summaryPanel.USD.CantidadVencido}{" "}
-                          {formatPEN.format(summaryPanel.USD.vencido)}
+                          {summaryPanel.PEN.CantidadVencido}{" "}
+                          {formatPEN.format(summaryPanel.PEN.vencido)}
                         </div>
                       </td>
                       <td className="p-4 text-right text-rose-600 font-semibold">

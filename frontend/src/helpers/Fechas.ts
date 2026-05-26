@@ -18,14 +18,19 @@ export default isoToDDMMYYYY;
 import { format } from "date-fns";
 
 export const renderFechaSegura = (
-    fecha: string | null | undefined,
-    formato = "dd/MM/yyyy",
-  ) => {
-    if (!fecha) return "-";
-    try {
-      return format(new Date(fecha), formato);
-    } catch (error) {
-      console.error("Error al formatear fecha:", fecha, error);
-      return "-";
-    }
-  };
+  fecha: string | null | undefined,
+  formato = "dd/MM/yyyy",
+) => {
+  if (!fecha || fecha === "-") return "-";
+  try {
+    // Convierte "2026-04-08" en "2026/04/08" para evitar que JS reste un día
+    const fechaNormalizada = typeof fecha === "string" 
+      ? fecha.replace(/-/g, "/") 
+      : fecha;
+
+    return format(new Date(fechaNormalizada), formato);
+  } catch (error) {
+    console.error("Error al formatear fecha:", fecha, error);
+    return "-";
+  }
+};

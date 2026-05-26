@@ -2,8 +2,8 @@ export interface RowTableVentas {
   key: number;
   id: number;
   periodo: string;
-  fecha_inicio: Date; 
-  fecha_fin: Date;
+  fecha_inicio: string; 
+  fecha_fin: string;
   tipo_comp: string;
   serie_comp: string;
   numero_comp: string;

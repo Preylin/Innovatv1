@@ -7,7 +7,7 @@ import {
   type RenderEditCellProps,
 } from "react-data-grid";
 import { useLayoutEffect, useMemo, useRef } from "react";
-import dayjs from "dayjs";
+import { format } from "date-fns"; // ◄ Cambiado de dayjs a date-fns
 import TablaGridBaseVentas, { type Filters } from "./TablaBaseVentas";
 import type { RowTableVentas } from "../utils/interfaceTablaVentas";
 import {
@@ -33,7 +33,6 @@ function DropdownEditor<TRow>({
   onClose,
   options,
 }: DropdownEditorProps<TRow>) {
-  // Normalizamos las opciones para manejar tanto string[] como DropdownOption[]
   const normalizedOptions = options.map((opt) =>
     typeof opt === "string" ? { value: opt, label: opt } : opt,
   );
@@ -42,12 +41,10 @@ function DropdownEditor<TRow>({
     <select
       autoFocus
       className="w-full h-full bg-blue-50 outline-none border-none text-[12px] cursor-pointer"
-      // Accedemos dinámicamente al valor usando la key de la columna
       value={(row as any)[column.key] ?? ""}
       onChange={(event) => {
-        // Actualizamos la fila dinámicamente
         onRowChange({ ...row, [column.key]: event.target.value }, true);
-        onClose(true); // El segundo parámetro 'true' confirma el cambio
+        onClose(true);
       }}
       onBlur={() => onClose(true)}
     >
@@ -139,7 +136,7 @@ function FilterHeader({
             [column.key]: e.target.value,
           }))
         }
-        onClick={(e) => e.stopPropagation()} // Evita que el click para filtrar active el Sort
+        onClick={(e) => e.stopPropagation()}
       />
     </div>
   );
@@ -164,11 +161,22 @@ const CellInput = ({
   />
 );
 
-// --- Configuración de Columnas Actualizada ---
+// Auxiliar para formatear de forma segura strings ISO crudos ("YYYY-MM-DD") a "yyyy-MM-dd" en local
+const formatToInputDate = (dateStr: string | null | undefined): string => {
+  if (!dateStr || dateStr === "-") return "";
+  try {
+    // Reemplazamos guiones por barras para forzar la interpretación en hora local
+    const normalized = typeof dateStr === "string" ? dateStr.replace(/-/g, "/") : dateStr;
+    return format(new Date(normalized), "yyyy-MM-dd");
+  } catch {
+    return "";
+  }
+};
+
 const getColumns = (
   updateCell: (rowId: number, field: keyof RowTableVentas, value: any) => void,
-  filters: Filters, // <--- NUEVO
-  setFilters: React.Dispatch<React.SetStateAction<Filters>>, // <--- NUEVO
+  filters: Filters,
+  setFilters: React.Dispatch<React.SetStateAction<Filters>>,
 ): readonly Column<RowTableVentas>[] => [
   {
     key: "select",
@@ -212,7 +220,6 @@ const getColumns = (
       return "";
     },
   },
-
   {
     key: "fecha_inicio",
     name: "Emisión",
@@ -229,9 +236,7 @@ const getColumns = (
     renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
       <CellInput
         type="date"
-        value={
-          row.fecha_inicio ? dayjs(row.fecha_inicio).format("YYYY-MM-DD") : ""
-        }
+        value={formatToInputDate(row.fecha_inicio)} // ◄ Modificado con date-fns local
         onChange={(val) => updateCell(row.id, "fecha_inicio", val)}
       />
     ),
@@ -253,13 +258,12 @@ const getColumns = (
     renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
       <CellInput
         type="date"
-        value={row.fecha_fin ? dayjs(row.fecha_fin).format("YYYY-MM-DD") : ""}
+        value={formatToInputDate(row.fecha_fin)} // ◄ Modificado con date-fns local
         onChange={(val) => updateCell(row.id, "fecha_fin", val)}
       />
     ),
     cellClass: (row) => (!row.fecha_fin ? "bg-red-100" : ""),
   },
-
   {
     key: "tipo_comp",
     name: "Tipo",
@@ -326,7 +330,6 @@ const getColumns = (
       return "";
     },
   },
-
   {
     key: "tipo_empresa",
     name: "Tipo",
@@ -415,7 +418,7 @@ const getColumns = (
         }).format(row.base_imponible)}
       </div>
     ),
-    editable: true, // Dejamos que este use el editor de texto normal para valores numéricos
+    editable: true,
     renderEditCell: renderTextEditor,
     cellClass: (row) => {
       if (row.base_imponible !== 0) return "bg-stone-100";
@@ -443,7 +446,7 @@ const getColumns = (
         }).format(row.igv)}
       </div>
     ),
-    editable: true, // Dejamos que este use el editor de texto normal para valores numéricos
+    editable: true,
     renderEditCell: renderTextEditor,
     cellClass: (row) => {
       if (row.igv !== 0) return "bg-stone-100";
@@ -471,7 +474,7 @@ const getColumns = (
         }).format(row.total)}
       </div>
     ),
-    editable: true, // Dejamos que este use el editor de texto normal para valores numéricos
+    editable: true,
     renderEditCell: renderTextEditor,
     cellClass: (row) => {
       if (row.total !== 0) return "bg-stone-100";
@@ -526,7 +529,7 @@ const getColumns = (
         }).format(row.tipo_cambio)}
       </div>
     ),
-    editable: true, // Dejamos que este use el editor de texto normal para valores numéricos
+    editable: true,
     renderEditCell: renderTextEditor,
     cellClass: (row) => {
       if (row.tipo_cambio !== 0) return "bg-stone-100";
@@ -599,7 +602,7 @@ const getColumns = (
         }).format(row.monto_detraccion || 0)}
       </div>
     ),
-    editable: true, // Dejamos que este use el editor de texto normal para valores numéricos
+    editable: true,
     renderEditCell: renderTextEditor,
     cellClass: (row) => {
       if (row.monto_detraccion || 0 !== 0) return "bg-stone-100";
@@ -627,7 +630,7 @@ const getColumns = (
         }).format(row.monto_retencion)}
       </div>
     ),
-    editable: true, // Dejamos que este use el editor de texto normal para valores numéricos
+    editable: true,
     renderEditCell: renderTextEditor,
     cellClass: (row) => {
       if (row.monto_retencion !== 0) return "bg-stone-100";
@@ -649,14 +652,12 @@ const getColumns = (
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }: RenderCellProps<RowTableVentas>) => {
-      // 💡 Buscamos la opción que coincida con el valor del backend (soportando número o string)
       const estadoEncontrado = OPT_ESTADO.find(
         (opt) => String(opt.value) === String(row.is_active),
       );
 
       return (
         <CellInput
-          // Muestra "Activo"/"Inactivo" si lo encuentra, si no, usa el valor crudo o vacío
           value={
             estadoEncontrado ? estadoEncontrado.label : (row.is_active ?? "")
           }
@@ -666,7 +667,6 @@ const getColumns = (
       );
     },
     cellClass: (row) => {
-      // Si no viene ningún dato válido, se pinta de rojo
       if (
         row.is_active === null ||
         row.is_active === undefined ||
@@ -674,9 +674,6 @@ const getColumns = (
       ) {
         return "bg-red-100";
       }
-      // 💡 Tip extra: Si quieres pintar la celda según el estado, puedes agregar esto:
-      // if (String(row.is_active) === "0") return "text-red-600 font-medium";
-      // if (String(row.is_active) === "1") return "text-green-600 font-medium";
       return "";
     },
   },
@@ -710,8 +707,8 @@ const mapDataApi = (data: TablaVentasSchemaApiOutType[]): RowTableVentas[] => {
     key: index + 1,
     id: item.id,
     periodo: item.periodo,
-    fecha_inicio: item.fecha_emision, // Ya es un Date, pasa directo
-    fecha_fin: item.fecha_vencimiento, // Puede ser Date o null, pasa directo
+    fecha_inicio: item.fecha_emision,
+    fecha_fin: item.fecha_vencimiento,
     tipo_comp: item.tipo_cp_codigo,
     serie_comp: item.serie,
     numero_comp: item.numero,
@@ -731,6 +728,7 @@ const mapDataApi = (data: TablaVentasSchemaApiOutType[]): RowTableVentas[] => {
     link_pdf: item.link_pdf,
   }));
 };
+
 const rowProcessor = (
   rows: RowTableVentas[],
   apiData: RowTableVentas[],
@@ -744,12 +742,13 @@ const rowProcessor = (
     return { ...row, saldo: saldoAcumulado, key: isSaved ? visualIndex++ : 0 };
   });
 };
+
 const createEmptyRow = (id: number): RowTableVentas => ({
   key: 0,
   id,
   periodo: "",
-  fecha_inicio: "" as unknown as Date,
-  fecha_fin: "" as unknown as Date,
+  fecha_inicio: "",
+  fecha_fin: "",
   tipo_comp: "",
   serie_comp: "",
   numero_comp: "",
@@ -773,10 +772,24 @@ interface Props {
   periodo: string;
 }
 
+// Auxiliar seguro para formatear los objetos Date o strings de la fila antes de enviarlos a la API
+const safeFormatToApi = (dateInput: Date | string): string => {
+  try {
+    const parsedDate = typeof dateInput === "string" 
+      ? new Date(dateInput.replace(/-/g, "/")) 
+      : dateInput;
+    return format(parsedDate, "yyyy-MM-dd");
+  } catch (error) {
+    console.error("Error formatting date for API:", error);
+    return "";
+  }
+};
+
 function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
   const { data, isLoading, isError } = useContabilidadVentasLista(periodo);
   const { mutateAsync: syncData } = useSyncbContabilidadVentas(periodo);
   const { mutateAsync: deleteItems } = useDeleteContabilidadVentas();
+
   const totals = useMemo(() => {
     if (!data) return { base: 0, igv: 0, total: 0 };
     return data.reduce(
@@ -796,7 +809,6 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
     const formattedPayload = {
       created: payload.created
         .filter((row) => {
-          // Validamos campos obligatorios de texto (que tengan contenido)
           const hasRequiredText =
             row.fecha_inicio &&
             row.fecha_fin &&
@@ -805,7 +817,6 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
             row.numero_comp?.trim() &&
             row.nombre_empresa?.trim();
 
-          // Validamos campos numéricos (permitiendo el número 0)
           const hasRequiredNumbers =
             typeof row.base_imponible === "number" &&
             typeof row.igv === "number" &&
@@ -815,15 +826,14 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
         })
         .map((row) => ({
           periodo: row.periodo,
-          fecha_emision: new Date(row.fecha_inicio),
-          fecha_vencimiento: new Date(row.fecha_fin),
+          fecha_emision: safeFormatToApi(row.fecha_inicio), // ◄ Modificado con date-fns
+          fecha_vencimiento: safeFormatToApi(row.fecha_fin), // ◄ Modificado con date-fns
           tipo_cp_codigo: row.tipo_comp.trim(),
           serie: row.serie_comp.trim(),
           numero: row.numero_comp.trim(),
           tipo_documento: row.tipo_empresa.trim() || null,
           nro_documento: row.numero_empresa.trim() || null,
           razon_social: row.nombre_empresa.trim() || null,
-
           base_imponible: Number(row.base_imponible) || 0,
           igv: Number(row.igv) || 0,
           total: Number(row.total) || 0,
@@ -840,8 +850,8 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
       updates: payload.updates.map((row) => ({
         id: row.id,
         periodo: row.periodo,
-        fecha_emision: new Date(row.fecha_inicio),
-        fecha_vencimiento: new Date(row.fecha_fin),
+        fecha_emision: safeFormatToApi(row.fecha_inicio), // ◄ Modificado con date-fns
+        fecha_vencimiento: safeFormatToApi(row.fecha_fin), // ◄ Modificado con date-fns
         tipo_cp_codigo: row.tipo_comp.trim(),
         serie: row.serie_comp.trim(),
         numero: row.numero_comp.trim(),
