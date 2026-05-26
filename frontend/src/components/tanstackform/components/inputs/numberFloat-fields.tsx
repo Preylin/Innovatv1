@@ -1,35 +1,39 @@
-import { InputNumber } from "antd";
+import { InputNumber, type InputNumberProps } from "antd";
 import FieldInfo from "../core/errors";
 import { useFieldContext } from "../core/form-context";
 
-interface Props {
+// Extendemos de InputNumberProps para que tu componente sea elástico
+interface Props extends Omit<InputNumberProps<number>, "onChange" | "value"> {
   label: string;
   placeholder?: string;
-  maxLength?: number;
+  max?: number;
 }
 
-export default function NumberFloatField({ label, placeholder, maxLength }: Props) {
+export default function NumberFloatField({ label, placeholder, max, ...rest }: Props) {
   const field = useFieldContext<number>();
 
+  const handleChange = (value: number | null) => {
+    const newValue = value ?? 0; 
+    field.handleChange(newValue);
+  };
+
   return (
-    <div>
+    <div className="flex flex-col gap-1">
       <label className="font-semibold text-xs" htmlFor={field.name}>
         {label}
       </label>
-      <InputNumber
+      <InputNumber<number>
         id={field.name}
         name={field.name}
         placeholder={placeholder}
         value={field.state.value}
-        maxLength={maxLength}
         style={{ width: "100%" }}
-        precision={2} 
-        stringMode
-        onChange={(val) => {
-          const numValue = val ? parseFloat(val as unknown as string) : 0;
-          field.handleChange(Number.isNaN(numValue) ? 0 : numValue);
-        }}
+        precision={2}
+        min={0}
+        max={max}
+        onChange={handleChange}
         onBlur={field.handleBlur}
+        {...rest}
       />
       <FieldInfo field={field} />
     </div>

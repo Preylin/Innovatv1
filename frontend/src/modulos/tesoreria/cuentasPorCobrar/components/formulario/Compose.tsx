@@ -47,7 +47,7 @@ export const FromCntsPorCobrarUnico = withForm({
         <form.AppField
           name="monto_pagado"
           children={(field) => (
-            <field.NumberField label="Monto Pagado" max={montoMaximo} />
+            <field.NumberFloatField label="Monto Pagado" placeholder="Ingrese monto" max={montoMaximo}/>
           )}
         />
         

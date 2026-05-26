@@ -49,8 +49,7 @@ export interface DataTableCntsPorPagar {
   link_pdf: string;
 }
 
-const format = new Intl.NumberFormat("es-PE", {
-});
+const format = new Intl.NumberFormat("es-PE", {});
 
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   const itemRank = rankItem(row.getValue(columnId), value);
@@ -232,8 +231,20 @@ function TablaMostrarCntPorCobrar() {
   const summaryPanel = useMemo(() => {
     // Inicializamos nuestra estructura de acumuladores
     const summary = {
-      PEN: { porVencer: 0, vencido: 0, total: 0 },
-      USD: { porVencer: 0, vencido: 0, total: 0 },
+      PEN: {
+        CantidadVencer: 0,
+        CantidadVencido: 0,
+        porVencer: 0,
+        vencido: 0,
+        total: 0,
+      },
+      USD: {
+        CantidadVencer: 0,
+        CantidadVencido: 0,
+        porVencer: 0,
+        vencido: 0,
+        total: 0,
+      },
     };
 
     if (!apiData) return summary;
@@ -241,7 +252,16 @@ function TablaMostrarCntPorCobrar() {
     const hoy = new Date();
 
     return apiData.reduce((acc, item) => {
-      const PagoMaximo = Number(item?.total / item?.tipo_cambio);
+      const TotalDetraccion = item?.monto_detraccion || 0;
+      const TotalRetencion = item?.monto_retencion || 0;
+      const TotalDescuento = TotalDetraccion + TotalRetencion;
+
+      const Total = item?.total || 0;
+      const TipoCambio = item?.tipo_cambio || 1;
+
+      const TotalDescontado = Total - TotalDescuento;
+
+      const PagoMaximo = TotalDescontado / TipoCambio;
 
       // Paso 1: Solo considerar status_cobro "PENDIENTE"
       if (item.status_cobro !== "PENDIENTE") return acc;
@@ -259,9 +279,11 @@ function TablaMostrarCntPorCobrar() {
       if (fechaVencimiento >= hoy) {
         // Pendiente por vencer
         acc[moneda].porVencer += saldoPendiente;
+        acc[moneda].CantidadVencer += 1;
       } else {
         // Vencida
         acc[moneda].vencido += saldoPendiente;
+        acc[moneda].CantidadVencido += 1;
       }
 
       // calcular total
@@ -669,10 +691,16 @@ function TablaMostrarCntPorCobrar() {
                         Por vencer
                       </td>
                       <td className="p-4 text-right text-emerald-600 font-semibold">
-                        {formatPEN.format(summaryPanel.PEN.porVencer)}
+                        <div>
+                          {summaryPanel.PEN.CantidadVencer}{" "}
+                          {formatPEN.format(summaryPanel.PEN.porVencer)}
+                        </div>
                       </td>
                       <td className="p-4 text-right text-emerald-600 font-semibold">
-                        {formatUSD.format(summaryPanel.USD.porVencer)}
+                        <div>
+                          {summaryPanel.USD.CantidadVencer}{" "}
+                          {formatUSD.format(summaryPanel.USD.porVencer)}
+                        </div>
                       </td>
                     </tr>
 
@@ -682,10 +710,16 @@ function TablaMostrarCntPorCobrar() {
                         Vencido
                       </td>
                       <td className="p-4 text-right text-rose-600 font-semibold">
-                        {formatPEN.format(summaryPanel.PEN.vencido)}
+                        <div>
+                          {summaryPanel.USD.CantidadVencido}{" "}
+                          {formatPEN.format(summaryPanel.USD.vencido)}
+                        </div>
                       </td>
                       <td className="p-4 text-right text-rose-600 font-semibold">
-                        {formatUSD.format(summaryPanel.USD.vencido)}
+                        <div>
+                          {summaryPanel.USD.CantidadVencido}{" "}
+                          {formatUSD.format(summaryPanel.USD.vencido)}
+                        </div>
                       </td>
                     </tr>
 
