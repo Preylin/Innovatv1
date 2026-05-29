@@ -19,7 +19,6 @@ import { ModalRegistrarPago } from "./ModalRegistrarPago";
 import type { CuentasPorPagarResumenMensualSchemaApiOutType } from "../../data/api.shemaCuentasPorCobar";
 import { useToggle, useUpdateModal } from "../../../../../hooks/Toggle";
 import ButtomNew from "../../../../../components/molecules/botons/BottomNew";
-import { TbFileDescription } from "react-icons/tb";
 import { App, Dropdown, Popconfirm, type MenuProps } from "antd";
 import ButtonUpdate from "../../../../../components/molecules/botons/BottonUpdate";
 import ButtonDelete from "../../../../../components/molecules/botons/BottonDelete";
@@ -60,8 +59,8 @@ export function ObligacionItem({
   const diasDiferencia = Math.abs(diaActual - item.dia_pago);
 
   return (
-    <div className="flex-1 flex flex-col gap-2">
-      <div className="flex items-center w-auto shadow shadow-mist-300 rounded-md p-2">
+    <div className="flex-1 flex flex-col md:flex-row gap-1 w-full items-center overflow-auto scroll-auto p-0.5 ">
+      <div className=" flex items-center w-full md:w-350 p-2">
         <h4
           className={`font-black text-xs w-7/12 uppercase tracking-tight ${estaVencido ? "text-red-600" : "text-slate-800"}`}
         >
@@ -96,7 +95,7 @@ export function ObligacionItem({
         </div>
       </div>
 
-      <div className="flex flex-col gap-1 items-center">
+      <div className=" flex flex-col gap-1 items-center w-full md:w-full">
         <div className="flex flex-wrap gap-6 justify-center w-full">
           <div className="text-center">
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
@@ -161,13 +160,9 @@ export function ObligacionItem({
           />
         </div>
       </div>
-
       {item.detalle && (
-        <div className="px-2 py-1 text-[9px] font-mono shadow-xs shadow-mist-300 rounded-xs">
-          <div className="flex flex-row gap-2">
-            <TbFileDescription fontSize={15} />
-            <p className="text-slate-500">{item.detalle}</p>
-          </div>
+        <div className=" w-full md:w-120 text-slate-500 text-[9px] font-mono overflow-auto scroll-auto">
+            <p>{item.detalle}</p>
         </div>
       )}
     </div>
@@ -246,11 +241,11 @@ export function CuentasPorPagarFijas() {
         />
       )}
 
-      <header className="sticky top-0 z-10 w-full bg-mist-50 px-1 pb-3 md:px-4 rounded-b-xl shadow-md flex flex-col gap-4">
+      <header className="sticky top-0 z-10 w-full p-1 md:px-4  flex flex-col gap-2 bg-mist-50 dark:bg-mist-600">
         <div className="flex flex-wrap justify-between items-center gap-2">
           <div className="flex flex-1 gap-2 items-center">
-            <h2 className="text-2xl font-black text-slate-900 italic uppercase">
-              Obligaciones <span className="text-indigo-600">Fijas</span>
+            <h2 className="text-base md:text-lg font-black text-slate-900 dark:text-mist-50 italic uppercase">
+              Obligaciones <span className="text-fuchsia-400">Fijas</span>
             </h2>
             <div className="bg-slate-900 text-white px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest text-center">
               {format(mesActual, "MMMM yyyy", { locale: es })}
@@ -270,7 +265,7 @@ export function CuentasPorPagarFijas() {
                 <button
                   key={mes.etiqueta}
                   onClick={() => setMesActual(mes.fecha)}
-                  className={`flex-1 min-w-13.75 py-2 rounded-lg text-[10px] font-black uppercase transition-all duration-200 ${
+                  className={`flex-1 min-w-13.75 py-1 rounded-lg text-[10px] font-black uppercase transition-all duration-200 ${
                     isActive
                       ? "bg-indigo-600 text-white shadow-md"
                       : "text-slate-400 hover:bg-slate-50"
@@ -285,7 +280,7 @@ export function CuentasPorPagarFijas() {
       </header>
 
       <main className="px-1 md:px-2 py-2">
-        <div className="grid gap-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3" >
+        <div className="flex flex-col gap-2 overflow-auto scroll-auto">
           {data
             ?.filter((ob) => {
               const inicioMesCreacion = startOfMonth(
@@ -305,12 +300,12 @@ export function CuentasPorPagarFijas() {
                   trigger={["contextMenu"]}
                 >
                   <div
-                    className={`p-4 rounded-xl border transition-all ${
+                    className={`flex flex-col md:flex-row p-2 items-center justify-between gap-2 rounded-md border transition-all ${
                       ob.estado_pago === "TOTAL"
-                        ? "bg-slate-50 border-slate-100 opacity-75"
+                        ? "bg-slate-50 border-slate-200 opacity-75"
                         : estaVencido
-                          ? "bg-white border-red-200 shadow-lg shadow-red-50"
-                          : "bg-white border-slate-200 hover:shadow-xl"
+                          ? "bg-white border-red-200 hover:shadow-md hover:shadow-mist-400 hover:bg-red-100"
+                          : "bg-white border-slate-200 hover:shadow-md hover:shadow-mist-400 hover:bg-mist-100"
                     }`}
                   >
                     <ObligacionItem
@@ -318,7 +313,7 @@ export function CuentasPorPagarFijas() {
                       estaVencido={estaVencido}
                       hoy={fechaHoy}
                     />
-                    <div className="mt-4 flex justify-end">
+                    <div className="flex justify-end">
                       {ob.estado_pago !== "TOTAL" && (
                         <button
                           onClick={() => setItemAPagar(ob)}

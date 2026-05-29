@@ -783,7 +783,6 @@ function TablaContabilidadCompras({ periodo }: Props = { periodo: "" }) {
   const formattedPayload = {
     created: payload.created
       .filter((row) => {
-        // 1. Validar textos obligatorios de manera segura
         const hasRequiredText =
           !!row.fecha_inicio &&
           !!row.fecha_fin &&
@@ -792,8 +791,6 @@ function TablaContabilidadCompras({ periodo }: Props = { periodo: "" }) {
           !!row.numero_comp?.trim() &&
           !!row.nombre_empresa?.trim();
 
-        // 2. CORRECCIÓN: Validar que se puedan convertir a números válidos (coerción)
-        // Evitamos el "typeof === 'number'" estricto porque el grid suele guardar strings.
         const baseNum = Number(row.base_imponible);
         const igvNum = Number(row.igv);
         const totalNum = Number(row.total);
@@ -851,28 +848,25 @@ function TablaContabilidadCompras({ periodo }: Props = { periodo: "" }) {
     })),
   };
 
-  console.log("Formatted Payload enviado al backend:", formattedPayload);
-  
-  // Ahora el array 'created' no debería llegar vacío al backend
-  await syncData(formattedPayload);
+    await syncData(formattedPayload);
 };
 
-  // const columnsExcel = [
-  //     { header: "Periodo", key: "periodo", width: 12 },
-  //     { header: "F. Emisión", key: "fecha_inicio", width: 15 },
-  //     { header: "F. Vencimiento", key: "fecha_fin", width: 15 },
-  //     { header: "Tipo", key: "tipo_comp", width: 8 },
-  //     { header: "Serie", key: "serie_comp", width: 10 },
-  //     { header: "Número", key: "numero_comp", width: 15 },
-  //     { header: "Tipo Emp", key: "tipo_empresa", width: 15 },
-  //     { header: "Razón Social", key: "nombre_empresa", width: 35 },
-  //     { header: "Base Imponible", key: "base_imponible", width: 15 },
-  //     { header: "IGV", key: "igv", width: 15 },
-  //     { header: "Total", key: "total", width: 15 },
-  //     { header: "Moneda", key: "moneda", width: 15 },
-  //     { header: "Tipo Cambio", key: "tipo_cambio", width: 15 },
-  //     { header: "Descripción", key: "descripcion", width: 15 },
-  //   ];
+  const columnsExcel = [
+      { header: "Periodo", key: "periodo", width: 12 },
+      { header: "F. Emisión", key: "fecha_inicio", width: 15 },
+      { header: "F. Vencimiento", key: "fecha_fin", width: 15 },
+      { header: "Tipo", key: "tipo_comp", width: 8 },
+      { header: "Serie", key: "serie_comp", width: 10 },
+      { header: "Número", key: "numero_comp", width: 15 },
+      { header: "Tipo Emp", key: "tipo_empresa", width: 15 },
+      { header: "Razón Social", key: "nombre_empresa", width: 35 },
+      { header: "Base Imponible", key: "base_imponible", width: 15 },
+      { header: "IGV", key: "igv", width: 15 },
+      { header: "Total", key: "total", width: 15 },
+      { header: "Moneda", key: "moneda", width: 15 },
+      { header: "Tipo Cambio", key: "tipo_cambio", width: 15 },
+      { header: "Descripción", key: "descripcion", width: 15 },
+    ];
 
 
   return (
@@ -891,6 +885,7 @@ function TablaContabilidadCompras({ periodo }: Props = { periodo: "" }) {
       createEmptyRow={createEmptyRow}
       rowProcessor={rowProcessor}
       syncData={handleSync}
+      columnsExcel={columnsExcel}
       
     />
   );

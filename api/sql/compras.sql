@@ -29,7 +29,6 @@ CREATE TABLE IF NOT EXISTS contabilidad.compras (
     descripcion_comprobante TEXT,
     is_active CHAR(1) DEFAULT '1', -- 0 = anulado, 1 = activo
     link_pdf TEXT,
-    is_check BOOLEAN DEFAULT FALSE,
     
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

@@ -1,5 +1,5 @@
-import { withForm } from "../../../../../components/tanstackform/components/core/form";
-import { FormRegistroCobro } from "./StructureFormData";
+import { withForm } from "../../../../../../components/tanstackform/components/core/form";
+import { FormRegistroPagoProveedores } from "./StructureFormData";
 
 
 const LugarIngreso = [
@@ -19,8 +19,8 @@ const StatusCobro = [
   {label: <div className="flex items-center gap-1"><span>Pendiente</span> <span className="text-red-500 text-[10px]">*(pagos parciales)</span></div>, value: "PENDIENTE"},
 ]
 
-export const FromCntsPorCobrarUnico = withForm({
-  ...FormRegistroCobro,
+export const FromCntsPorPagarProveedoresUnico = withForm({
+  ...FormRegistroPagoProveedores,
 
   render: ({ form }) => {
     return (
@@ -32,7 +32,7 @@ export const FromCntsPorCobrarUnico = withForm({
           )}
         />
         <form.AppField
-          name="lugar_ingreso"
+          name="lugar_salida"
           children={(field) => (
             <field.SelectFormFields
               label="Lugar de Ingreso"

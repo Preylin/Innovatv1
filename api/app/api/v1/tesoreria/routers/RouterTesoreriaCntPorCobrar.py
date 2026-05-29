@@ -159,7 +159,6 @@ async def registrar_cobro(payload: RegistrarCobro, db: AsyncSession = Depends(ge
             detail=f"Error al registrar el cobro: {str(e)}"
         )
 
-
 @router_tesoreria_cuentasporcobrar.delete("/eliminar-cobro/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def eliminar_cobro(id: int, db: AsyncSession = Depends(get_session)):
     cobro = await db.get(CajaMovimientoVenta, id)
@@ -185,8 +184,6 @@ async def eliminar_cobro(id: int, db: AsyncSession = Depends(get_session)):
     return None
 
 # actualizar solo el campo Venta.fecha_pago_detraccion_retencion,
-
-
 @router_tesoreria_cuentasporcobrar.put("/actualizar-fecha-pago-detraccion-retencion/{id}", status_code=status.HTTP_200_OK)
 async def actualizar_fecha_pago_detraccion_retencion(id: int, payload: UpdateFechaPagoRetencionDetraccionSchema, db: AsyncSession = Depends(get_session)):
     try:

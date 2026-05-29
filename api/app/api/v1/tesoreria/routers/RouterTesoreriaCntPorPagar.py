@@ -1,8 +1,9 @@
 from typing import List
 from datetime import date, datetime
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.core.deps import get_current_user
 from app.core.db import get_session
@@ -10,12 +11,21 @@ from app.api.v1.tesoreria.schemas.SchemaTesoreriaCntPorPagar import (
     ObligacionCreate,
     ObligacionRead,
     ObligacionUpdate, 
-    RegistroPagoCreate
+    RegistroPagoCreate,
+    ResponseCuentasPorPagarProveedoresLista,
+    CuentasPorPagarProveedoresDetalleOnetoOneReadVentas,
+    CuentasPorPagarProveedoresDetalleOnetoOneReadCajaVentas,
+    RegistrarCobroProveedores
 )
 from app.api.v1.tesoreria.models.ModelsTesoreriaCntPorpagar import (
     ObligacionCuentasPorPagar, 
     RegistroCuentasPorPagar
 )
+
+from app.api.v1.contabilidad.compras.modelCompras import Compra, CajaMovimientoCompra
+from app.api.v1.administracion.globalClienteProveedor.models.modelGlobalProveedor import GlobalProveedor
+
+
 
 router_cuentasporpagar = APIRouter(
     prefix="/cuentasporpagar",
@@ -202,3 +212,157 @@ async def actualizar_obligacion(
 
     # El response_model se encargará de transformar el modelo de DB al formato ObligacionRead
     return obligacion_db
+
+
+# routers de cuentas por pagar proveedores
+@router_cuentasporpagar.get("/resumen-proveedores", response_model=List[ResponseCuentasPorPagarProveedoresLista])
+async def get_resumen(year: str, db: AsyncSession = Depends(get_session)):
+    periodo_like = f"{year}%" 
+
+    query = (
+        select(
+            Compra.id,
+            Compra.fecha_emision,
+            Compra.fecha_vencimiento,
+            Compra.serie,
+            Compra.numero,
+            GlobalProveedor.nro_documento,
+            GlobalProveedor.razon_social,
+            Compra.total,
+            Compra.moneda,
+            Compra.tipo_cambio,
+            func.coalesce(func.sum(CajaMovimientoCompra.monto_pagado), 0.00).label("monto_pagado"),
+            Compra.link_pdf
+        )
+        .join(GlobalProveedor, Compra.proveedor_id == GlobalProveedor.id)
+        .outerjoin(CajaMovimientoCompra, Compra.id == CajaMovimientoCompra.compra_id)
+        .where(
+            Compra.periodo.like(periodo_like),
+            Compra.is_active == '1',
+        )
+        .group_by(
+            Compra.id,
+            GlobalProveedor.nro_documento,
+            GlobalProveedor.razon_social
+        )
+        .order_by(Compra.fecha_emision.desc())
+    )
+
+    try:
+        result = await db.execute(query)
+        return result.mappings().all()
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener el resumen mensual: {str(e)}"
+        )
+
+@router_cuentasporpagar.get("/detalle-compras-proveedores/{id}", response_model=CuentasPorPagarProveedoresDetalleOnetoOneReadVentas)
+async def get_detalle_cuenta(id: int, db: AsyncSession = Depends(get_session)):
+    query = (
+        select(
+            Compra.id,
+            Compra.periodo,
+            Compra.fecha_emision,
+            Compra.fecha_vencimiento,
+            Compra.serie,
+            Compra.numero,
+            Compra.base_imponible,
+            Compra.igv,
+            Compra.no_gravadas,
+            Compra.otros,
+            Compra.total,
+            Compra.tipo_cambio,
+            Compra.moneda,
+            Compra.descripcion_comprobante,
+        )
+        .where(Compra.id == id)
+    )
+
+    try:
+        result = await db.execute(query)
+        registro = result.mappings().one_or_none()
+        
+        if not registro:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No se encontró ningún registro con el ID {id}"
+            )
+            
+        return registro
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno al obtener el detalle: {str(e)}"
+        )
+    
+@router_cuentasporpagar.get("/detalle-caja-compras-proveedores/{id}", response_model=List[CuentasPorPagarProveedoresDetalleOnetoOneReadCajaVentas])
+async def get_detalle_cuenta(id: int, db: AsyncSession = Depends(get_session)):
+    query = (
+        select(
+            CajaMovimientoCompra.id,
+            CajaMovimientoCompra.fecha_pago,
+            CajaMovimientoCompra.lugar_salida,
+            CajaMovimientoCompra.monto_pagado,
+            CajaMovimientoCompra.medio_pago,
+            CajaMovimientoCompra.glosa_pago,
+        )
+        .where(CajaMovimientoCompra.compra_id == id)
+    )
+
+    try:
+        result = await db.execute(query)
+        registro = result.mappings().all()
+        # sin bloque if que lanza error 404 devuelve [] y estado 200
+        return registro
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno al obtener el detalle: {str(e)}"
+        )
+
+@router_cuentasporpagar.post("/registrar-pago-proveedores", status_code=status.HTTP_201_CREATED)
+async def registrar_cobro(payload: RegistrarCobroProveedores, db: AsyncSession = Depends(get_session)):
+    new_cobro = CajaMovimientoCompra(**payload.model_dump())
+
+    try:
+        db.add(new_cobro)
+        await db.commit()
+        await db.refresh(new_cobro)
+        return new_cobro
+
+    except SQLAlchemyError as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al registrar el cobro: {str(e)}"
+        )
+
+@router_cuentasporpagar.delete("/eliminar-pago-proveedores/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def eliminar_cobro(id: int, db: AsyncSession = Depends(get_session)):
+    cobro = await db.get(CajaMovimientoCompra, id)
+    
+
+    if not cobro:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No se encontró el cobro con ID {id}"
+        )
+
+    try:
+        await db.delete(cobro)
+        await db.commit()
+        
+    except SQLAlchemyError as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno al eliminar el cobro: {str(e)}"
+        )
+
+    return None

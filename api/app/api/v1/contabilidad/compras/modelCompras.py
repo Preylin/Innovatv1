@@ -38,7 +38,6 @@ class Compra(Base):
     descripcion_comprobante: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_active: Mapped[str] = mapped_column(CHAR(1), server_default=text("'1'"), default="1")
     link_pdf: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    is_check: Mapped[bool] = mapped_column(default=False)
     
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"), nullable=False)
 
@@ -54,7 +53,7 @@ class CajaMovimientoCompra(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     compra_id: Mapped[Optional[int]] = mapped_column(ForeignKey("contabilidad.compras.id"), nullable=True)
     fecha_pago: Mapped[date] = mapped_column(nullable=False)
-    lugar_ingreso: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    lugar_salida: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     monto_pagado: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     medio_pago: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     status_cobro: Mapped[str] = mapped_column(String(20), server_default="PENDIENTE", default="PENDIENTE")

@@ -874,23 +874,23 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
     await syncData(formattedPayload);
   };
 
-  // const columnsExcel = [
-  //     { header: "Periodo", key: "periodo", width: 12 },
-  //     { header: "F. Emisión", key: "fecha_inicio", width: 15 },
-  //     { header: "F. Vencimiento", key: "fecha_fin", width: 15 },
-  //     { header: "Tipo", key: "tipo_comp", width: 8 },
-  //     { header: "Serie", key: "serie_comp", width: 10 },
-  //     { header: "Número", key: "numero_comp", width: 15 },
-  //     { header: "Tipo Emp", key: "tipo_empresa", width: 15 },
-  //     { header: "Razón Social", key: "nombre_empresa", width: 35 },
-  //     { header: "Base Imponible", key: "base_imponible", width: 15 },
-  //     { header: "IGV", key: "igv", width: 15 },
-  //     { header: "Total", key: "total", width: 15 },
-  //     { header: "Moneda", key: "moneda", width: 15 },
-  //     { header: "Tipo Cambio", key: "tipo_cambio", width: 15 },
-  //     { header: "Categoria", key: "categoria", width: 15 },
-  //     { header: "Descripción", key: "descripcion", width: 15 },
-  //   ];
+  const columnsExcel = [
+      { header: "Periodo", key: "periodo", width: 12 },
+      { header: "F. Emisión", key: "fecha_inicio", width: 15 },
+      { header: "F. Vencimiento", key: "fecha_fin", width: 15 },
+      { header: "Tipo", key: "tipo_comp", width: 8 },
+      { header: "Serie", key: "serie_comp", width: 10 },
+      { header: "Número", key: "numero_comp", width: 15 },
+      { header: "Tipo Emp", key: "tipo_empresa", width: 15 },
+      { header: "Razón Social", key: "nombre_empresa", width: 35 },
+      { header: "Base Imponible", key: "base_imponible", width: 15 },
+      { header: "IGV", key: "igv", width: 15 },
+      { header: "Total", key: "total", width: 15 },
+      { header: "Moneda", key: "moneda", width: 15 },
+      { header: "Tipo Cambio", key: "tipo_cambio", width: 15 },
+      { header: "Categoria", key: "categoria", width: 15 },
+      { header: "Descripción", key: "descripcion", width: 15 },
+    ];
 
   return (
     <TablaGridBaseVentas
@@ -908,6 +908,7 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
       createEmptyRow={createEmptyRow}
       rowProcessor={rowProcessor}
       syncData={handleSync}
+      columnsExcel={columnsExcel}
     />
   );
 }

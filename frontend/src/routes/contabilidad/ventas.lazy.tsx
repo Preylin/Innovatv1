@@ -85,11 +85,11 @@ function PanelVentas() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 px-2 py-1.5 bg-mist-50 rounded-lg border border-mist-200">
+        <div className="flex items-center gap-3 px-2 py-1.5 bg-mist-100 rounded-lg shadow-md shadow-mist-300 dark:shadow-mist-900">
           {/* Selector Año */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-gray-400 uppercase ml-2">
-              Año
+            <span className="text-xs font-semibold text-gray-600 uppercase ml-2">
+              Año:
             </span>
             <Select
               className="w-20"
@@ -102,8 +102,8 @@ function PanelVentas() {
 
           {/* Selector Mes */}
           <div className="flex items-center gap-2 border-l pl-3 border-gray-200">
-            <span className="text-xs font-semibold text-gray-400 uppercase">
-              Mes
+            <span className="text-xs font-semibold text-gray-600 uppercase">
+              Mes:
             </span>
             <Select
               className="w-25"

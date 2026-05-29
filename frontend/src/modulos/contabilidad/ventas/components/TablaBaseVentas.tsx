@@ -17,6 +17,12 @@ import ErrorResultServer from "../../../../components/pages/resultado/ErrorResul
 
 export type Filters = Record<string, string>;
 
+interface ColumnExcel {
+  header: string;
+  key: string;
+  width: number;
+}
+
 interface BaseRow {
   id: number;
   key: number;
@@ -41,6 +47,7 @@ interface Props<T extends BaseRow> {
   ) => readonly Column<T>[];
   createEmptyRow: (id: number) => T;
   rowProcessor?: (rows: T[], apiData: T[]) => T[];
+  columnsExcel: ColumnExcel[];
 }
 
 function TablaGridBaseVentas<T extends BaseRow>({
@@ -58,6 +65,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
   getColumns,
   createEmptyRow,
   rowProcessor,
+  columnsExcel,
 }: Props<T>) {
   const gridRef = useRef<DataGridHandle>(null);
   const [rows, setRows] = useState<T[]>([]);
@@ -89,7 +97,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
 
     if (apiData) {
       changeManager.current = new DataChangeManagerVentas<T>(apiData);
-      
+
       // Asignamos un ID temporal inicial negativo a la fila en blanco por defecto
       // para blindar el flujo contra colisiones con IDs autoincrementales reales de la BD
       setRows([...apiData, createEmptyRow(-1)]);
@@ -106,7 +114,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
             const updated = { ...r, [field]: value };
             // Un registro es verdaderamente "Nuevo" si su ID no existe en la data original de la API
             const isNew = !apiData?.some((apiR) => apiR.id === rowId);
-            
+
             changeManager.current.registerChange(rowId, updated, isNew);
             setHasChanges(changeManager.current.hasChanges());
             return updated;
@@ -150,7 +158,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
       // 2. Enviamos el clon aislado de los datos directamente al Hook / Backend
       await syncData(pending);
       message.success("Datos guardados correctamente");
-      
+
       // 3. Limpiamos el administrador solo tras una respuesta HTTP exitosa
       changeManager.current.clear();
       setHasChanges(false);
@@ -231,7 +239,10 @@ function TablaGridBaseVentas<T extends BaseRow>({
     if (value === null || value === undefined) return 0;
     if (typeof value === "number") return isNaN(value) ? 0 : value;
 
-    let clean = value.toString().replace(/[S/$/\s]/g, "").trim();
+    let clean = value
+      .toString()
+      .replace(/[S/$/\s]/g, "")
+      .trim();
     if (!clean) return 0;
 
     const isParenthesisNegative = clean.startsWith("(") && clean.endsWith(")");
@@ -319,13 +330,22 @@ function TablaGridBaseVentas<T extends BaseRow>({
                 "ingreso",
                 "egreso",
               ];
-              const dateKeys = ["fecha_inicio", "fecha_fin", "fecha_emision", "fecha_vencimiento"];
+              const dateKeys = [
+                "fecha_inicio",
+                "fecha_fin",
+                "fecha_emision",
+                "fecha_vencimiento",
+              ];
 
               if (numericKeys.includes(column.key)) {
                 (rowToUpdate as any)[key] = cleanNumericValue(rawValue);
               } else if (dateKeys.includes(column.key)) {
                 if (!rawValue) {
-                  (rowToUpdate as any)[key] = column.key === "fecha_fin" || column.key === "fecha_vencimiento" ? null : "";
+                  (rowToUpdate as any)[key] =
+                    column.key === "fecha_fin" ||
+                    column.key === "fecha_vencimiento"
+                      ? null
+                      : "";
                 } else {
                   const parsedDate = dayjs(rawValue, [
                     "DD/MM/YYYY",
@@ -367,7 +387,9 @@ function TablaGridBaseVentas<T extends BaseRow>({
     const idsToDelete = Array.from(selectedRows);
     try {
       await deleteItems(idsToDelete);
-      setRows((prevRows) => prevRows.filter((row) => !selectedRows.has(row.id)));
+      setRows((prevRows) =>
+        prevRows.filter((row) => !selectedRows.has(row.id)),
+      );
       setSelectedRows(new Set());
       message.success("Registros eliminados de forma optimista");
     } catch (error) {
@@ -382,23 +404,11 @@ function TablaGridBaseVentas<T extends BaseRow>({
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Ventas");
 
-    worksheet.columns = [
-      { header: "Periodo", key: "periodo", width: 12 },
-      { header: "F. Emisión", key: "fecha_inicio", width: 15 },
-      { header: "F. Vencimiento", key: "fecha_fin", width: 15 },
-      { header: "Tipo", key: "tipo_comp", width: 8 },
-      { header: "Serie", key: "serie_comp", width: 10 },
-      { header: "Número", key: "numero_comp", width: 15 },
-      { header: "Tipo Emp", key: "tipo_empresa", width: 15 },
-      { header: "Razón Social", key: "nombre_empresa", width: 35 },
-      { header: "Base Imponible", key: "base_imponible", width: 15 },
-      { header: "IGV", key: "igv", width: 15 },
-      { header: "Total", key: "total", width: 15 },
-      { header: "Moneda", key: "moneda", width: 15 },
-      { header: "Tipo Cambio", key: "tipo_cambio", width: 15 },
-      { header: "Categoria", key: "categoria", width: 15 },
-      { header: "Descripción", key: "descripcion", width: 15 },
-    ];
+    worksheet.columns = columnsExcel.map((col) => ({
+      header: col.header,
+      key: col.key,
+      width: col.width,
+    }));
 
     const headerRow = worksheet.getRow(1);
     headerRow.font = { bold: true, color: { argb: "FFFFFF" } };
@@ -429,6 +439,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
     a.href = url;
     a.download = `${excelFileName}_${dayjs().format("YYYYMMDD_HHmm")}.xlsx`;
     a.click();
+    window.URL.revokeObjectURL(url);
   }, [selectedRows, rows, excelFileName, moneda]);
 
   const scrollToBottom = useCallback(() => {

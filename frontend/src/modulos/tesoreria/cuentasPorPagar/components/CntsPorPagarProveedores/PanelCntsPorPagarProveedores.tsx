@@ -16,18 +16,18 @@ import {
   type SortingFn,
 } from "@tanstack/react-table";
 import { compareItems, rankItem } from "@tanstack/match-sorter-utils";
-// Nota: Reemplazar por tu custom hook real de cuentas por pagar cuando exista en tu API
-import { useCuentasPorCobrarResumenMensualCaja } from "../data/api.CntsCobrarTableReporte";
-import type { ReporteCntsPorCobrarSchemaApiType } from "../data/api.schemaCntsCobrarTableReporte";
-import { TableBaseFuzzyCntasPorCobrar } from "../../../../components/tanstack-table/TablaBaseTsKFilterPaginacion";
-import { Select, Tooltip } from "antd";
-import { useYearsContabilidadVentas } from "../../../contabilidad/ventas/data/api.ventas/api.smallConsultas";
+import { Select, } from "antd";
 import { differenceInCalendarDays, isValid } from "date-fns";
-import { ModalRegistroCntsPorCobrar } from "./ModalRegistroCobro";
-import FloatingWindowButton from "./VentanaDetalle";
+
 import { LuListCheck } from "react-icons/lu";
-import { ApiErrorDisplay } from "../../../../components/Error/ApiErrorDisplay";
-import { SkeletonHeaderTable } from "../../../../components/skeleton/SkeletonHeaderTable";
+import { SkeletonHeaderTable } from "../../../../../components/skeleton/SkeletonHeaderTable";
+import { ApiErrorDisplay } from "../../../../../components/Error/ApiErrorDisplay";
+import FloatingWindowButton from "../../../cuentasPorCobrar/components/VentanaDetalle";
+import { TableBaseFuzzyCntasPorCobrar } from "../../../../../components/tanstack-table/TablaBaseTsKFilterPaginacion";
+import type { ReporteCntsPorPagarProveedoresSchemaApiType } from "../../data/api.schemaPorPagarProveedores";
+import { useCuentasPorPagarProveedoresResumenMensual } from "../../data/api.cntsPorPagarProveedores";
+import { useYearsContabilidadCompras } from "../../../../contabilidad/compras/data/api.smallConsultasCompras";
+import ModalRegistroCntsPorCobrarProveedores from "./ModalRegistroCobro";
 
 export interface DataTableCntsPorPagar {
   key: number;
@@ -39,11 +39,8 @@ export interface DataTableCntsPorPagar {
   cliente_razon_social: string;
   status_fecha: string; // Días restantes o de retraso
   total: number;
-  monto_detraccion: number;
-  monto_retencion: number;
   moneda: string;
   tipo_cambio: number;
-  fecha_pago_detraccion_retencion: string | Date | null;
   status_pago: string;
   link_pdf: string;
 }
@@ -109,7 +106,7 @@ function obtenerTextoAlertaVencimiento(
 }
 
 const mapDataTable = (
-  data: ReporteCntsPorCobrarSchemaApiType[],
+  data: ReporteCntsPorPagarProveedoresSchemaApiType[],
 ): DataTableCntsPorPagar[] => {
   return data.map((item, index) => {
     const textoStatusFecha = obtenerTextoAlertaVencimiento(
@@ -119,12 +116,8 @@ const mapDataTable = (
 
     const Total = item?.total || 0;
     const TipoCambio = item?.tipo_cambio || 1;
-    const TotalDetraccion = item?.monto_detraccion || 0;
-    const TotalRetencion = item?.monto_retencion || 0;
     const MontoPagado = item?.monto_pagado || 0;
-    const TotalDescuento = TotalDetraccion + TotalRetencion;
-    const TotalDescontado = Total - TotalDescuento;
-    const PagoMaximo = TotalDescontado / TipoCambio;
+    const PagoMaximo = Total / TipoCambio;
     const SaldoPendiente = PagoMaximo - MontoPagado;
 
     return {
@@ -137,10 +130,6 @@ const mapDataTable = (
       nro_documento: item.nro_documento || "-",
       cliente_razon_social: item.razon_social || "-",
       total: SaldoPendiente,
-      monto_detraccion: item.monto_detraccion || 0,
-      monto_retencion: item.monto_retencion || 0,
-      fecha_pago_detraccion_retencion:
-        item.fecha_pago_detraccion_retencion || "-",
       moneda: item.moneda || "-",
       tipo_cambio: item.tipo_cambio || 1,
       status_pago: item.status_cobro || "-",
@@ -206,17 +195,19 @@ const formatUSD = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
-function TablaMostrarCntPorCobrar() {
-  const yearPeru = new Intl.DateTimeFormat("es-PE", {
-    timeZone: "America/Lima",
-    year: "numeric",
-  }).format(new Date());
+function CuentasPorPagarProveedores() {
+//   const yearPeru = new Intl.DateTimeFormat("es-PE", {
+//     timeZone: "America/Lima",
+//     year: "numeric",
+//   }).format(new Date());
+
+  const yearPeru = "2025";
   const [selectedYear, setSelectedYear] = useState<string>(yearPeru);
 
   const [selectedCobroId, setSelectedCobroId] = useState<number | null>(null);
   const [selectDay, setSelectDay] = useState<string>("");
 
-  const { data: years } = useYearsContabilidadVentas();
+  const { data: years } = useYearsContabilidadCompras();
 
   const [columnFilters] = useState<ColumnFiltersState>([
     {
@@ -230,7 +221,7 @@ function TablaMostrarCntPorCobrar() {
     isLoading,
     isError,
     error,
-  } = useCuentasPorCobrarResumenMensualCaja(selectedYear);
+  } = useCuentasPorPagarProveedoresResumenMensual(selectedYear);
 
   const tableData = useMemo(() => {
     if (!apiData) return [];
@@ -286,13 +277,10 @@ function TablaMostrarCntPorCobrar() {
     return apiData.reduce((acc, item) => {
       if (item.status_cobro !== "PENDIENTE") return acc;
 
-      const TotalDetraccion = item?.monto_detraccion || 0;
-      const TotalRetencion = item?.monto_retencion || 0;
-      const TotalDescuento = TotalDetraccion + TotalRetencion;
+
       const Total = item?.total || 0;
       const TipoCambio = item?.tipo_cambio || 1;
-      const TotalDescontado = Total - TotalDescuento;
-      const PagoMaximo = TotalDescontado / TipoCambio;
+      const PagoMaximo = Total / TipoCambio;
 
       const moneda = item.moneda as "PEN" | "USD";
       if (!acc[moneda]) return acc;
@@ -459,7 +447,7 @@ function TablaMostrarCntPorCobrar() {
         size: 300,
         header: () => (
           <span className="flex text-[8px] md:text-[10px] items-center gap-1">
-            <IoPersonOutline className="text-gray-500" /> Cliente
+            <IoPersonOutline className="text-gray-500" /> Proveedor
           </span>
         ),
         cell: (info) => (
@@ -546,6 +534,7 @@ function TablaMostrarCntPorCobrar() {
         filterFn: "fuzzy",
         sortingFn: fuzzySort,
       },
+
       {
         accessorKey: "link_pdf",
         size: 50,
@@ -576,86 +565,6 @@ function TablaMostrarCntPorCobrar() {
         },
         enableColumnFilter: false,
         enableSorting: false,
-      },
-      {
-        accessorKey: "monto_detraccion",
-        size: 100,
-        filterFn: numericFilterFn,
-        meta: { textAlign: "center" },
-        header: () => (
-          <span className="flex text-[8px] md:text-[10px] items-center gap-1">
-            <IoWalletOutline className="text-gray-500" /> Detracción
-          </span>
-        ),
-        cell: (info) => (
-          <StyleDataCell className="text-end">
-            {new Intl.NumberFormat("es-PE", {
-              style: "currency",
-              currency: "PEN",
-            }).format(info.getValue())}
-          </StyleDataCell>
-        ),
-        footer: ({ table }) => {
-          const totalPagadoFiltrado = table
-            .getFilteredRowModel()
-            .rows.reduce((sum, row) => {
-              return sum + (Number(row.getValue("monto_detraccion")) || 0);
-            }, 0);
-
-          return (
-            <span className="text-[8px] md:text-[10px] font-extrabold text-gray-900 block w-full text-end">
-              {formatPEN.format(totalPagadoFiltrado)}
-            </span>
-          );
-        },
-      },
-      {
-        accessorKey: "monto_retencion",
-        size: 100,
-        filterFn: numericFilterFn,
-        meta: { textAlign: "center" },
-        header: () => (
-          <span className="flex text-[8px] md:text-[10px] items-center gap-1">
-            <IoWalletOutline className="text-gray-500" /> Retención
-          </span>
-        ),
-        cell: (info) => (
-          <StyleDataCell className="text-end">
-            {new Intl.NumberFormat("es-PE", {
-              style: "currency",
-              currency: "PEN",
-            }).format(info.getValue())}
-          </StyleDataCell>
-        ),
-        footer: ({ table }) => {
-          const totalPagadoFiltrado = table
-            .getFilteredRowModel()
-            .rows.reduce((sum, row) => {
-              return sum + (Number(row.getValue("monto_retencion")) || 0);
-            }, 0);
-
-          return (
-            <span className="text-[8px] md:text-[10px] font-extrabold text-gray-900 block w-full text-end">
-              {formatPEN.format(totalPagadoFiltrado)}
-            </span>
-          );
-        },
-      },
-      {
-        accessorKey: "fecha_pago_detraccion_retencion",
-        size: 80,
-        filterFn: dateFilterFn,
-        meta: { textAlign: "center" },
-        header: () => (
-          <Tooltip title={"Fecha de Pago de Detracción o Retención"}>
-            <span className="flex text-[8px] md:text-[10px] items-center gap-1">
-              <IoCalendarOutline className="text-gray-500" /> F. Pago
-            </span>
-          </Tooltip>
-        ),
-        cell: (info) => (
-          <StyleDataCell>{formatDate(info.getValue())}</StyleDataCell>
-        ),
       },
       {
         accessorKey: "actions",
@@ -695,10 +604,10 @@ function TablaMostrarCntPorCobrar() {
       <header className=" px-2 flex items-center justify-between">
         <div>
           <h2 className="text-base md:text-xl font-bold text-gray-800 tracking-tight uppercase">
-            Control de cuentas por cobrar
+            Control de cuentas por pagar proveedores
           </h2>
           <p className="text-xs text-gray-400 mt-0.5">
-            Gestión de derechos de cobros a clientes
+            Gestión de obligaciones con proveedores.
           </p>
         </div>
 
@@ -797,7 +706,7 @@ function TablaMostrarCntPorCobrar() {
         />
       </main>
       {selectedCobroId !== null && (
-        <ModalRegistroCntsPorCobrar
+        <ModalRegistroCntsPorCobrarProveedores
           id={selectedCobroId}
           open={selectedCobroId !== null}
           onClose={() => setSelectedCobroId(null)}
@@ -808,4 +717,4 @@ function TablaMostrarCntPorCobrar() {
   );
 }
 
-export default TablaMostrarCntPorCobrar;
+export default CuentasPorPagarProveedores;

@@ -5,6 +5,7 @@ import { RxDrawingPin } from "react-icons/rx";
 import { MdPublishedWithChanges } from "react-icons/md";
 import { RiExchangeBoxFill } from "react-icons/ri";
 import { VscRequestChanges } from "react-icons/vsc";
+import CuentasPorPagarProveedores from "./CntsPorPagarProveedores/PanelCntsPorPagarProveedores";
 
 interface ShowSidebarProps {
   onSelect: (id: NavigationItem) => void;
@@ -14,7 +15,7 @@ interface ShowSidebarProps {
 
 const Item1: React.FC = () => <CuentasPorPagarFijas />;
 
-const Item2: React.FC = () => <div>: ) En desarrollo</div>;
+const Item2: React.FC = () => <CuentasPorPagarProveedores />;
 
 const Item3: React.FC = () => <div>: ) En desarrollo</div>;
 
@@ -56,7 +57,7 @@ function ShowSidebar({ onSelect, isOpen, toggleMenu }: ShowSidebarProps) {
     <nav className="flex flex-col p-1 gap-3">
       <div className="flex flex-row items-center justify-between">
         <p className="text-xs font-bold text-mist-700 uppercase tracking-widest pl-1 select-none">
-          Navegación
+          Obligaciones
         </p>
         <button
           onClick={toggleMenu}
@@ -120,7 +121,7 @@ function PanelCntsPorCobrar() {
         <aside
           onMouseLeave={() => setIsHovered(false)}
           className={`
-            h-full bg-mist-100 border-r border-mist-500 transition-all duration-300 ease-in-out z-40
+            h-full bg-mist-100 transition-all duration-300 ease-in-out z-40
             ${isOpen ? "relative w-45 translate-x-0" : "absolute w-45 -translate-x-full"}
             ${!isOpen && isHovered ? "translate-x-0 shadow-2xl" : ""}
           `}

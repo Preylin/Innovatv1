@@ -84,7 +84,7 @@ const OPCIONES_MESES = [
           </p>
         </div>
 
-        <div className="flex items-center gap-3 px-2 py-1.5 bg-mist-50 rounded-lg border border-mist-200">
+        <div className="flex items-center gap-3 px-2 py-1.5 bg-mist-100 rounded-lg shadow-md shadow-mist-300 dark:shadow-mist-900">
           {/* Selector Año */}
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-gray-600 uppercase ml-2">
