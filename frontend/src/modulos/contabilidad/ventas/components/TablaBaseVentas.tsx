@@ -3,7 +3,7 @@ import {
   DataGrid,
   type Column,
   type SortColumn,
-  type RowsChangeData, // Re-integrado correctamente
+  type RowsChangeData,
   type DataGridHandle,
 } from "react-data-grid";
 import { Button, message, Skeleton, Tooltip } from "antd";
@@ -40,9 +40,7 @@ interface Props<T extends BaseRow> {
     setFilters: React.Dispatch<React.SetStateAction<Filters>>,
   ) => readonly Column<T>[];
   createEmptyRow: (id: number) => T;
-  // Opcional: Para lógica específica como el cálculo de saldos
   rowProcessor?: (rows: T[], apiData: T[]) => T[];
-  // Opcional: Para mostrar un resumen en el header (como el saldo total)
 }
 
 function TablaGridBaseVentas<T extends BaseRow>({
@@ -73,7 +71,6 @@ function TablaGridBaseVentas<T extends BaseRow>({
     colIdx: number;
   } | null>(null);
 
-  // NUEVO: Estados para controlar el botón de guardado de forma reactiva
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -84,24 +81,34 @@ function TablaGridBaseVentas<T extends BaseRow>({
     [data, mapDataApi],
   );
 
+  // --- Sincronización Inicial y Control de renders concurrentes ---
   useEffect(() => {
-    changeManager.current = new DataChangeManagerVentas<T>(apiData);
-    const lastId =
-      apiData.length > 0 ? Math.max(...apiData.map((r) => r.id)) : 0;
-    setRows([...apiData, createEmptyRow(lastId + 1)]);
-    setHasChanges(false); // Resetear estado de cambios al recargar datos limpios
-  }, [apiData, createEmptyRow]);
+    // PROTECCIÓN: Si se está ejecutando la mutación asíncrona, congelamos este efecto
+    // para evitar que re-instancie el mánager y destruya el mapa interno de cambios.
+    if (isSaving) return;
 
-  // --- Lógica de Actualización ---
+    if (apiData) {
+      changeManager.current = new DataChangeManagerVentas<T>(apiData);
+      
+      // Asignamos un ID temporal inicial negativo a la fila en blanco por defecto
+      // para blindar el flujo contra colisiones con IDs autoincrementales reales de la BD
+      setRows([...apiData, createEmptyRow(-1)]);
+      setHasChanges(false);
+    }
+  }, [apiData, createEmptyRow, isSaving]);
+
+  // --- Lógica de Actualización de Celdas de forma manual ---
   const updateCell = useCallback(
     (rowId: number, field: keyof T, value: any) => {
       setRows((prev) =>
         prev.map((r) => {
           if (r.id === rowId) {
             const updated = { ...r, [field]: value };
+            // Un registro es verdaderamente "Nuevo" si su ID no existe en la data original de la API
             const isNew = !apiData?.some((apiR) => apiR.id === rowId);
+            
             changeManager.current.registerChange(rowId, updated, isNew);
-            setHasChanges(changeManager.current.hasChanges()); // Notificar cambio a React
+            setHasChanges(changeManager.current.hasChanges());
             return updated;
           }
           return r;
@@ -116,31 +123,35 @@ function TablaGridBaseVentas<T extends BaseRow>({
     [getColumns, updateCell, filters],
   );
 
-  //aviso para guardar datos por salida de browser o pestaña
+  // Bloqueo de salida involuntaria del navegador si hay cambios
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (hasChanges) {
         event.preventDefault();
       }
     };
-
     window.addEventListener("beforeunload", handleBeforeUnload);
-
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [hasChanges]);
 
+  // --- Manejo del Guardado (Mutación del Payload) ---
   const handlerSave = async () => {
     if (!changeManager.current.hasChanges()) {
       return message.info("No hay cambios pendientes");
     }
+
+    // 1. Extraemos el payload de forma síncrona ANTES de gatillar mutaciones de estado en React
     const pending = changeManager.current.getPendingPayload();
     setIsSaving(true);
+
     try {
+      // 2. Enviamos el clon aislado de los datos directamente al Hook / Backend
       await syncData(pending);
       message.success("Datos guardados correctamente");
-      // Importante: No limpiamos filas manualmente aquí, el useEffect de apiData lo hará al refrescarse el query
+      
+      // 3. Limpiamos el administrador solo tras una respuesta HTTP exitosa
       changeManager.current.clear();
       setHasChanges(false);
     } catch (error) {
@@ -182,6 +193,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
     return rowProcessor ? rowProcessor(baseRows, apiData) : baseRows;
   }, [rows, sortColumns, filters, apiData, rowProcessor]);
 
+  // --- Lógica del input de celdas nativas en DataGrid ---
   const handleRowsChange = useCallback(
     (newRows: T[], data: RowsChangeData<T>) => {
       const updatedRows = [...newRows];
@@ -203,8 +215,9 @@ function TablaGridBaseVentas<T extends BaseRow>({
             !["id", "key"].includes(k) && v !== "" && v !== 0 && v !== null,
         );
         if (hasData) {
-          const nextId = Math.max(...updatedRows.map((r) => r.id), 0) + 1;
-          updatedRows.push(createEmptyRow(nextId));
+          // Generamos una clave de ID auto-incremental negativa y única para la fila vacía subsiguiente
+          const nextTempId = Math.min(...updatedRows.map((r) => r.id), 0) - 1;
+          updatedRows.push(createEmptyRow(nextTempId));
         }
       }
       setRows(updatedRows);
@@ -218,13 +231,9 @@ function TablaGridBaseVentas<T extends BaseRow>({
     if (value === null || value === undefined) return 0;
     if (typeof value === "number") return isNaN(value) ? 0 : value;
 
-    let clean = value
-      .toString()
-      .replace(/[S/$/\s]/g, "")
-      .trim();
+    let clean = value.toString().replace(/[S/$/\s]/g, "").trim();
     if (!clean) return 0;
 
-    // Manejo de negativos contables tradicionales: (100.00) -> -100.00
     const isParenthesisNegative = clean.startsWith("(") && clean.endsWith(")");
     if (isParenthesisNegative) clean = clean.replace(/[()]/g, "");
 
@@ -232,13 +241,10 @@ function TablaGridBaseVentas<T extends BaseRow>({
     const lastDot = clean.lastIndexOf(".");
 
     if (lastComma > lastDot) {
-      // Caso "35341,60" o "1.250,60" -> Coma es decimal
       clean = clean.replace(/\./g, "").replace(",", ".");
     } else if (lastDot > lastComma) {
-      // Caso "1,250.60" -> Punto es decimal
       clean = clean.replace(/,/g, "");
     } else if (lastComma !== -1 && lastDot === -1) {
-      // Caso redundante de seguridad para comas solitarias
       clean = clean.replace(",", ".");
     }
 
@@ -248,7 +254,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
     return isNaN(num) ? 0 : num;
   };
 
-  // 2. Función principal de pegado masivo (Portapapeles)
+  // --- Lógica Avanzada de Pegado Masivo ---
   const handlePaste = useCallback(
     (event: React.ClipboardEvent<HTMLDivElement>) => {
       event.preventDefault();
@@ -256,7 +262,6 @@ function TablaGridBaseVentas<T extends BaseRow>({
       const text = event.clipboardData.getData("text/plain");
       if (!text || !activeCell) return;
 
-      // Procesamos filas (salto de línea) y celdas (tabulaciones de Excel)
       const gridData = text
         .split(/\r?\n/)
         .filter((r) => r.trim().length > 0)
@@ -273,14 +278,11 @@ function TablaGridBaseVentas<T extends BaseRow>({
           gridData.length - availableVisibleRows,
         );
 
-        // Inyección automática de nuevas filas vacías si el copiado supera el límite actual
+        // Generamos filas nuevas asignando IDs temporales estrictamente negativos
         if (rowsToCreate > 0) {
-          let lastId =
-            currentRows.length > 0
-              ? Math.max(...currentRows.map((r) => r.id))
-              : 0;
+          let currentMinId = Math.min(...currentRows.map((r) => r.id), 0);
           for (let i = 1; i <= rowsToCreate; i++) {
-            const newRow = createEmptyRow(lastId + i);
+            const newRow = createEmptyRow(currentMinId - i);
             rowsMap.set(newRow.id, newRow);
           }
         }
@@ -305,12 +307,9 @@ function TablaGridBaseVentas<T extends BaseRow>({
             const colIndex = startColIdx + j;
             const column = columns[colIndex];
 
-            // Validamos que la columna exista, sea editable y no sea el selector de filas
             if (column && column.editable && column.key !== "select") {
               const rawValue = value.trim();
               const key = column.key as keyof typeof rowToUpdate;
-
-              // --- Clasificación de mapeo dinámico por tipo de columna ---
 
               const numericKeys = [
                 "base_imponible",
@@ -320,16 +319,13 @@ function TablaGridBaseVentas<T extends BaseRow>({
                 "ingreso",
                 "egreso",
               ];
-              const dateKeys = ["fecha_inicio", "fecha_fin"];
+              const dateKeys = ["fecha_inicio", "fecha_fin", "fecha_emision", "fecha_vencimiento"];
 
               if (numericKeys.includes(column.key)) {
-                // Limpieza y parseo de importes numéricos
                 (rowToUpdate as any)[key] = cleanNumericValue(rawValue);
               } else if (dateKeys.includes(column.key)) {
-                // Parseo multi-formato para objetos de tipo Date nativos de JS
                 if (!rawValue) {
-                  (rowToUpdate as any)[key] =
-                    column.key === "fecha_fin" ? null : "";
+                  (rowToUpdate as any)[key] = column.key === "fecha_fin" || column.key === "fecha_vencimiento" ? null : "";
                 } else {
                   const parsedDate = dayjs(rawValue, [
                     "DD/MM/YYYY",
@@ -337,62 +333,45 @@ function TablaGridBaseVentas<T extends BaseRow>({
                     "DD-MM-YYYY",
                     "MM/DD/YYYY",
                     "DD/MM/YY",
+                    "DD/MM/YYYY HH:mm:ss",
                   ]);
                   (rowToUpdate as any)[key] = parsedDate.isValid()
-                    ? parsedDate.toDate()
+                    ? parsedDate.format("YYYY-MM-DD")
                     : null;
                 }
               } else {
-                // Sanitización estándar para cadenas de texto (Strings)
                 (rowToUpdate as any)[key] = rawValue;
               }
             }
           });
 
-          // Registrar cambios en el administrador de estado persistente (Backend)
           const isNew = !apiData?.some((apiR) => apiR.id === rowToUpdate.id);
           changeManager.current.registerChange(targetRowId, rowToUpdate, isNew);
           rowsMap.set(targetRowId, rowToUpdate);
         });
 
         setHasChanges(changeManager.current.hasChanges());
-
-
         return Array.from(rowsMap.values());
       });
 
       message.success("Datos pegados y normalizados");
     },
-    [activeCell, apiData, columns, filteredSortedRows],
+    [activeCell, apiData, columns, filteredSortedRows, createEmptyRow],
   );
 
   const handleDelete = async () => {
     if (selectedRows.size === 0) return;
-
-    // Confirmación simple al usuario
     if (!confirm(`¿Estás seguro de eliminar ${selectedRows.size} registros?`))
       return;
 
     const idsToDelete = Array.from(selectedRows);
-
     try {
-      // 2. Ejecutar eliminación en el Backend
       await deleteItems(idsToDelete);
-
-      // 3. Actualización optimista: Remover de la UI inmediatamente
-      setRows((prevRows) => {
-        const updatedRows = prevRows.filter((row) => !selectedRows.has(row.id));
-        return updatedRows;
-      });
-
-      // 4. Limpiar selección
+      setRows((prevRows) => prevRows.filter((row) => !selectedRows.has(row.id)));
       setSelectedRows(new Set());
-
-      // Opcional: Notificación de éxito
-      console.log("Eliminación exitosa");
+      message.success("Registros eliminados de forma optimista");
     } catch (error) {
-      console.error("Error al eliminar:", error);
-      alert("No se pudieron eliminar los registros. Intente de nuevo.");
+      message.error("No se pudieron eliminar los registros.");
     }
   };
 
@@ -403,7 +382,6 @@ function TablaGridBaseVentas<T extends BaseRow>({
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Ventas");
 
-    // Ajuste de columnas a la realidad de Ventas
     worksheet.columns = [
       { header: "Periodo", key: "periodo", width: 12 },
       { header: "F. Emisión", key: "fecha_inicio", width: 15 },
@@ -434,9 +412,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
     const formatStr = `"${moneda}" #,##0.00`;
 
     dataToExport.forEach((item) => {
-      const row = worksheet.addRow({
-        ...item,
-      });
+      const row = worksheet.addRow({ ...item });
       ["base_imponible", "igv", "total"].forEach((key) => {
         const cell = row.getCell(key);
         cell.numFmt = formatStr;
@@ -453,7 +429,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
     a.href = url;
     a.download = `${excelFileName}_${dayjs().format("YYYYMMDD_HHmm")}.xlsx`;
     a.click();
-  }, [selectedRows, rows, excelFileName, moneda]); // Asegúrate de incluir 'moneda' en las dependencias
+  }, [selectedRows, rows, excelFileName, moneda]);
 
   const scrollToBottom = useCallback(() => {
     gridRef.current?.scrollToCell({ rowIdx: filteredSortedRows.length - 1 });
@@ -464,12 +440,12 @@ function TablaGridBaseVentas<T extends BaseRow>({
 
   return (
     <div
-      className="flex flex-col gap-1 p-1 h-[calc(100vh-140px)] min-w-200 md:w-full"
+      className="flex flex-col gap-2 p-1 h-[calc(100vh-140px)] min-w-200 md:w-full"
       onPaste={handlePaste}
     >
       <header className="flex justify-between items-center px-2">
         <div className="flex gap-2">
-          <div className="shadow shadow-mist-300 px-1 rounded-md bg-mist-200">
+          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-mist-500 text-mist-50">
             <span className="font-semibold italic">Base Imponible: </span>
             <span>
               {new Intl.NumberFormat("es-PE", {
@@ -478,7 +454,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
               }).format(totalBaseImponible)}
             </span>
           </div>
-          <div className="shadow shadow-mist-300 px-1 rounded-md bg-mist-200">
+          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-mist-500 text-mist-50">
             <span className="font-semibold italic">IGV: </span>
             <span>
               {new Intl.NumberFormat("es-PE", {
@@ -487,7 +463,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
               }).format(totalIgv)}
             </span>
           </div>
-          <div className="shadow shadow-mist-300 px-1 rounded-md bg-mist-200">
+          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-mist-500 text-mist-50">
             <span className="font-semibold italic">Total: </span>
             <span>
               {new Intl.NumberFormat("es-PE", {
@@ -532,12 +508,12 @@ function TablaGridBaseVentas<T extends BaseRow>({
         </div>
       </header>
 
-      <div className="flex-1 bg-white rounded-lg shadow-inner overflow-hidden max-w-200 md:max-w-full ">
+      <div className="flex-1 bg-mist-50 rounded-lg shadow-md shadow-mist-400 border border-mist-300 overflow-hidden max-w-200 md:max-w-full">
         <DataGrid
           ref={gridRef}
           columns={columns}
           rows={filteredSortedRows}
-          headerRowHeight={70}
+          headerRowHeight={60}
           rowKeyGetter={(row) => row.id}
           onRowsChange={handleRowsChange}
           selectedRows={selectedRows}

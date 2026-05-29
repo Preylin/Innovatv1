@@ -87,12 +87,12 @@ export const ResumenSaldoEfectivo: React.FC = () => {
   ];
 
   return (
-    <div className="p-4 space-y-4 rounded-md bg-mauve-50 shadow-md">
-      <h2 className="text-lg font-semibold text-slate-700 uppercase tracking-tight">
+    <div className="p-2 space-y-2 rounded-md dark:bg-mist-600 bg-mist-100/70 border border-mist-300 dark:border-mist-600 shadow-xs">
+      <h2 className="md:text-lg lg:text-xl text-base font-bold dark:text-mist-50 text-mist-900  uppercase tracking-tight">
         Estado de Cuentas
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
         {cards.map((card, index) => {
           const isNegative = (card.value ?? 0) < 0;
 
@@ -112,7 +112,7 @@ export const ResumenSaldoEfectivo: React.FC = () => {
                 </div>
 
                 <div
-                  className={`text-2xl font-bold tracking-tight ${isNegative ? "text-red-600" : "text-slate-900"}`}
+                  className={`md:text-xl lg:text-2xl text-base font-bold tracking-tight ${isNegative ? "text-red-600" : "text-slate-900"}`}
                 >
                   {formatCurrency(card.value, card.currency)}
                 </div>

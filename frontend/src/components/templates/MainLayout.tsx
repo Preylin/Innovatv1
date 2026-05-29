@@ -67,11 +67,11 @@ function MainLayout(props: MainLayoutProps) {
 
   return (
     <div>
-        <div className="flex flex-col w-full h-dvh overflow-hidden"> 
-          <header className="bg-mist-950 dark:bg-mist-800 w-full h-12 flex items-center shrink-0 shadow-md z-50">
+        <div className="flex flex-col w-full h-dvh overflow-hidden dark:bg-[#121212] bg-[#F8F9FA]"> 
+          <header className="w-full h-12 flex items-center shrink-0 z-50">
           {props.header}
           </header>
-          <section className="flex-1 p-1 overflow-auto relative bg-mist-100 dark:bg-mist-950">
+          <section className="flex-1 p-1 overflow-auto relative">
             <Outlet />
           </section>
         </div>

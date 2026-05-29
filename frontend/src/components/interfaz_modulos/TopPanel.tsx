@@ -12,11 +12,12 @@ import {
 import {
   EyeOutlined,
   LogoutOutlined,
-  MenuOutlined,
   MessageOutlined,
   SettingOutlined,
 } from "@ant-design/icons";
 import { useNavigate, Link } from "@tanstack/react-router";
+import { HiMenu } from "react-icons/hi";
+
 
 import logoInnovatImg from "../../assets/logoInnovat.webp";
 import { defaultImage } from "../../assets/images";
@@ -106,7 +107,7 @@ export function PanelSuperior({ title, MenuItems }: TopPanelProps) {
   );
 
   return (
-    <nav className="flex h-12 w-full items-center justify-between shadow-sm">
+    <nav className="flex h-12 w-full items-center justify-between">
       {/* SECCIÓN IZQUIERDA: Menu y Logo */}
       <Flex align="center" gap={screens.md ? 16 : 8} className="shrink-0" style={{paddingLeft: "14px"}}>
         {isLoading ? (
@@ -116,7 +117,8 @@ export function PanelSuperior({ title, MenuItems }: TopPanelProps) {
             <CustomDropdown
               placement="bottomLeft"
               triggerElement={
-                <MenuOutlined className="cursor-pointer text-lg" style={{color: "#F7F7F7"}}/>
+                <HiMenu size={24} className="cursor-pointer text-lg dark:text-white"/>
+
               }
               items={MenuItems}
             />
@@ -135,7 +137,7 @@ export function PanelSuperior({ title, MenuItems }: TopPanelProps) {
       <div className="relative flex flex-1 items-center justify-center overflow-hidden ">
           <ShowMessage />
         <div className="flex items-center gap-2 overflow-hidden">
-          <span className="truncate font-bold md:text-lg" style={{color: "#F7F7F7"}}>
+          <span className="truncate font-bold md:text-lg dark:text-mist-50 text-shadow-md text-shadow-mist-300 dark:text-shadow-mist-500">
             {title}
           </span>
         </div>
@@ -149,7 +151,7 @@ export function PanelSuperior({ title, MenuItems }: TopPanelProps) {
         {screens.sm && (
           <Space size={screens.md ? "middle" : "small"} style={{marginRight: "2px"}}>
             <Badge size="small" count={1} overflowCount={9}>
-              <MessageOutlined className="cursor-pointer text-lg" style={{color: "#F7F7F7"}}/>
+              <MessageOutlined className="cursor-pointer text-lg"/>
             </Badge>
           </Space>
         )}

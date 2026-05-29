@@ -399,10 +399,10 @@ export function HistorialVentasTable() {
   if (isError) return <ApiErrorDisplay error={error} />;
 
   return (
-    <div className="flex flex-col w-full h-[calc(100vh-58px)] gap-1">
-      <header className="bg-white p-2 rounded-md shadow-sm border border-gray-100 flex items-center justify-between">
+    <div className="flex flex-col w-full h-[calc(100vh-58px)] gap-3">
+      <header className="px-2 flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-800 tracking-tight">
+          <h2 className="text-base md:text-xl font-bold text-gray-800 dark:text-mist-50 tracking-tight">
             Historial de Ventas
           </h2>
           <p className="text-xs text-gray-400 mt-0.5">
@@ -413,13 +413,13 @@ export function HistorialVentasTable() {
         <div className="flex flex-row items-center gap-2"></div>
       </header>
 
-      <main className="bg-white rounded-md shadow-sm border border-gray-100 flex-1 overflow-auto w-full">
+      <main className="flex-1 overflow-auto w-full">
         <TableBaseFuzzyCntasPorCobrar<DataTable>
           data={tableData}
           columns={columns}
           fuzzyFilter={fuzzyFilter}
           columFiltersInitialValue={columnFilters}
-          cantidadFilas={10}
+          cantidadFilas={15}
         />
       </main>
     </div>

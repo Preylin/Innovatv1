@@ -40,7 +40,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
   columns,
   fuzzyFilter,
   columFiltersInitialValue,
-  cantidadFilas = 10,
+  cantidadFilas = 15,
 }: Props<T>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(columFiltersInitialValue ?? []);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -85,22 +85,22 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
   }, [table.getState().columnFilters[0]?.id]);
 
   return (
-    <div className="p-2 flex flex-col gap-2 w-full space-y-1 animate-in fade-in duration-500">
-      <div className="flex flex-row sm:flex-row justify-between items-center sm:items-center gap-6 w-full">
+    <div className="px-2 flex flex-col gap-2 w-full animate-in fade-in duration-500">
+      <div className="flex flex-row sm:flex-row justify-between items-center sm:items-center gap-6 w-full py-0.5">
         <DebouncedInput
           value={globalFilter ?? ""}
           onChange={(value) => setGlobalFilter(String(value))}
-          className="p-2 text-sm shadow-sm border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="p-2 text-sm shadow-md shadow-mist-300 border border-mist-300 rounded-lg w-full focus:outline-none focus:ring-1 focus:ring-olive-500 dark:text-mist-50 dark:shadow-mist-500"
           placeholder="Buscar en todas las columnas..."
         />
-        <div className="text-sm font-medium text-gray-600 bg-mist-200 px-2 py-1 rounded-md text-center w-40">
+        <div className="text-sm font-medium text-mist-50 bg-mist-500 shadow-md shadow-mist-400 dark:shadow-mist-600 px-2 py-1 rounded-md text-center w-40">
           {table.getPrePaginationRowModel().rows.length} Registros
         </div>
       </div>
 
-      <div className="rounded-xl shadow-sm overflow-auto border border-gray-200">
+      <div className="shadow-md shadow-mist-400 overflow-auto rounded-md w-full">
         <table className="w-full border-collapse text-sm table-fixed">
-          <thead className="text-xs font-semibold text-gray-900 uppercase tracking-wider bg-mist-300">
+          <thead className="text-xs text-mist-50 font-semibold uppercase tracking-wider bg-mist-600 border-x border-mist-600 text-center">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -108,7 +108,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
                   return (
                     <th
                       key={header.id}
-                      className="p-2 relative group border-b border-gray-200 select-none"
+                      className="px-2 py-1 relative group select-none"
                       style={{ width: header.getSize() }}
                     >
                       <div
@@ -144,7 +144,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
               </tr>
             ))}
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200 text-sm text-gray-700">
+          <tbody className="bg-mist-50 divide-y divide-gray-200 text-sm text-mist-950">
             {table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="py-20 text-center">
@@ -153,7 +153,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
               </tr>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <tr className="hover:bg-gray-100" key={row.id}>
+                <tr className="hover:bg-mist-200/80" key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <td
                       className="p-2 border border-gray-200 truncate"
@@ -167,7 +167,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
               ))
             )}
           </tbody>
-          <tfoot className="bg-mist-100 font-bold border-t-2 border-gray-300 text-sm text-gray-900 sticky bottom-0">
+          <tfoot className="bg-mist-200 font-bold border-t-2 border-mist-400 text-sm sticky bottom-0">
             {table.getFooterGroups().map((footerGroup) => (
               <tr key={footerGroup.id}>
                 {footerGroup.headers.map((footer) => {
@@ -175,7 +175,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
                   return (
                     <td
                       key={footer.id}
-                      className="p-2 border border-gray-200"
+                      className="p-2"
                       style={{ width: footer.column.getSize() }}
                     >
                       <div
@@ -196,7 +196,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
         </table>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 pt-2 px-2 border-t border-gray-100">
+      <div className="flex flex-wrap items-center justify-between gap-4 pt-2 px-2 border-t border-mist-100">
         <div className="flex items-center gap-2">
           <button
             className="px-2 py-0.5 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white text-sm"
@@ -226,13 +226,13 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
           >
             {">>"}
           </button>
-          <span className="text-[8px] md:text-[10px] text-gray-600">
+          <span className="text-[8px] md:text-[10px] text-mist-600 dark:text-mist-50">
             Página <strong>{table.getState().pagination.pageIndex + 1}</strong> de <strong>{table.getPageCount()}</strong>
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-2 text-[8px] md:text-[10px] text-gray-600">
+          <span className="flex items-center gap-2 text-[8px] md:text-[10px] text-mist-600 dark:text-mist-50">
             Ir a:
             <input
               type="number"
@@ -249,7 +249,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
             value={table.getState().pagination.pageSize}
             onChange={(e) => table.setPageSize(Number(e.target.value))}
           >
-            {[10, 15, 20, 25, 30].map((pageSize) => (
+            {[15, 20, 25, 30, 40, 50].map((pageSize) => (
               <option key={pageSize} value={pageSize}>
                 Mostrar {pageSize}
               </option>
@@ -272,7 +272,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   );
 
   const inputStyle =
-    "w-full p-1 text-[8px] md:text-[10px] border border-gray-300 rounded focus:outline-none focus:ring-1 bg-white focus:ring-mist-500";
+    "w-full p-1 text-[8px] md:text-[10px] text-mist-500 font-bold border border-mist-300 rounded focus:outline-none focus:ring-1 bg-white focus:ring-teal-600";
 
   if (filterVariant === "select") {
     return (

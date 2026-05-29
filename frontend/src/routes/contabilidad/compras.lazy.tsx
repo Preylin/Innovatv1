@@ -1,20 +1,19 @@
-import { createLazyFileRoute } from "@tanstack/react-router";
-import { useToggle } from "../../hooks/Toggle";
-import { Button, Empty, Select, Spin } from "antd";
-import HistorialVentasImportMasivaExcel from "../../modulos/contabilidad/ventas/components/ModalImportarMasivoVentas";
-import { useYearsContabilidadVentas } from "../../modulos/contabilidad/ventas/data/api.ventas/api.smallConsultas";
-import { useState } from "react";
-import { LuSearch, LuFileUp, LuCalendarDays, LuInfo } from "react-icons/lu"; // Opcional: Iconos para mejor UX
-import TablaContabilidadVentas from "../../modulos/contabilidad/ventas/components/TablaMostrarActualizarVentas";
+import { createLazyFileRoute } from '@tanstack/react-router'
+import { useToggle } from '../../hooks/Toggle';
+import { useState } from 'react';
+import { Button, Empty, Select, Spin } from 'antd';
+import { LuCalendarDays, LuFileUp, LuInfo, LuSearch } from 'react-icons/lu';
+import HistorialComprasImportMasivaExcel from '../../modulos/contabilidad/ventas/components/ModalImportalMasivoCompras';
+import { useYearsContabilidadCompras } from '../../modulos/contabilidad/compras/data/api.smallConsultasCompras';
+import TablaContabilidadCompras from '../../modulos/contabilidad/compras/components/TablaMostrarActualizarCompras';
 
-export const Route = createLazyFileRoute("/contabilidad/ventas")({
+export const Route = createLazyFileRoute('/contabilidad/compras')({
   component: RouteComponent,
-});
+})
 
 function RouteComponent() {
-  return <PanelVentas />;
+  return <PanelCompras />
 }
-
 
 
 // Constante fuera del componente para evitar re-renders
@@ -33,9 +32,9 @@ const OPCIONES_MESES = [
   { label: "Diciembre", value: "12" },
 ];
 
-function PanelVentas() {
+ function PanelCompras() {
   const { isToggled, toggle } = useToggle();
-  const { data: years, error, isLoading } = useYearsContabilidadVentas();
+  const { data: years, error, isLoading } = useYearsContabilidadCompras();
 
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
@@ -64,7 +63,7 @@ function PanelVentas() {
         <div className="space-y-1">
           <div className="flex gap-3 items-center ">
             <h1 className="text-xl font-bold text-gray-900 dark:text-mist-50 tracking-tight">
-              Registro de Ventas
+              Registro de Compras
             </h1>
             {busquedaPeriodo && (
               <div className="flex items-center gap-1 px-1 py-0.5 bg-blue-50 rounded-md border border-blue-100">
@@ -80,7 +79,7 @@ function PanelVentas() {
               </div>
             )}
           </div>
-          <p className="text-sm text-gray-500 flex items-center gap-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
             <LuInfo size={14} /> Gestión de periodos y operaciones contables
           </p>
         </div>
@@ -88,8 +87,8 @@ function PanelVentas() {
         <div className="flex items-center gap-3 px-2 py-1.5 bg-mist-50 rounded-lg border border-mist-200">
           {/* Selector Año */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-gray-400 uppercase ml-2">
-              Año
+            <span className="text-xs font-semibold text-gray-600 uppercase ml-2">
+              Año:
             </span>
             <Select
               className="w-20"
@@ -102,8 +101,8 @@ function PanelVentas() {
 
           {/* Selector Mes */}
           <div className="flex items-center gap-2 border-l pl-3 border-gray-200">
-            <span className="text-xs font-semibold text-gray-400 uppercase">
-              Mes
+            <span className="text-xs font-semibold text-gray-600 uppercase">
+              Mes:
             </span>
             <Select
               className="w-25"
@@ -139,7 +138,7 @@ function PanelVentas() {
       {/* Área de Contenido / Resultados */}
       <main className="flex-1 py-1 overflow-hidden relative">
         {busquedaPeriodo ? (
-          <div className=""><TablaContabilidadVentas periodo={busquedaPeriodo} /></div>
+          <div className=""><TablaContabilidadCompras periodo={busquedaPeriodo} /></div>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-8 transition-all">
             <Empty
@@ -156,7 +155,7 @@ function PanelVentas() {
       </main>
 
       {/* Modales Externos */}
-      <HistorialVentasImportMasivaExcel open={isToggled} onClose={toggle} />
+      <HistorialComprasImportMasivaExcel open={isToggled} onClose={toggle} />
 
       {/* Manejo de error flotante o inline */}
       {error && (

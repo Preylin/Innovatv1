@@ -43,6 +43,12 @@ function useSiderBarContent(): AppMenuItem[] {
         icon: <UseBarGerenciaIcons name="inicio" />,
         to: "/contabilidad/ventas",
       },
+      {
+        label: "Compras",
+        key: "/contabilidad/compras",
+        icon: <UseBarGerenciaIcons name="inicio" />,
+        to: "/contabilidad/compras",
+      },
 
     ];
 

@@ -40,6 +40,9 @@ const GerenciaActividadesLazyRouteImport = createFileRoute(
 const ContabilidadVentasLazyRouteImport = createFileRoute(
   '/contabilidad/ventas',
 )()
+const ContabilidadComprasLazyRouteImport = createFileRoute(
+  '/contabilidad/compras',
+)()
 const AlmacenStockLazyRouteImport = createFileRoute('/almacen/stock')()
 const AlmacenSalidasLazyRouteImport = createFileRoute('/almacen/salidas')()
 const AlmacenIngresosLazyRouteImport = createFileRoute('/almacen/ingresos')()
@@ -240,6 +243,13 @@ const ContabilidadVentasLazyRoute = ContabilidadVentasLazyRouteImport.update({
   getParentRoute: () => ContabilidadRoute,
 } as any).lazy(() =>
   import('./routes/contabilidad/ventas.lazy').then((d) => d.Route),
+)
+const ContabilidadComprasLazyRoute = ContabilidadComprasLazyRouteImport.update({
+  id: '/compras',
+  path: '/compras',
+  getParentRoute: () => ContabilidadRoute,
+} as any).lazy(() =>
+  import('./routes/contabilidad/compras.lazy').then((d) => d.Route),
 )
 const AlmacenStockLazyRoute = AlmacenStockLazyRouteImport.update({
   id: '/stock',
@@ -445,6 +455,7 @@ export interface FileRoutesByFullPath {
   '/almacen/ingresos': typeof AlmacenIngresosLazyRoute
   '/almacen/salidas': typeof AlmacenSalidasLazyRoute
   '/almacen/stock': typeof AlmacenStockLazyRoute
+  '/contabilidad/compras': typeof ContabilidadComprasLazyRoute
   '/contabilidad/ventas': typeof ContabilidadVentasLazyRoute
   '/gerencia/actividades': typeof GerenciaActividadesLazyRoute
   '/gerencia/activos': typeof GerenciaActivosLazyRoute
@@ -486,6 +497,7 @@ export interface FileRoutesByTo {
   '/almacen/ingresos': typeof AlmacenIngresosLazyRoute
   '/almacen/salidas': typeof AlmacenSalidasLazyRoute
   '/almacen/stock': typeof AlmacenStockLazyRoute
+  '/contabilidad/compras': typeof ContabilidadComprasLazyRoute
   '/contabilidad/ventas': typeof ContabilidadVentasLazyRoute
   '/gerencia/actividades': typeof GerenciaActividadesLazyRoute
   '/gerencia/activos': typeof GerenciaActivosLazyRoute
@@ -533,6 +545,7 @@ export interface FileRoutesById {
   '/almacen/ingresos': typeof AlmacenIngresosLazyRoute
   '/almacen/salidas': typeof AlmacenSalidasLazyRoute
   '/almacen/stock': typeof AlmacenStockLazyRoute
+  '/contabilidad/compras': typeof ContabilidadComprasLazyRoute
   '/contabilidad/ventas': typeof ContabilidadVentasLazyRoute
   '/gerencia/actividades': typeof GerenciaActividadesLazyRoute
   '/gerencia/activos': typeof GerenciaActivosLazyRoute
@@ -582,6 +595,7 @@ export interface FileRouteTypes {
     | '/almacen/ingresos'
     | '/almacen/salidas'
     | '/almacen/stock'
+    | '/contabilidad/compras'
     | '/contabilidad/ventas'
     | '/gerencia/actividades'
     | '/gerencia/activos'
@@ -623,6 +637,7 @@ export interface FileRouteTypes {
     | '/almacen/ingresos'
     | '/almacen/salidas'
     | '/almacen/stock'
+    | '/contabilidad/compras'
     | '/contabilidad/ventas'
     | '/gerencia/actividades'
     | '/gerencia/activos'
@@ -669,6 +684,7 @@ export interface FileRouteTypes {
     | '/almacen/ingresos'
     | '/almacen/salidas'
     | '/almacen/stock'
+    | '/contabilidad/compras'
     | '/contabilidad/ventas'
     | '/gerencia/actividades'
     | '/gerencia/activos'
@@ -868,6 +884,13 @@ declare module '@tanstack/react-router' {
       path: '/ventas'
       fullPath: '/contabilidad/ventas'
       preLoaderRoute: typeof ContabilidadVentasLazyRouteImport
+      parentRoute: typeof ContabilidadRoute
+    }
+    '/contabilidad/compras': {
+      id: '/contabilidad/compras'
+      path: '/compras'
+      fullPath: '/contabilidad/compras'
+      preLoaderRoute: typeof ContabilidadComprasLazyRouteImport
       parentRoute: typeof ContabilidadRoute
     }
     '/almacen/stock': {
@@ -1098,11 +1121,13 @@ const AlmacenRouteWithChildren =
   AlmacenRoute._addFileChildren(AlmacenRouteChildren)
 
 interface ContabilidadRouteChildren {
+  ContabilidadComprasLazyRoute: typeof ContabilidadComprasLazyRoute
   ContabilidadVentasLazyRoute: typeof ContabilidadVentasLazyRoute
   ContabilidadIndexLazyRoute: typeof ContabilidadIndexLazyRoute
 }
 
 const ContabilidadRouteChildren: ContabilidadRouteChildren = {
+  ContabilidadComprasLazyRoute: ContabilidadComprasLazyRoute,
   ContabilidadVentasLazyRoute: ContabilidadVentasLazyRoute,
   ContabilidadIndexLazyRoute: ContabilidadIndexLazyRoute,
 }

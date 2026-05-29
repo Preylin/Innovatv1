@@ -8,14 +8,11 @@ import {
 } from "react-data-grid";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { format } from "date-fns"; // ◄ Cambiado de dayjs a date-fns
-import TablaGridBaseVentas, { type Filters } from "./TablaBaseVentas";
-import type { RowTableVentas } from "../utils/interfaceTablaVentas";
-import {
-  useContabilidadVentasLista,
-  useDeleteContabilidadVentas,
-  useSyncbContabilidadVentas,
-} from "../data/api.ventas/api.contabilidadVentas";
-import type { TablaVentasSchemaApiOutType } from "../data/api.schemasVentas/api.schemaVentas";
+import type { Filters } from "../../ventas/components/TablaBaseVentas";
+import TablaGridBaseVentas from "../../ventas/components/TablaBaseVentas";
+import { useContabilidadComprasLista, useDeleteContabilidadCompras, useSyncbContabilidadCompras } from "../data/api.contabilidadCompras";
+import type { TablaComprasSchemaApiOutType } from "../data/api.schemaCompras";
+import type { RowTableCompras } from "../types/interfaceTablaCompras";
 
 interface DropdownOption {
   value: string | number;
@@ -60,7 +57,7 @@ function DropdownEditor<TRow>({
   );
 }
 
-function CustomSelectCell({ row }: RenderCellProps<RowTableVentas>) {
+function CustomSelectCell({ row }: RenderCellProps<RowTableCompras>) {
   const { isRowSelectionDisabled, isRowSelected, onRowSelectionChange } =
     useRowSelection();
   return (
@@ -117,7 +114,7 @@ function FilterHeader({
   filters,
   setFilters,
 }: {
-  column: Column<RowTableVentas>;
+  column: Column<RowTableCompras>;
   filters: Filters;
   setFilters: React.Dispatch<React.SetStateAction<Filters>>;
 }) {
@@ -174,10 +171,10 @@ const formatToInputDate = (dateStr: string | null | undefined): string => {
 };
 
 const getColumns = (
-  updateCell: (rowId: number, field: keyof RowTableVentas, value: any) => void,
+  updateCell: (rowId: number, field: keyof RowTableCompras, value: any) => void,
   filters: Filters,
   setFilters: React.Dispatch<React.SetStateAction<Filters>>,
-): readonly Column<RowTableVentas>[] => [
+): readonly Column<RowTableCompras>[] => [
   {
     key: "select",
     name: "",
@@ -192,7 +189,7 @@ const getColumns = (
     name: "Nro",
     width: 50,
     headerCellClass: "text-center",
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => {
+    renderCell: ({ row }: RenderCellProps<RowTableCompras>) => {
       return (
         <div className="text-center text-[10px] md:text-[12px]">{row.key}</div>
       );
@@ -205,11 +202,11 @@ const getColumns = (
     width: 60,
     renderEditCell: renderTextEditor,
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
+    renderCell: ({ row }: RenderCellProps<RowTableCompras>) => (
       <CellInput
         value={row.periodo}
         onChange={(val) => updateCell(row.id, "periodo", val)}
@@ -229,11 +226,11 @@ const getColumns = (
     headerCellClass: "text-center",
     renderEditCell: renderTextEditor,
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
+    renderCell: ({ row }: RenderCellProps<RowTableCompras>) => (
       <CellInput
         type="date"
         value={formatToInputDate(row.fecha_inicio)} // ◄ Modificado con date-fns local
@@ -251,11 +248,11 @@ const getColumns = (
     headerCellClass: "text-center",
     renderEditCell: renderTextEditor,
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
+    renderCell: ({ row }: RenderCellProps<RowTableCompras>) => (
       <CellInput
         type="date"
         value={formatToInputDate(row.fecha_fin)} // ◄ Modificado con date-fns local
@@ -271,11 +268,11 @@ const getColumns = (
     width: 30,
     renderEditCell: renderTextEditor,
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
+    renderCell: ({ row }: RenderCellProps<RowTableCompras>) => (
       <CellInput
         value={row.tipo_comp}
         onChange={(val) => updateCell(row.id, "tipo_comp", val)}
@@ -293,11 +290,11 @@ const getColumns = (
     width: 55,
     renderEditCell: renderTextEditor,
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
+    renderCell: ({ row }: RenderCellProps<RowTableCompras>) => (
       <CellInput
         value={row.serie_comp}
         onChange={(val) => updateCell(row.id, "serie_comp", val)}
@@ -315,11 +312,11 @@ const getColumns = (
     width: 70,
     renderEditCell: renderTextEditor,
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
+    renderCell: ({ row }: RenderCellProps<RowTableCompras>) => (
       <CellInput
         value={row.numero_comp}
         onChange={(val) => updateCell(row.id, "numero_comp", val)}
@@ -337,11 +334,11 @@ const getColumns = (
     width: 30,
     renderEditCell: renderTextEditor,
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
+    renderCell: ({ row }: RenderCellProps<RowTableCompras>) => (
       <CellInput
         value={row.tipo_empresa}
         onChange={(val) => updateCell(row.id, "tipo_empresa", val)}
@@ -359,11 +356,11 @@ const getColumns = (
     width: 90,
     renderEditCell: renderTextEditor,
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
+    renderCell: ({ row }: RenderCellProps<RowTableCompras>) => (
       <CellInput
         value={row.numero_empresa}
         onChange={(val) => updateCell(row.id, "numero_empresa", val)}
@@ -382,11 +379,11 @@ const getColumns = (
     minWidth: 200,
     renderEditCell: renderTextEditor,
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
+    renderCell: ({ row }: RenderCellProps<RowTableCompras>) => (
       <CellInput
         value={row.nombre_empresa}
         onChange={(val) => updateCell(row.id, "nombre_empresa", val)}
@@ -400,11 +397,11 @@ const getColumns = (
   {
     key: "base_imponible",
     name: "Base Imponible",
-    width: 120,
+    width: 110,
     sortable: true,
     headerCellClass: "text-center",
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
@@ -428,11 +425,11 @@ const getColumns = (
   {
     key: "igv",
     name: "IGV",
-    width: 120,
+    width: 100,
     sortable: true,
     headerCellClass: "text-center",
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
@@ -454,13 +451,69 @@ const getColumns = (
     },
   },
   {
-    key: "total",
-    name: "Total",
+    key: "no_gravadas",
+    name: "No Gravadas",
     width: 120,
     sortable: true,
     headerCellClass: "text-center",
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
+      sortDirection: any;
+      priority: any;
+    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
+    renderCell: ({ row }) => (
+      <div
+        className={`text-right pr-4 font-medium text-[12px] ${row.no_gravadas >= 0 ? "text-teal-700" : "text-orange-500"}`}
+      >
+        {new Intl.NumberFormat("es-PE", {
+          style: "currency",
+          currency: "PEN",
+        }).format(row.no_gravadas)}
+      </div>
+    ),
+    editable: true,
+    renderEditCell: renderTextEditor,
+    cellClass: (row) => {
+      if (row.no_gravadas !== 0) return "bg-stone-100";
+      return "";
+    },
+  },
+  {
+    key: "otros",
+    name: "Otros",
+    width: 90,
+    sortable: true,
+    headerCellClass: "text-center",
+    renderHeaderCell: (props: {
+      column: Column<RowTableCompras>;
+      sortDirection: any;
+      priority: any;
+    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
+    renderCell: ({ row }) => (
+      <div
+        className={`text-right pr-4 font-medium text-[12px] ${row.otros >= 0 ? "text-teal-700" : "text-orange-500"}`}
+      >
+        {new Intl.NumberFormat("es-PE", {
+          style: "currency",
+          currency: "PEN",
+        }).format(row.otros)}
+      </div>
+    ),
+    editable: true,
+    renderEditCell: renderTextEditor,
+    cellClass: (row) => {
+      if (row.otros !== 0) return "bg-stone-100";
+      return "";
+    },
+  },
+  {
+    key: "total",
+    name: "Total",
+    width: 110,
+    sortable: true,
+    headerCellClass: "text-center",
+    renderHeaderCell: (props: {
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
@@ -490,11 +543,11 @@ const getColumns = (
       <DropdownEditor {...props} options={OPT_MONEDAS} />
     ),
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
+    renderCell: ({ row }: RenderCellProps<RowTableCompras>) => (
       <CellInput
         value={row.moneda}
         onChange={(val) => updateCell(row.id, "moneda", val)}
@@ -509,11 +562,11 @@ const getColumns = (
   {
     key: "tipo_cambio",
     name: "T.C",
-    width: 85,
+    width: 80,
     sortable: true,
     headerCellClass: "text-center",
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
@@ -536,28 +589,7 @@ const getColumns = (
       return "";
     },
   },
-  {
-    key: "categoria",
-    name: "Categoría",
-    editable: true,
-    width: 100,
-    renderEditCell: renderTextEditor,
-    renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
-      sortDirection: any;
-      priority: any;
-    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
-      <CellInput
-        value={row.categoria}
-        onChange={(val) => updateCell(row.id, "categoria", val)}
-      />
-    ),
-    cellClass: (row) => {
-      if (row.categoria === "") return "bg-red-100";
-      return "";
-    },
-  },
+
   {
     key: "descripcion",
     name: "Descripción",
@@ -566,11 +598,11 @@ const getColumns = (
     minWidth: 150,
     renderEditCell: renderTextEditor,
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
+    renderCell: ({ row }: RenderCellProps<RowTableCompras>) => (
       <CellInput
         value={row.descripcion || ""}
         onChange={(val) => updateCell(row.id, "descripcion", val)}
@@ -578,62 +610,6 @@ const getColumns = (
     ),
     cellClass: (row) => {
       if (row.descripcion === "") return "bg-red-100";
-      return "";
-    },
-  },
-  {
-    key: "monto_detraccion",
-    name: "Detracción",
-    width: 120,
-    sortable: true,
-    headerCellClass: "text-center",
-    renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
-      sortDirection: any;
-      priority: any;
-    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }) => (
-      <div
-        className={`text-right pr-4 font-medium text-[12px] ${row.monto_detraccion || 0 >= 0 ? "text-teal-700" : "text-orange-500"}`}
-      >
-        {new Intl.NumberFormat("es-PE", {
-          style: "currency",
-          currency: "PEN",
-        }).format(row.monto_detraccion || 0)}
-      </div>
-    ),
-    editable: true,
-    renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.monto_detraccion || 0 !== 0) return "bg-stone-100";
-      return "";
-    },
-  },
-  {
-    key: "monto_retencion",
-    name: "Retención",
-    width: 120,
-    sortable: true,
-    headerCellClass: "text-center",
-    renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
-      sortDirection: any;
-      priority: any;
-    }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }) => (
-      <div
-        className={`text-right pr-4 font-medium text-[12px] ${row.monto_retencion >= 0 ? "text-teal-700" : "text-orange-500"}`}
-      >
-        {new Intl.NumberFormat("es-PE", {
-          style: "currency",
-          currency: "PEN",
-        }).format(row.monto_retencion)}
-      </div>
-    ),
-    editable: true,
-    renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.monto_retencion !== 0) return "bg-stone-100";
       return "";
     },
   },
@@ -647,11 +623,11 @@ const getColumns = (
       <DropdownEditor {...props} options={OPT_ESTADO} />
     ),
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => {
+    renderCell: ({ row }: RenderCellProps<RowTableCompras>) => {
       const estadoEncontrado = OPT_ESTADO.find(
         (opt) => String(opt.value) === String(row.is_active),
       );
@@ -685,11 +661,11 @@ const getColumns = (
     width: 90,
     renderEditCell: renderTextEditor,
     renderHeaderCell: (props: {
-      column: Column<RowTableVentas>;
+      column: Column<RowTableCompras>;
       sortDirection: any;
       priority: any;
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
-    renderCell: ({ row }: RenderCellProps<RowTableVentas>) => (
+    renderCell: ({ row }: RenderCellProps<RowTableCompras>) => (
       <CellInput
         value={row.link_pdf || ""}
         onChange={(val) => updateCell(row.id, "link_pdf", val)}
@@ -702,7 +678,7 @@ const getColumns = (
   },
 ];
 
-const mapDataApi = (data: TablaVentasSchemaApiOutType[]): RowTableVentas[] => {
+const mapDataApi = (data: TablaComprasSchemaApiOutType[]): RowTableCompras[] => {
   return data.map((item, index) => ({
     key: index + 1,
     id: item.id,
@@ -717,22 +693,21 @@ const mapDataApi = (data: TablaVentasSchemaApiOutType[]): RowTableVentas[] => {
     nombre_empresa: item.razon_social || "",
     base_imponible: item.base_imponible,
     igv: item.igv,
+    no_gravadas: item.no_gravadas,
+    otros: item.otros,
     total: item.total,
     moneda: item.moneda,
     tipo_cambio: item.tipo_cambio,
-    categoria: item.categoria || "",
     descripcion: item.descripcion_comprobante || "",
-    monto_retencion: item.monto_retencion || 0,
-    monto_detraccion: item.monto_detraccion || 0,
     is_active: item.is_active || "",
     link_pdf: item.link_pdf,
   }));
 };
 
 const rowProcessor = (
-  rows: RowTableVentas[],
-  apiData: RowTableVentas[],
-): RowTableVentas[] => {
+  rows: RowTableCompras[],
+  apiData: RowTableCompras[],
+): RowTableCompras[] => {
   let saldoAcumulado = 0;
   let visualIndex = 1;
   return rows.map((row) => {
@@ -743,7 +718,7 @@ const rowProcessor = (
   });
 };
 
-const createEmptyRow = (id: number): RowTableVentas => ({
+const createEmptyRow = (id: number): RowTableCompras => ({
   key: 0,
   id,
   periodo: "",
@@ -757,13 +732,12 @@ const createEmptyRow = (id: number): RowTableVentas => ({
   nombre_empresa: "",
   base_imponible: 0,
   igv: 0,
+  no_gravadas: 0,
+  otros: 0,
   total: 0,
   moneda: "",
   tipo_cambio: 0,
-  categoria: "",
   descripcion: "",
-  monto_retencion: 0,
-  monto_detraccion: 0,
   is_active: "",
   link_pdf: "",
 });
@@ -785,10 +759,10 @@ const safeFormatToApi = (dateInput: Date | string): string => {
   }
 };
 
-function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
-  const { data, isLoading, isError } = useContabilidadVentasLista(periodo);
-  const { mutateAsync: syncData } = useSyncbContabilidadVentas(periodo);
-  const { mutateAsync: deleteItems } = useDeleteContabilidadVentas();
+function TablaContabilidadCompras({ periodo }: Props = { periodo: "" }) {
+  const { data, isLoading, isError } = useContabilidadComprasLista(periodo);
+  const { mutateAsync: syncData } = useSyncbContabilidadCompras(periodo);
+  const { mutateAsync: deleteItems } = useDeleteContabilidadCompras();
 
   const totals = useMemo(() => {
     if (!data) return { base: 0, igv: 0, total: 0 };
@@ -803,76 +777,85 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
   }, [data]);
 
   const handleSync = async (payload: {
-    created: RowTableVentas[];
-    updates: RowTableVentas[];
-  }) => {
-    const formattedPayload = {
-      created: payload.created
-        .filter((row) => {
-          const hasRequiredText =
-            row.fecha_inicio &&
-            row.fecha_fin &&
-            row.tipo_comp?.trim() &&
-            row.serie_comp?.trim() &&
-            row.numero_comp?.trim() &&
-            row.nombre_empresa?.trim();
+  created: RowTableCompras[];
+  updates: RowTableCompras[];
+}) => {
+  const formattedPayload = {
+    created: payload.created
+      .filter((row) => {
+        // 1. Validar textos obligatorios de manera segura
+        const hasRequiredText =
+          !!row.fecha_inicio &&
+          !!row.fecha_fin &&
+          !!row.tipo_comp?.trim() &&
+          !!row.serie_comp?.trim() &&
+          !!row.numero_comp?.trim() &&
+          !!row.nombre_empresa?.trim();
 
-          const hasRequiredNumbers =
-            typeof row.base_imponible === "number" &&
-            typeof row.igv === "number" &&
-            typeof row.total === "number";
+        // 2. CORRECCIÓN: Validar que se puedan convertir a números válidos (coerción)
+        // Evitamos el "typeof === 'number'" estricto porque el grid suele guardar strings.
+        const baseNum = Number(row.base_imponible);
+        const igvNum = Number(row.igv);
+        const totalNum = Number(row.total);
 
-          return hasRequiredText && hasRequiredNumbers;
-        })
-        .map((row) => ({
-          periodo: row.periodo,
-          fecha_emision: safeFormatToApi(row.fecha_inicio), // ◄ Modificado con date-fns
-          fecha_vencimiento: safeFormatToApi(row.fecha_fin), // ◄ Modificado con date-fns
-          tipo_cp_codigo: row.tipo_comp.trim(),
-          serie: row.serie_comp.trim(),
-          numero: row.numero_comp.trim(),
-          tipo_documento: row.tipo_empresa.trim() || null,
-          nro_documento: row.numero_empresa.trim() || null,
-          razon_social: row.nombre_empresa.trim() || null,
-          base_imponible: Number(row.base_imponible) || 0,
-          igv: Number(row.igv) || 0,
-          total: Number(row.total) || 0,
-          moneda: row.moneda.trim(),
-          tipo_cambio: Number(row.tipo_cambio) || 0,
-          categoria: row.categoria.trim() || null,
-          descripcion_comprobante: row.descripcion?.trim() || null,
-          monto_retencion: row.monto_retencion || 0,
-          monto_detraccion: row.monto_detraccion || 0,
-          is_active: row.is_active.trim() || "1",
-          link_pdf: row.link_pdf || null,
-        })),
+        const hasRequiredNumbers = 
+          !isNaN(baseNum) && 
+          !isNaN(igvNum) && 
+          !isNaN(totalNum);
 
-      updates: payload.updates.map((row) => ({
-        id: row.id,
+        return hasRequiredText && hasRequiredNumbers;
+      })
+      .map((row) => ({
         periodo: row.periodo,
-        fecha_emision: safeFormatToApi(row.fecha_inicio), // ◄ Modificado con date-fns
-        fecha_vencimiento: safeFormatToApi(row.fecha_fin), // ◄ Modificado con date-fns
+        fecha_emision: safeFormatToApi(row.fecha_inicio), 
+        fecha_vencimiento: safeFormatToApi(row.fecha_fin), 
         tipo_cp_codigo: row.tipo_comp.trim(),
         serie: row.serie_comp.trim(),
         numero: row.numero_comp.trim(),
-        tipo_documento: row.tipo_empresa.trim() || null,
-        nro_documento: row.numero_empresa.trim() || null,
-        razon_social: row.nombre_empresa.trim() || null,
+        tipo_documento: row.tipo_empresa?.trim() || null,
+        nro_documento: row.numero_empresa?.trim() || null,
+        razon_social: row.nombre_empresa?.trim() || null,
         base_imponible: Number(row.base_imponible) || 0,
         igv: Number(row.igv) || 0,
+        no_gravadas: Number(row.no_gravadas) || 0,
+        otros: Number(row.otros) || 0,
         total: Number(row.total) || 0,
-        moneda: row.moneda.trim(),
+        moneda: row.moneda?.trim() || "PEN", // Valor por defecto si viene vacío
         tipo_cambio: Number(row.tipo_cambio) || 0,
-        categoria: row.categoria.trim() || null,
         descripcion_comprobante: row.descripcion?.trim() || null,
-        monto_retencion: row.monto_retencion || 0,
-        monto_detraccion: row.monto_detraccion || 0,
-        is_active: row.is_active.trim() || "1",
+        is_active: row.is_active?.trim() || "1",
         link_pdf: row.link_pdf || null,
       })),
-    };
-    await syncData(formattedPayload);
+
+    updates: payload.updates.map((row) => ({
+      id: row.id,
+      periodo: row.periodo,
+      fecha_emision: safeFormatToApi(row.fecha_inicio), 
+      fecha_vencimiento: safeFormatToApi(row.fecha_fin), 
+      tipo_cp_codigo: row.tipo_comp.trim(),
+      serie: row.serie_comp.trim(),
+      numero: row.numero_comp.trim(),
+      tipo_documento: row.tipo_empresa?.trim() || null,
+      nro_documento: row.numero_empresa?.trim() || null,
+      razon_social: row.nombre_empresa?.trim() || null,
+      base_imponible: Number(row.base_imponible) || 0,
+      igv: Number(row.igv) || 0,
+      no_gravadas: Number(row.no_gravadas) || 0,
+      otros: Number(row.otros) || 0,
+      total: Number(row.total) || 0,
+      moneda: row.moneda?.trim() || "PEN",
+      tipo_cambio: Number(row.tipo_cambio) || 0,
+      descripcion_comprobante: row.descripcion?.trim() || null,
+      is_active: row.is_active?.trim() || "1",
+      link_pdf: row.link_pdf || null,
+    })),
   };
+
+  console.log("Formatted Payload enviado al backend:", formattedPayload);
+  
+  // Ahora el array 'created' no debería llegar vacío al backend
+  await syncData(formattedPayload);
+};
 
   // const columnsExcel = [
   //     { header: "Periodo", key: "periodo", width: 12 },
@@ -888,9 +871,9 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
   //     { header: "Total", key: "total", width: 15 },
   //     { header: "Moneda", key: "moneda", width: 15 },
   //     { header: "Tipo Cambio", key: "tipo_cambio", width: 15 },
-  //     { header: "Categoria", key: "categoria", width: 15 },
   //     { header: "Descripción", key: "descripcion", width: 15 },
   //   ];
+
 
   return (
     <TablaGridBaseVentas
@@ -908,8 +891,9 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
       createEmptyRow={createEmptyRow}
       rowProcessor={rowProcessor}
       syncData={handleSync}
+      
     />
   );
 }
 
-export default TablaContabilidadVentas;
+export default TablaContabilidadCompras;
