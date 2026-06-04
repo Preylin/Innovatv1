@@ -58,3 +58,80 @@ export const CuentasPorPagarUpdateApiSchema = z.object({
 export type CuentasPorPagarUpdateApiType = z.infer<
   typeof CuentasPorPagarUpdateApiSchema
 >;
+
+
+// schemas zod para cuentas por pagar eventuales
+
+export const CuentasPorPagarEventualResumenMensualSchemaApiOut = z.object({
+  id: z.number(),
+  fecha_emision: z.coerce.date(),
+  fecha_vencimiento: z.coerce.date(),
+  empresa: z.string(),
+  detalle: z.string(),
+  monto_esperado: z.coerce.number(),
+  monto_pagado: z.coerce.number(),
+  moneda: z.string(),
+  status_cobro: z.string(),
+});
+
+export type CuentasPorPagarEventualResumenMensualSchemaApiOutType = z.infer<
+  typeof CuentasPorPagarEventualResumenMensualSchemaApiOut
+>;
+
+export const CuentasPorPagarEventualRegistrarApiSchema = z.object({
+  fecha_emision: z.string(),
+  fecha_vencimiento: z.string(),
+  empresa: z.string(),
+  detalle: z.string(),
+  monto_esperado: z.number(),
+  moneda: z.string(),
+});
+
+export type CuentasPorPagarEventualRegistrarApiType = z.infer<
+  typeof CuentasPorPagarEventualRegistrarApiSchema
+>;
+export const CuentasPorPagarEventualActualizarApiSchema = z.object({
+  fecha_emision: z.string(),
+  fecha_vencimiento: z.string(),
+  empresa: z.string(),
+  detalle: z.string(),
+  monto_esperado: z.number(),
+  moneda: z.string(),
+});
+
+export type CuentasPorPagarEventualActualizarApiType = z.infer<
+  typeof CuentasPorPagarEventualActualizarApiSchema
+>;
+
+export const MovimientoCajaCntsPagarEventualesSchemaApi = z.object({
+  id: z.number(),
+  fecha_operacion: z.coerce.date(),
+  monto_pagado: z.coerce.number(),
+  medio_pago: z.string(),
+  glosa_pago: z.string(),
+});
+
+export type MovimientoCajaCntsPagarEventualesSchemaApiType = z.infer<
+  typeof MovimientoCajaCntsPagarEventualesSchemaApi
+>;
+
+export const CuentasPorPagarEventualesDetalleMovimientoCajaComprasSchemaApi = z.object({
+  id: z.number().int(),
+  fecha_operacion: z.string().nullish(),
+  lugar_salida: z.string().nullish(),
+  monto_pagado: z.coerce.number(),
+  medio_pago: z.string().nullish(),
+  glosa_pago: z.string().nullish(),
+});
+export type CuentasPorPagarEventualesDetalleMovimientoCajaComprasSchemaApiType = z.infer<typeof CuentasPorPagarEventualesDetalleMovimientoCajaComprasSchemaApi>;
+
+export const RegistrarPagoEventualesSchemaApi = z.object({
+  obligacion_id: z.number().int(),
+  fecha_operacion: z.string(),
+  lugar_salida: z.string().nullish(),
+  monto_pagado: z.coerce.number(),
+  medio_pago: z.string(),
+  status_cobro: z.string(),
+  glosa_pago: z.string(),
+});
+export type RegistrarPagoEventualesSchemaApiType = z.infer<typeof RegistrarPagoEventualesSchemaApi>;

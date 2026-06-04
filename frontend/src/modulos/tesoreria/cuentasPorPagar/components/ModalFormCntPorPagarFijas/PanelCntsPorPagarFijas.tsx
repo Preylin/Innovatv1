@@ -162,7 +162,7 @@ export function ObligacionItem({
       </div>
       {item.detalle && (
         <div className=" w-full md:w-120 text-slate-500 text-[9px] font-mono overflow-auto scroll-auto">
-            <p>{item.detalle}</p>
+          <p>{item.detalle}</p>
         </div>
       )}
     </div>
@@ -281,56 +281,62 @@ export function CuentasPorPagarFijas() {
 
       <main className="px-1 md:px-2 py-2">
         <div className="flex flex-col gap-2 overflow-auto scroll-auto">
-          {data
-            ?.filter((ob) => {
-              const inicioMesCreacion = startOfMonth(
-                new Date(ob.fecha_creacion),
-              );
-              const inicioMesVisualizado = startOfMonth(mesActual);
-              return !isBefore(inicioMesVisualizado, inicioMesCreacion);
-            })
-            .map((ob) => {
-              const fechaHoy = new Date();
-              const estaVencido = checkIsVencido(ob, mesActual, fechaHoy);
+          {data && data.length > 0 ? (
+            data
+              ?.filter((ob) => {
+                const inicioMesCreacion = startOfMonth(
+                  new Date(ob.fecha_creacion),
+                );
+                const inicioMesVisualizado = startOfMonth(mesActual);
+                return !isBefore(inicioMesVisualizado, inicioMesCreacion);
+              })
+              .map((ob) => {
+                const fechaHoy = new Date();
+                const estaVencido = checkIsVencido(ob, mesActual, fechaHoy);
 
-              return (
-                <Dropdown
-                  key={ob.id}
-                  menu={{ items: items(ob.id) }}
-                  trigger={["contextMenu"]}
-                >
-                  <div
-                    className={`flex flex-col md:flex-row p-2 items-center justify-between gap-2 rounded-md border transition-all ${
-                      ob.estado_pago === "TOTAL"
-                        ? "bg-slate-50 border-slate-200 opacity-75"
-                        : estaVencido
-                          ? "bg-white border-red-200 hover:shadow-md hover:shadow-mist-400 hover:bg-red-100"
-                          : "bg-white border-slate-200 hover:shadow-md hover:shadow-mist-400 hover:bg-mist-100"
-                    }`}
+                return (
+                  <Dropdown
+                    key={ob.id}
+                    menu={{ items: items(ob.id) }}
+                    trigger={["contextMenu"]}
                   >
-                    <ObligacionItem
-                      item={ob}
-                      estaVencido={estaVencido}
-                      hoy={fechaHoy}
-                    />
-                    <div className="flex justify-end">
-                      {ob.estado_pago !== "TOTAL" && (
-                        <button
-                          onClick={() => setItemAPagar(ob)}
-                          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase text-white shadow-lg ${
-                            estaVencido ? "bg-red-600" : "bg-slate-900"
-                          }`}
-                        >
-                          {ob.estado_pago === "PARCIAL"
-                            ? "Completar Pago"
-                            : "Pagar Ahora"}
-                        </button>
-                      )}
+                    <div
+                      className={`flex flex-col md:flex-row p-2 items-center justify-between gap-2 rounded-md border transition-all ${
+                        ob.estado_pago === "TOTAL"
+                          ? "bg-slate-50 border-slate-200 opacity-75"
+                          : estaVencido
+                            ? "bg-white border-red-200 hover:shadow-md hover:shadow-mist-400 hover:bg-red-100"
+                            : "bg-white border-slate-200 hover:shadow-md hover:shadow-mist-400 hover:bg-mist-100"
+                      }`}
+                    >
+                      <ObligacionItem
+                        item={ob}
+                        estaVencido={estaVencido}
+                        hoy={fechaHoy}
+                      />
+                      <div className="flex justify-end">
+                        {ob.estado_pago !== "TOTAL" && (
+                          <button
+                            onClick={() => setItemAPagar(ob)}
+                            className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase text-white shadow-lg ${
+                              estaVencido ? "bg-red-600" : "bg-slate-900"
+                            }`}
+                          >
+                            {ob.estado_pago === "PARCIAL"
+                              ? "Completar Pago"
+                              : "Pagar Ahora"}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </Dropdown>
-              );
-            })}
+                  </Dropdown>
+                );
+              })
+          ) : (
+            <div className="text-center py-10 text-slate-400 font-bold">
+              No hay obligaciones registradas para este mes
+            </div>
+          )}
         </div>
       </main>
 

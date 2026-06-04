@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user
 from app.core.db import get_session
-from app.api.v1.tesoreria.schemas.SchemaTesoreriaEfectivo import DeleteRequest, EfectivoOut, SaldosIndependientes, SyncPayload, SyncResponse, ListasUnicasResponse
+from app.api.v1.tesoreria.schemas.SchemaTesoreriaEfectivo import DeleteRequest, EfectivoOut, SaldosIndependientes, SyncPayload, SyncResponse, ListasUnicasResponse, ReporteCobroPagoActual
 from app.api.v1.tesoreria.models.ModelsTesoreriaEfectivo import CajaChica, Bcpsoles, Bcpdolares
 
 # router caja chica
@@ -105,6 +105,13 @@ async def obtener_saldos_separados(session: AsyncSession = Depends(get_session))
         
     return row
 
+@router_cajachica.get("/reporte-cobro-pago-actual", response_model=list[ReporteCobroPagoActual])
+async def reporte_cobro_pago_actual(session: AsyncSession = Depends(get_session)):
+    query = text("SELECT * FROM reporte_cobros_pagos_actual;")
+    result = await session.execute(query)
+    return result.mappings().all()
+
+
 @router_cajachica.get("/resumen_columnas", response_model=ListasUnicasResponse)
 async def get_datos_resumen_caja_chica(db: AsyncSession = Depends(get_session)):
     desc_cte = (
@@ -158,8 +165,6 @@ async def get_datos_resumen_caja_chica(db: AsyncSession = Depends(get_session)):
         "referencias": [row.referencia for row in rows if row.referencia is not None],
         "adicionales": [row.adicionales for row in rows if row.adicionales is not None]
     }
-
-
 
 
 # router bcpsoles

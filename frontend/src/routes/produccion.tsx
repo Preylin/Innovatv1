@@ -8,12 +8,15 @@ import { PanelSuperior } from "../components/interfaz_modulos/TopPanel";
 import { useMemo } from "react";
 import { UseBarTesoreriaIcons } from "../components/atoms/icons/AntDesign/tesoreria/BarTesoreria";
 import { UseSpinnersIcons } from "../components/atoms/icons/OtrasLibs/Spinners";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export const Route = createFileRoute("/produccion")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
+  useDocumentTitle("Producción");
+
   return (
     <MainLayout
       header={

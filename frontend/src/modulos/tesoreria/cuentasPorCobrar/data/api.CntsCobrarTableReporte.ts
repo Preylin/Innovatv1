@@ -6,6 +6,7 @@ import {
   CuentasPorCobrarDetalleOnetoOneReadVentasSchemaApi,
   RegistrarCobroSchemaApi,
   ReporteCntsPorCobrarSchemaApi,
+  ReporteCobrosPagosActualSchemaApi,
   UpdateFechaPagoRetencionDetraccionSchemaApi,
   type CuentasPorCobrarDetalleMovimientoCajaVentasSchemaApiType,
   type RegistrarCobroSchemaApiType,
@@ -117,5 +118,19 @@ export function useUpdateFechaDetraccionRetencion(id: number) {
       qc.invalidateQueries({ queryKey: ["detalle_cuenta_por_cobrar_individual_ventas"] });
       
     },
+  });
+}
+
+
+export function useReposteCobrosPagosActual() {
+  return useQuery({
+    // Agregamos el mes a la queryKey para que se refresque al cambiar de mes
+    queryKey: ["reporte_cobro_pago_actual_tesoreria"],
+    queryFn: createQuery({
+      // Pasamos el mes como query param al backend
+      request: () =>
+        api.get("/cajachica/reporte-cobro-pago-actual"),
+      schema: ReporteCobrosPagosActualSchemaApi.array(),
+    }),
   });
 }

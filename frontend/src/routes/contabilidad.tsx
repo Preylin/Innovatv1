@@ -3,6 +3,7 @@ import MainLayout, { mapNavToMenu, type AppMenuItem, type NavNodeInterface } fro
 import { PanelSuperior } from "../components/interfaz_modulos/TopPanel";
 import { useMemo } from "react";
 import { UseBarGerenciaIcons } from "../components/atoms/icons/AntDesign/gerencia/BarGerencia";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 
 
@@ -20,6 +21,8 @@ export const Route = createFileRoute("/contabilidad")({
 
 
 function RouteComponent() {
+  useDocumentTitle("Contabilidad");
+
   return (
     <MainLayout
       header={<PanelSuperior title="CONTABILIDAD" MenuItems={useSiderBarContent()}/>}

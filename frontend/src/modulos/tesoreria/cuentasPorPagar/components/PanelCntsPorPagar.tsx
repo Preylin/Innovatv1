@@ -1,57 +1,46 @@
 import { useState, type JSX } from "react";
-import { CuentasPorPagarFijas } from "./ModalFormCntPorPagarFijas/PanelCntsPorPagarFijas";
-import { RxCross2 } from "react-icons/rx";
-import { RxDrawingPin } from "react-icons/rx";
+import { RxCross2, RxDrawingPin } from "react-icons/rx";
 import { MdPublishedWithChanges } from "react-icons/md";
 import { RiExchangeBoxFill } from "react-icons/ri";
 import { VscRequestChanges } from "react-icons/vsc";
-import CuentasPorPagarProveedores from "./CntsPorPagarProveedores/PanelCntsPorPagarProveedores";
+import { Link, Outlet, useLocation } from "@tanstack/react-router";
 
-interface ShowSidebarProps {
-  onSelect: (id: NavigationItem) => void;
-  isOpen: boolean;
-  toggleMenu: () => void;
+type NavigationItem = "item1" | "item2" | "item3";
+
+interface MenuItem {
+  id: NavigationItem;
+  label: string;
+  icon: JSX.Element;
+  to: string;
 }
 
-const Item1: React.FC = () => <CuentasPorPagarFijas />;
+interface ShowSidebarProps {
+  isOpen: boolean;
+  toggleMenu: () => void;
+  currentPath: string;
+}
 
-const Item2: React.FC = () => <CuentasPorPagarProveedores />;
-
-const Item3: React.FC = () => <div>: ) En desarrollo</div>;
-
-function ShowSidebar({ onSelect, isOpen, toggleMenu }: ShowSidebarProps) {
-  const [activeItemId, setActiveItemId] = useState<NavigationItem | null>(
-    "item1",
-  );
-
-  const menuItems: { id: NavigationItem; label: string; icon: JSX.Element }[] =
-    [
-      {
-        id: "item1",
-        label: "Mensuales",
-        icon: (
-          <MdPublishedWithChanges
-            className=" text-red-400"
-            fontSize={20}
-          />
-        ),
-      },
-      {
-        id: "item2",
-        label: "Temporales",
-        icon: <RiExchangeBoxFill className="" fontSize={20} />,
-      },
-      {
-        id: "item3",
-        label: "Otras",
-        icon: <VscRequestChanges className="" fontSize={20} />,
-      },
-    ];
-
-  const handleItemClick = (id: NavigationItem) => {
-    setActiveItemId(id);
-    onSelect(id);
-  };
+function ShowSidebar({ isOpen, toggleMenu, currentPath }: ShowSidebarProps) {
+  const menuItems: MenuItem[] = [
+    {
+      id: "item1",
+      label: "Mensuales",
+      icon: <MdPublishedWithChanges className="text-red-400" fontSize={20} />,
+      to: "/tesoreria/pagar/mensuales",
+    },
+    {
+      id: "item2",
+      label: "Proveedores",
+      icon: <RiExchangeBoxFill fontSize={20} />,
+      to: "/tesoreria/pagar/proveedores",
+    },
+    {
+      id: "item3",
+      label: "Eventuales",
+      icon: <VscRequestChanges fontSize={20} />,
+      to: "/tesoreria/pagar/eventuales",
+    },
+  ];
 
   return (
     <nav className="flex flex-col p-1 gap-3">
@@ -61,6 +50,7 @@ function ShowSidebar({ onSelect, isOpen, toggleMenu }: ShowSidebarProps) {
         </p>
         <button
           onClick={toggleMenu}
+          type="button"
           className="text-gray-500 hover:text-red-500 transition-colors text-sm font-bold p-1 border border-gray-200 rounded"
         >
           {isOpen ? <RxCross2 /> : <RxDrawingPin />}
@@ -69,44 +59,39 @@ function ShowSidebar({ onSelect, isOpen, toggleMenu }: ShowSidebarProps) {
 
       <div className="px-2">
         <ul className="space-y-1">
-          {menuItems.map((item) => (
-            <li key={item.id}>
-              <button
-                onClick={() => handleItemClick(item.id)}
-                className={`w-full text-left p-2 rounded-md transition-all flex items-center gap-3 font-medium ${
-                  activeItemId === item.id
-                    ? "bg-mist-600 text-mist-100 shadow-sm"
-                    : "text-gray-600 hover:bg-mist-300 hover:text-mist-800"
-                }`}
-              >
-                <span>{item.icon}</span>
-                {item.label}
-              </button>
-            </li>
-          ))}
+          {menuItems.map((item) => {
+            // Evaluamos la coincidencia exacta de la ruta actual del navegador
+            const isActive = currentPath === item.to;
+
+            return (
+              <li key={item.id}>
+                <Link to={item.to}>
+                  <button
+                    className={`w-full text-left p-2 rounded-md transition-all flex items-center gap-3 font-medium  ${
+                      isActive
+                        ? "bg-mist-600 text-mist-100 shadow-sm"
+                        : "text-gray-600 hover:bg-mist-300 hover:text-mist-800"
+                    }`}
+                  >
+                    <span>{item.icon}</span>
+                    {item.label}
+                  </button>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </nav>
   );
 }
 
-type NavigationItem = "item1" | "item2" | "item3";
-
-function PanelCntsPorCobrar() {
+function PanelCntsPorPagar() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
-  const [selectedItem, setSelectedItem] = useState<NavigationItem>("item1");
 
-  const renderContent = (): JSX.Element => {
-    switch (selectedItem) {
-      case "item2":
-        return <Item2 />;
-      case "item3":
-        return <Item3 />;
-      default:
-        return <Item1 />;
-    }
-  };
+  // Extraemos de manera reactiva la URL exacta en la que se encuentra el usuario
+  const location = useLocation();
 
   return (
     <div className="flex flex-col w-full h-[calc(100vh-58px)] overflow-hidden">
@@ -117,7 +102,7 @@ function PanelCntsPorCobrar() {
           onMouseEnter={() => setIsHovered(true)}
         />
 
-        {/* SIDEBAR */}
+        {/* SIDEBAR PERSISTENTE */}
         <aside
           onMouseLeave={() => setIsHovered(false)}
           className={`
@@ -126,21 +111,20 @@ function PanelCntsPorCobrar() {
             ${!isOpen && isHovered ? "translate-x-0 shadow-2xl" : ""}
           `}
         >
-          {/* Pasamos isOpen y la función para cerrar al Sidebar */}
           <ShowSidebar
-            onSelect={setSelectedItem}
             isOpen={isOpen}
             toggleMenu={() => setIsOpen(!isOpen)}
+            currentPath={location.pathname} // Enviamos el pathname limpio al hijo
           />
         </aside>
 
-        {/* CUERPO PRINCIPAL */}
-        <section className="pl-1 overflow-auto w-full">
-          {renderContent()}
+        {/* CUERPO PRINCIPAL DINÁMICO */}
+        <section className="overflow-auto w-full">
+          <Outlet />
         </section>
       </main>
     </div>
   );
 }
 
-export default PanelCntsPorCobrar;
+export default PanelCntsPorPagar;

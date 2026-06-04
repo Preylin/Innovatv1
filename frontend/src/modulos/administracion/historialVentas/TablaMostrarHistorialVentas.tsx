@@ -6,8 +6,8 @@ import {
   type FilterFn,
   type SortingFn,
 } from "@tanstack/react-table";
-import { useHistorialVentasListaList } from "../../../api/queries/modulos/administracion/ventas/historialVentas.api";
-import type { HistorialVentasOutApiType } from "../../../api/queries/modulos/administracion/ventas/historialVentas.api.schema";
+import { useHistorialVentasListaList } from "../../../api/queries/modulos/administracion/ventas/historial.api";
+import type { HistorialVentasOutApiType } from "../../../api/queries/modulos/administracion/ventas/historial.api.schema";
 import { compareItems, rankItem } from "@tanstack/match-sorter-utils";
 import {
   IoCalendarOutline,
@@ -28,8 +28,7 @@ interface DataTable {
   id: number;
   fecha_emision: string | Date;
   tipo_cp_codigo: string;
-  serie: string;
-  numero: string;
+  comprobante: string;
   base_imponible: number;
   igv: number;
   total: number;
@@ -50,8 +49,7 @@ const mapHistorialVentasTable = (
     id: item.id,
     fecha_emision: item.fecha_emision || "",
     tipo_cp_codigo: item.tipo_cp_codigo || "",
-    serie: item.serie || "",
-    numero: item.numero || "",
+    comprobante: `${item.serie || ""}-${item.numero || ""}`,
     base_imponible: (item.base_imponible || 0) / (item.tipo_cambio || 1) || 0,
     igv: (item.igv || 0) / (item.tipo_cambio || 1) || 0,
     total: (item.total || 0) / (item.tipo_cambio || 1) || 0,
@@ -258,30 +256,26 @@ export function HistorialVentasTable() {
         cell: (info) => <StyleDataCell>{info.getValue()}</StyleDataCell>,
         filterFn: "fuzzy",
         sortingFn: fuzzySort,
+        
       },
       {
-        accessorKey: "serie",
+        accessorKey: "comprobante",
         size: 100,
+        minSize: 60,
+        maxSize: 100,
         meta: { textAlign: "center" },
         header: () => (
           <span className="flex text-[8px] md:text-[10px] items-center gap-1">
-            Serie
+            <IoPersonOutline className="text-gray-500" /> Comprobante
           </span>
         ),
-        cell: (info) => <StyleDataCell>{info.getValue()}</StyleDataCell>,
-        filterFn: "fuzzy",
-      },
-      {
-        accessorKey: "numero",
-        size: 100,
-        meta: { textAlign: "center" },
-        header: () => (
-          <span className="flex text-[8px] md:text-[10px] items-center gap-1">
-            Número
-          </span>
+        cell: (info) => (
+          <StyleDataCell className="text-center">
+            {info.getValue() || "-"}
+          </StyleDataCell>
         ),
-        cell: (info) => <StyleDataCell>{info.getValue()}</StyleDataCell>,
         filterFn: "fuzzy",
+        sortingFn: fuzzySort,
         footer: () => (
           <span className="text-[8px] md:text-[10px] font-extrabold text-gray-900 block w-full text-end">
             TOTALES:
@@ -394,6 +388,70 @@ export function HistorialVentasTable() {
     ],
     [],
   );
+
+  const columnsExcel = [
+      {
+        key: "key",
+        header: "Nro.",
+        width: 5,
+      },
+      {
+        key: "fecha_emision",
+        header: "F. Emisión",
+        width: 15,
+      },
+      {
+        key: "descripcion_comprobante",
+        header: "Descripción",
+        width: 50,
+      },
+      {
+        key: "razon_social",
+        header: "Cliente",
+        width: 20,
+      },
+      {
+        key: "nro_documento",
+        header: "RUC/DNI",
+        width: 20,
+      },
+      {
+        key: "categoria",
+        header: "Categoría",
+        width: 10,
+      },
+      {
+        key: "tipo_cp_codigo",
+        header: "Tipo CP",
+        width: 5,
+      },
+      {
+        key: "comprobante",
+        header: "Comprobante",
+        width: 10,
+      },
+      {
+        key: "base_imponible",
+        header: "B.I.",
+        width: 10,
+      },
+      {
+        key: "igv",
+        header: "IGV",
+        width: 10,
+      },
+      {
+        key: "total",
+        header: "Total",
+        width: 10,
+      },
+      {
+        key: "moneda",
+        header: "Moneda",
+        width: 10,
+      },
+      
+    ];
   if (isLoading) return <SkeletonHeaderTable loading={isLoading} />;
 
   if (isError) return <ApiErrorDisplay error={error} />;
@@ -420,6 +478,8 @@ export function HistorialVentasTable() {
           fuzzyFilter={fuzzyFilter}
           columFiltersInitialValue={columnFilters}
           cantidadFilas={15}
+          excelFileName="HistorialVentas"
+          columnsExcel={columnsExcel}
         />
       </main>
     </div>

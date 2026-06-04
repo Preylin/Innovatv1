@@ -21,3 +21,26 @@ export const HistorialVentasOutApiSchema = z.object({
 export type HistorialVentasOutApiType = z.infer<
   typeof HistorialVentasOutApiSchema
 >;
+
+
+export const HistorialComprasOutApiSchema = z.object({
+  id: z.number(),
+  fecha_emision: z.coerce.date(),
+  descripcion_comprobante: z.string().nullish(),
+  tipo_cp_codigo: z.string(),
+  serie: z.string(),
+  numero: z.string(),
+  nro_documento: z.string().nullish(),
+  razon_social: z.string().nullish(),
+  base_imponible: z.coerce.number(),
+  igv: z.coerce.number(),
+  no_gravadas: z.coerce.number(),
+  otros: z.coerce.number(),
+  total: z.coerce.number(),
+  moneda: z.string(),
+  tipo_cambio: z.coerce.number(),
+});
+
+export type HistorialComprasOutApiType = z.infer<
+  typeof HistorialComprasOutApiSchema
+>;

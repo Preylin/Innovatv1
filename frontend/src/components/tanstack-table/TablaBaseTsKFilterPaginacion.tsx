@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-
+import { useCallback, useEffect, useMemo, useState } from "react";
+import ExcelJS from "exceljs";
 import {
   type Column,
   type ColumnDef,
@@ -17,6 +17,7 @@ import {
 
 import { type RankingInfo } from "@tanstack/match-sorter-utils";
 import { Empty } from "antd";
+import { PiMicrosoftExcelLogoFill } from "react-icons/pi";
 
 declare module "@tanstack/react-table" {
   interface FilterFns {
@@ -27,12 +28,20 @@ declare module "@tanstack/react-table" {
   }
 }
 
+interface ColumnExcel {
+  header: string;
+  key: string;
+  width: number;
+}
+
 interface Props<T> {
   data: T[];
   columns: ColumnDef<T, any>[];
   fuzzyFilter: FilterFn<any>;
   columFiltersInitialValue?: ColumnFiltersState;
   cantidadFilas?: number;
+  excelFileName?: string;
+  columnsExcel: ColumnExcel[];
 }
 
 export function TableBaseFuzzyCntasPorCobrar<T>({
@@ -41,8 +50,12 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
   fuzzyFilter,
   columFiltersInitialValue,
   cantidadFilas = 15,
+  excelFileName = "Export",
+  columnsExcel,
 }: Props<T>) {
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(columFiltersInitialValue ?? []);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
+    columFiltersInitialValue ?? [],
+  );
   const [globalFilter, setGlobalFilter] = useState("");
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -76,6 +89,73 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
     debugColumns: false,
   });
 
+  // FUNCIÓN DE EXPORTACIÓN INTEGRADA CORRECTAMENTE
+  const handleExportExcel = useCallback(async () => {
+    const filteredRows = table.getFilteredRowModel().rows;
+
+    if (filteredRows.length === 0) {
+      alert("No hay registros en la tabla para exportar.");
+      return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Datos");
+
+    // 1. Configurar columnas pasadas por props
+    worksheet.columns = columnsExcel.map((col) => ({
+      header: col.header,
+      key: col.key,
+      width: col.width,
+    }));
+
+    // Estilo del Header
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: "FFFFFF" } };
+    headerRow.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "1e293b" },
+    };
+
+    // Creas un Set rápido de las llaves válidas que sí configuraste en Excel
+    const validExcelKeys = new Set(columnsExcel.map((col) => col.key));
+
+    // 2. Agregar las filas de la tabla reactiva
+    filteredRows.forEach((row) => {
+      const item = row.original;
+      const excelRow = worksheet.addRow({ ...item });
+
+      // 3. Formatear SÓLO si la columna realmente existe en esta exportación
+      ["base_imponible", "igv", "total"].forEach((key) => {
+        if (validExcelKeys.has(key)) {
+          // <--- PROTECCIÓN CRÍTICA
+          const cell = excelRow.getCell(key);
+          if (cell && cell.value !== undefined && cell.value !== null) {
+            cell.numFmt = "#,##0.00";
+            cell.alignment = { horizontal: "right" };
+          }
+        }
+      });
+    });
+
+    // Descarga del documento
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[-:T]/g, "")
+      .slice(0, 14);
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${excelFileName}_${timestamp}.xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }, [table, columnsExcel, excelFileName]);
+
   useEffect(() => {
     if (table.getState().columnFilters[0]?.id === "fullName") {
       if (table.getState().sorting[0]?.id !== "fullName") {
@@ -93,8 +173,19 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
           className="p-2 text-sm shadow-md shadow-mist-300 border border-mist-300 rounded-lg w-full focus:outline-none focus:ring-1 focus:ring-olive-500 dark:text-mist-50 dark:shadow-mist-500"
           placeholder="Buscar en todas las columnas..."
         />
-        <div className="text-sm font-medium text-mist-50 bg-mist-500 shadow-md shadow-mist-400 dark:shadow-mist-600 px-2 py-1 rounded-md text-center w-40">
-          {table.getPrePaginationRowModel().rows.length} Registros
+        <div
+        className="flex flex-row gap-2 items-center justify-evenly"
+        >
+          <div className="text-sm font-medium text-mist-50 bg-mist-500 shadow-md shadow-mist-400 dark:shadow-mist-600 px-2 py-1 rounded-md text-center w-40">
+            {table.getPrePaginationRowModel().rows.length} Registros
+          </div>
+          <button
+            title="Exportar Excel"
+            onClick={handleExportExcel}
+            className="px-2 py-1 border border-mist-300 rounded-md shadow-md shadow-mist-300 hover:bg-mist-200  text-sm"
+          >
+            <PiMicrosoftExcelLogoFill fontSize={20} />
+          </button>
         </div>
       </div>
 
@@ -104,7 +195,8 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const align = (header.column.columnDef.meta as any)?.textAlign || "left";
+                  const align =
+                    (header.column.columnDef.meta as any)?.textAlign || "left";
                   return (
                     <th
                       key={header.id}
@@ -113,12 +205,21 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
                     >
                       <div
                         className={`flex items-center gap-1 ${
-                          align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"
+                          align === "center"
+                            ? "justify-center"
+                            : align === "right"
+                              ? "justify-end"
+                              : "justify-start"
                         } ${header.column.getCanSort() ? "cursor-pointer select-none hover:text-pink-600" : ""}`}
                         onClick={header.column.getToggleSortingHandler()}
                       >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {{ asc: " 🔼", desc: " 🔽" }[header.column.getIsSorted() as string] ?? null}
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                        {{ asc: " 🔼", desc: " 🔽" }[
+                          header.column.getIsSorted() as string
+                        ] ?? null}
                       </div>
 
                       {header.column.getCanFilter() && (
@@ -133,7 +234,9 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
                             onMouseDown: header.getResizeHandler(),
                             onTouchStart: header.getResizeHandler(),
                             className: `absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none touch-none z-10 hover:bg-mist-400 ${
-                              header.column.getIsResizing() ? "bg-blue-600 w-2" : "bg-transparent"
+                              header.column.getIsResizing()
+                                ? "bg-blue-600 w-2"
+                                : "bg-transparent"
                             }`,
                           }}
                         />
@@ -148,7 +251,10 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
             {table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="py-20 text-center">
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No hay registros" />
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description="No hay registros"
+                  />
                 </td>
               </tr>
             ) : (
@@ -160,7 +266,10 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
                       key={cell.id}
                       style={{ width: cell.column.getSize() }}
                     >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </td>
                   ))}
                 </tr>
@@ -171,7 +280,8 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
             {table.getFooterGroups().map((footerGroup) => (
               <tr key={footerGroup.id}>
                 {footerGroup.headers.map((footer) => {
-                  const align = (footer.column.columnDef.meta as any)?.textAlign || "left";
+                  const align =
+                    (footer.column.columnDef.meta as any)?.textAlign || "left";
                   return (
                     <td
                       key={footer.id}
@@ -180,12 +290,19 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
                     >
                       <div
                         className={`flex items-center w-full ${
-                          align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"
+                          align === "center"
+                            ? "justify-center"
+                            : align === "right"
+                              ? "justify-end"
+                              : "justify-start"
                         }`}
                       >
                         {footer.isPlaceholder
                           ? null
-                          : flexRender(footer.column.columnDef.footer, footer.getContext())}
+                          : flexRender(
+                              footer.column.columnDef.footer,
+                              footer.getContext(),
+                            )}
                       </div>
                     </td>
                   );
@@ -196,6 +313,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
         </table>
       </div>
 
+      {/* Control de paginación */}
       <div className="flex flex-wrap items-center justify-between gap-4 pt-2 px-2 border-t border-mist-100">
         <div className="flex items-center gap-2">
           <button
@@ -227,7 +345,8 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
             {">>"}
           </button>
           <span className="text-[8px] md:text-[10px] text-mist-600 dark:text-mist-50">
-            Página <strong>{table.getState().pagination.pageIndex + 1}</strong> de <strong>{table.getPageCount()}</strong>
+            Página <strong>{table.getState().pagination.pageIndex + 1}</strong>{" "}
+            de <strong>{table.getPageCount()}</strong>
           </span>
         </div>
 
@@ -261,7 +380,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
   );
 }
 
-
+// ... Las sub-funciones Filter y DebouncedInput se mantienen idénticas abajo
 function Filter({ column }: { column: Column<any, unknown> }) {
   const { filterVariant } = (column.columnDef.meta as any) ?? {};
   const columnFilterValue = column.getFilterValue();
@@ -326,5 +445,11 @@ function DebouncedInput({
     return () => clearTimeout(timeout);
   }, [value]);
 
-  return <input {...props} value={value} onChange={(e) => setValue(e.target.value)} />;
+  return (
+    <input
+      {...props}
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+    />
+  );
 }

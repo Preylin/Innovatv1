@@ -87,7 +87,7 @@ export const ResumenSaldoEfectivo: React.FC = () => {
   ];
 
   return (
-    <div className="p-2 space-y-2 rounded-md dark:bg-mist-600 bg-mist-100/70 border border-mist-300 dark:border-mist-600 shadow-xs">
+    <div className="p-2 space-y-2 rounded-md shadow-xs">
       <h2 className="md:text-lg lg:text-xl text-base font-bold dark:text-mist-50 text-mist-900  uppercase tracking-tight">
         Estado de Cuentas
       </h2>

@@ -1,7 +1,4 @@
 import { App, Modal, Spin } from "antd";
-
-
-
 import { format } from "date-fns";
 import { useMemo } from "react";
 import { CiViewList } from "react-icons/ci";
@@ -192,7 +189,7 @@ function ModalRegistroCntsPorCobrarProveedores({
             <CiViewList className="animate-bounce" />
 
             <h1 className="text-xs md:text-lg font-semibold text-gray-800 dark:text-mist-100">
-              Registrar Cobro
+              Registrar Pago
             </h1>
             <div className="text-[9px] font-medium text-gray-500">
               ID: <span className="text-blue-600 font-bold">#{id}</span>

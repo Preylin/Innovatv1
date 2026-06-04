@@ -1,67 +1,80 @@
 import React, { useMemo } from "react";
 import {
-  flexRender,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type Column,
+  sortingFns,
   type ColumnDef,
   type ColumnFiltersState,
   type FilterFn,
+  type SortingFn,
 } from "@tanstack/react-table";
-import { Empty, Card, Typography, Skeleton, Input, Select } from "antd";
-import { useToggle } from "../../../hooks/Toggle";
-import ButtomNew from "../../../components/molecules/botons/BottomNew";
-import isoToDDMMYYYY from "../../../helpers/Fechas";
-import { useHistorialComprasListaList } from "../../../api/queries/modulos/administracion/ventas/compras/historialCompras.api";
-import type { HistorialComprasOutApiType } from "../../../api/queries/modulos/administracion/ventas/compras/historialCompras.api.schema";
-import HistorialComprasImportMasiva from "./ModalImportacionMasivaHC";
-import { rankItem } from "@tanstack/match-sorter-utils";
-
-const { Text } = Typography;
+import { compareItems, rankItem } from "@tanstack/match-sorter-utils";
+import { useHistorialComprasListaList } from "../../../api/queries/modulos/administracion/ventas/historial.api";
+import type { HistorialComprasOutApiType } from "../../../api/queries/modulos/administracion/ventas/historial.api.schema";
+import { IoCalendarOutline, IoDocumentTextOutline, IoPersonOutline, IoReceiptOutline, IoWalletOutline } from "react-icons/io5";
+import { SkeletonHeaderTable } from "../../../components/skeleton/SkeletonHeaderTable";
+import { ApiErrorDisplay } from "../../../components/Error/ApiErrorDisplay";
+import { TableBaseFuzzyCntasPorCobrar } from "../../../components/tanstack-table/TablaBaseTsKFilterPaginacion";
 
 // --- INTERFACES Y MAPPERS ---
 
 interface DataTable {
+  key: number;
   id: number;
-  fecha: string;
-  descripcion: string;
-  ruc: string;
-  proveedor: string;
-  tipo: string;
-  serie: string;
-  numero: string;
-  subtotal: number;
+  fecha_emision: Date;
+  tipo_cp_codigo: string;
+  comprobante: string;
+  base_imponible: number;
   igv: number;
-  nograbada: number;
+  no_gravadas: number;
   otros: number;
   total: number;
-  tc: number;
+  moneda: string;
+  tipo_cambio: number;
+  descripcion_comprobante?: string;
+  nro_documento?: string;
+  razon_social?: string;
 }
 
 const mapHistorialVentasTable = (
   historialVentasData: HistorialComprasOutApiType[],
 ): DataTable[] => {
-  return historialVentasData.map((w, i) => ({
-    id: i + 1,
-    fecha: isoToDDMMYYYY(w.fecha) ?? "-",
-    descripcion: w.descripcion ?? "-",
-    ruc: w.ruc ?? "-",
-    proveedor: w.proveedor ?? "-",
-    tipo: w.tipo ?? "-",
-    serie: w.serie ?? "-",
-    numero: String(w.numero) ?? "-",
-    subtotal: Number(w.subtotal) || 0,
-    igv: Number(w.igv) || 0,
-    nograbada: Number(w.nograbada) || 0,
-    otros: Number(w.otros) || 0,
-    total: Number(w.total) || 0,
-    tc: Number(w.tc) || 0,
+  return historialVentasData.map((item, i) => ({
+    key: i + 1,
+    id: item.id,
+    fecha_emision: item.fecha_emision || "",
+    tipo_cp_codigo: item.tipo_cp_codigo || "",
+    comprobante: `${item.serie || ""}-${item.numero || ""}`,
+    base_imponible: (item.base_imponible || 0) / (item.tipo_cambio || 1) || 0,
+    igv: (item.igv || 0) / (item.tipo_cambio || 1) || 0,
+    no_gravadas: (item.no_gravadas || 0) / (item.tipo_cambio || 1) || 0,
+    otros: (item.otros || 0) / (item.tipo_cambio || 1) || 0,
+    total: (item.total || 0) / (item.tipo_cambio || 1) || 0,
+    moneda: item.moneda || "",
+    tipo_cambio: item.tipo_cambio || 0,
+    descripcion_comprobante: item.descripcion_comprobante || "",
+    nro_documento: item.nro_documento || "",
+    razon_social: item.razon_social || "",
   }));
+};
+
+
+const format = new Intl.NumberFormat("es-PE", {});
+
+const formatCurrency = (amount: number, currency: string) => {
+  return new Intl.NumberFormat("es-PE", {
+    style: "currency",
+    currency: currency === "USD" ? "USD" : "PEN",
+  }).format(amount);
+};
+
+const fuzzySort: SortingFn<any> = (rowA, rowB, columnId) => {
+  let dir = 0;
+  if (rowA.columnFiltersMeta[columnId]) {
+    dir = compareItems(
+      rowA.columnFiltersMeta[columnId]?.itemRank!,
+      rowB.columnFiltersMeta[columnId]?.itemRank!,
+    );
+  }
+  return dir === 0 ? sortingFns.alphanumeric(rowA, rowB, columnId) : dir;
 };
 
 // --- FILTRO PERSONALIZADO PARA NÚMEROS ---
@@ -69,9 +82,7 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   const itemRank = rankItem(row.getValue(columnId), value);
   addMeta({ itemRank });
   return itemRank.passed;
-}
-
-
+};
 const numericFilterFn: FilterFn<DataTable> = (row, columnId, filterValue) => {
   const cellValue = row.getValue(columnId);
   if (filterValue === "" || filterValue === undefined) return true;
@@ -81,382 +92,450 @@ const numericFilterFn: FilterFn<DataTable> = (row, columnId, filterValue) => {
     .includes(String(filterValue).toLowerCase());
 };
 
-// --- COMPONENTE PRINCIPAL ---
+const dateFilterFn: FilterFn<DataTable> = (row, columnId, filterValue) => {
+  const cellValue = row.getValue(columnId);
+  if (!filterValue || filterValue === "") return true;
+
+  if (!cellValue) return false;
+
+  const d = new Date(cellValue as string | Date);
+  if (isNaN(d.getTime())) return false;
+
+  const formattedCellDate = d.toLocaleDateString("es-PE", { timeZone: "UTC" });
+
+  return formattedCellDate
+    .toLowerCase()
+    .includes(String(filterValue).toLowerCase());
+};
+
+interface PropsComponent {
+  children: React.ReactNode;
+  className?: string;
+}
+// componente para dar estilo a los datos de las columnas
+const StyleDataCell: React.FC<PropsComponent> = ({ children, className }) => {
+  return (
+    <span
+      title={children?.toString().trim() || "-"}
+      className={`text-[8px] md:text-[10px] text-center block ${className}`}
+    >
+      {children}
+    </span>
+  );
+};
+
+// Formateador auxiliar de Fechas
+const formatDate = (date: string | Date | null) => {
+  if (!date) return "-";
+  const d = new Date(date);
+  return isNaN(d.getTime())
+    ? "-"
+    : d.toLocaleDateString("es-PE", { timeZone: "UTC" });
+};
+
 
 export function HistorialComprasTable() {
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
-  const openModal = useToggle();
+  const [columnFilters] = React.useState<ColumnFiltersState>([]);
 
   const {
-    data: sales = [],
+    data: apiData,
     isLoading,
     isError,
     error,
   } = useHistorialComprasListaList();
 
-  const dataSource = useMemo(() => {
-    if (!sales) return [];
-    return mapHistorialVentasTable(sales);
-  }, [sales]);
+  const tableData = useMemo(() => {
+    if (!apiData) return [];
+    return mapHistorialVentasTable(apiData);
+  }, [apiData]);
 
   const columns = React.useMemo<ColumnDef<DataTable, any>[]>(
-    () => [
+      () => [
+        {
+          accessorKey: "key",
+          size: 50,
+          meta: { textAlign: "center" },
+          header: () => (
+            <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+              Nro.
+            </span>
+          ),
+          cell: (info) => <StyleDataCell>{info.getValue()}</StyleDataCell>,
+          // Eliminamos equalsString si es un número correlativo secuencial
+        },
+        {
+          accessorKey: "fecha_emision",
+          size: 80,
+          filterFn: dateFilterFn,
+          meta: { textAlign: "center" },
+          header: () => (
+            <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+              <IoCalendarOutline className="text-gray-500" /> F. Emisión
+            </span>
+          ),
+          cell: (info) => (
+            <StyleDataCell>{formatDate(info.getValue())}</StyleDataCell>
+          ),
+        },
+        {
+          accessorKey: "descripcion_comprobante",
+          size: 250,
+          minSize: 150,
+          maxSize: 800,
+          header: () => (
+            <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+              <IoDocumentTextOutline className="text-gray-500" /> Descripción
+            </span>
+          ),
+          cell: (info) => (
+            <StyleDataCell className="text-start">
+              {info.getValue() || "-"}
+            </StyleDataCell>
+          ),
+          filterFn: "fuzzy",
+          sortingFn: fuzzySort,
+        },
+        {
+          accessorKey: "razon_social",
+          size: 150,
+          minSize: 150,
+          maxSize: 600,
+          header: () => (
+            <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+              <IoPersonOutline className="text-gray-500" /> Cliente
+            </span>
+          ),
+          cell: (info) => (
+            <StyleDataCell className="text-start">
+              {info.getValue() || "-"}
+            </StyleDataCell>
+          ),
+          filterFn: "fuzzy",
+          sortingFn: fuzzySort,
+        },
+        {
+          accessorKey: "nro_documento",
+          size: 80,
+          meta: { textAlign: "center" },
+          header: () => (
+            <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+              <IoReceiptOutline className="text-gray-500" /> RUC/DNI
+            </span>
+          ),
+          cell: (info) => <StyleDataCell>{info.getValue() || "-"}</StyleDataCell>,
+          filterFn: "fuzzy",
+        },
+        {
+          accessorKey: "tipo_cp_codigo",
+          size: 70,
+          meta: { textAlign: "center" },
+          header: () => (
+            <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+              <IoReceiptOutline className="text-gray-500" /> Tipo CP
+            </span>
+          ),
+          cell: (info) => <StyleDataCell>{info.getValue()}</StyleDataCell>,
+          filterFn: "fuzzy",
+          sortingFn: fuzzySort,
+          
+        },
+        {
+          accessorKey: "comprobante",
+          size: 100,
+          minSize: 60,
+          maxSize: 100,
+          meta: { textAlign: "center" },
+          header: () => (
+            <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+              <IoPersonOutline className="text-gray-500" /> Comprobante
+            </span>
+          ),
+          cell: (info) => (
+            <StyleDataCell className="text-center">
+              {info.getValue() || "-"}
+            </StyleDataCell>
+          ),
+          filterFn: "fuzzy",
+          sortingFn: fuzzySort,
+          footer: () => (
+            <span className="text-[8px] md:text-[10px] font-extrabold text-gray-900 block w-full text-end">
+              TOTALES:
+            </span>
+          ),
+        },
+        {
+          accessorKey: "base_imponible",
+          size: 80,
+          filterFn: numericFilterFn,
+          meta: { textAlign: "center" },
+          header: () => (
+            <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+              <IoWalletOutline className="text-gray-500" /> B.I.
+            </span>
+          ),
+          cell: (info) => (
+            <StyleDataCell className="text-end">
+              {formatCurrency(info.getValue(), info.row.original.moneda)}
+            </StyleDataCell>
+          ),
+          footer: ({ table }) => {
+            const totalFiltrado = table
+              .getFilteredRowModel()
+              .rows.reduce(
+                (sum, row) => sum + (Number(row.getValue("base_imponible")) || 0),
+                0,
+              );
+  
+            return (
+              <span className="text-[8px] md:text-[10px] font-extrabold text-gray-900 block w-full text-end">
+                {format.format(totalFiltrado)}
+              </span>
+            );
+          },
+        },
+        {
+          accessorKey: "igv",
+          size: 80,
+          filterFn: numericFilterFn,
+          meta: { textAlign: "center" },
+          header: () => (
+            <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+              <IoWalletOutline className="text-gray-500" /> IGV
+            </span>
+          ),
+          cell: (info) => (
+            <StyleDataCell className="text-end">
+              {formatCurrency(info.getValue(), info.row.original.moneda)}
+            </StyleDataCell>
+          ),
+          footer: ({ table }) => {
+            const totalFiltrado = table
+              .getFilteredRowModel()
+              .rows.reduce(
+                (sum, row) => sum + (Number(row.getValue("igv")) || 0),
+                0,
+              );
+  
+            return (
+              <span className="text-[8px] md:text-[10px] font-extrabold text-gray-900 block w-full text-end">
+                {format.format(totalFiltrado)}
+              </span>
+            );
+          },
+        },
+        {
+          accessorKey: "no_gravadas",
+          size: 80,
+          filterFn: numericFilterFn,
+          meta: { textAlign: "center" },
+          header: () => (
+            <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+              <IoWalletOutline className="text-gray-500" /> No Gravadas
+            </span>
+          ),
+          cell: (info) => (
+            <StyleDataCell className="text-end">
+              {formatCurrency(info.getValue(), info.row.original.moneda)}
+            </StyleDataCell>
+          ),
+          footer: ({ table }) => {
+            const totalFiltrado = table
+              .getFilteredRowModel()
+              .rows.reduce(
+                (sum, row) => sum + (Number(row.getValue("no_gravadas")) || 0),
+                0,
+              );
+  
+            return (
+              <span className="text-[8px] md:text-[10px] font-extrabold text-gray-900 block w-full text-end">
+                {format.format(totalFiltrado)}
+              </span>
+            );
+          },
+        },
+        {
+          accessorKey: "otros",
+          size: 80,
+          filterFn: numericFilterFn,
+          meta: { textAlign: "center" },
+          header: () => (
+            <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+              <IoWalletOutline className="text-gray-500" /> Otros
+            </span>
+          ),
+          cell: (info) => (
+            <StyleDataCell className="text-end">
+              {formatCurrency(info.getValue(), info.row.original.moneda)}
+            </StyleDataCell>
+          ),
+          footer: ({ table }) => {
+            const totalFiltrado = table
+              .getFilteredRowModel()
+              .rows.reduce(
+                (sum, row) => sum + (Number(row.getValue("otros")) || 0),
+                0,
+              );
+  
+            return (
+              <span className="text-[8px] md:text-[10px] font-extrabold text-gray-900 block w-full text-end">
+                {format.format(totalFiltrado)}
+              </span>
+            );
+          },
+        },
+        {
+          accessorKey: "total",
+          size: 90,
+          filterFn: numericFilterFn,
+          meta: { textAlign: "center" },
+          header: () => (
+            <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+              <IoWalletOutline className="text-gray-500" /> Total
+            </span>
+          ),
+          cell: (info) => (
+            <StyleDataCell className="text-end">
+              {formatCurrency(info.getValue(), info.row.original.moneda)}
+            </StyleDataCell>
+          ),
+          footer: ({ table }) => {
+            const totalFiltrado = table
+              .getFilteredRowModel()
+              .rows.reduce(
+                (sum, row) => sum + (Number(row.getValue("total")) || 0),
+                0,
+              );
+  
+            return (
+              <span className="text-[8px] md:text-[10px] font-extrabold text-gray-900 block w-full text-end">
+                {format.format(totalFiltrado)}
+              </span>
+            );
+          },
+        },
+        {
+          accessorKey: "moneda",
+          size: 70,
+          meta: { textAlign: "center", filterVariant: "select" },
+          header: () => (
+            <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+              Moneda
+            </span>
+          ),
+          cell: (info) => <StyleDataCell>{info.getValue() || "-"}</StyleDataCell>,
+          filterFn: "fuzzy",
+          sortingFn: fuzzySort,
+        },
+      ],
+      [],
+    );
+
+const columnsExcel = [
       {
-        accessorKey: "fecha",
-        header: "Fecha",
-        cell: (info) => (
-          <Text style={{ fontSize: "10px" }} className="text-gray-600">
-            {info.getValue()}
-          </Text>
-        ),
-        size: 80,
-        meta: { textAlign: "center" },
+        key: "key",
+        header: "Nro.",
+        width: 5,
       },
       {
-        accessorKey: "descripcion",
+        key: "fecha_emision",
+        header: "F. Emisión",
+        width: 15,
+      },
+      {
+        key: "descripcion_comprobante",
         header: "Descripción",
-        cell: (info) => (
-          <Text
-            style={{ fontSize: "10px" }}
-            ellipsis={{ tooltip: info.getValue() }}
-            className="text-gray-600"
-          >
-            {info.getValue()}
-          </Text>
-        ),
-        size: 220,
-        meta: { textAlign: "left" },
+        width: 50,
       },
       {
-        accessorKey: "proveedor",
-        header: "proveedor",
-        cell: (info) => (
-          <Text
-            style={{ fontSize: "10px" }}
-            ellipsis={{ tooltip: info.getValue() }}
-            className="text-gray-600"
-          >
-            {info.getValue()}
-          </Text>
-        ),
-        size: 180,
-        meta: { textAlign: "left" },
+        key: "razon_social",
+        header: "Cliente",
+        width: 20,
       },
       {
-        accessorKey: "ruc",
-        header: "RUC",
-        size: 100,
-        cell: (info) => (
-          <Text style={{ fontSize: "10px" }}>{info.getValue()}</Text>
-        ),
-        meta: { textAlign: "center" },
+        key: "nro_documento",
+        header: "RUC/DNI",
+        width: 20,
       },
       {
-        accessorKey: "tipo",
-        header: "Tipo",
-        size: 60,
-        meta: { filterVariant: "select", textAlign: "center" },
-        cell: (info) => (
-          <Text style={{ fontSize: "10px" }}>{info.getValue()}</Text>
-        ),
+        key: "categoria",
+        header: "Categoría",
+        width: 10,
       },
       {
-        accessorKey: "serie",
-        header: "Serie",
-        size: 70,
-        meta: { textAlign: "center" },
-        cell: (info) => (
-          <Text style={{ fontSize: "10px" }}>{info.getValue()}</Text>
-        ),
+        key: "tipo_cp_codigo",
+        header: "Tipo CP",
+        width: 10,
       },
       {
-        accessorKey: "numero",
-        header: "Número",
-        size: 70,
-        meta: { textAlign: "center" },
-        cell: (info) => (
-          <Text style={{ fontSize: "10px" }}>{info.getValue()}</Text>
-        ),
+        key: "comprobante",
+        header: "Comprobante",
+        width: 10,
       },
       {
-        accessorKey: "subtotal",
-        header: "Subtotal",
-        size: 80,
-        filterFn: numericFilterFn, // Aplicación del filtro
-        meta: { filterVariant: "inputnumber", textAlign: "right" },
-        cell: (info) => (
-          <Text style={{ fontSize: "10px" }} className="text-gray-600">
-            {info.getValue().toFixed(2)}
-          </Text>
-        ),
+        key: "base_imponible",
+        header: "B.I.",
+        width: 10,
       },
       {
-        accessorKey: "igv",
+        key: "igv",
         header: "IGV",
-        size: 80,
-        filterFn: numericFilterFn, // Aplicación del filtro
-        meta: { filterVariant: "inputnumber", textAlign: "right" },
-        cell: (info) => (
-          <Text style={{ fontSize: "10px" }} className="text-gray-600">
-            {info.getValue().toFixed(2)}
-          </Text>
-        ),
+        width: 10,
       },
       {
-        accessorKey: "nograbada",
-        header: "No Grabada",
-        size: 80,
-        filterFn: numericFilterFn, // Aplicación del filtro
-        meta: { filterVariant: "inputnumber", textAlign: "right" },
-        cell: (info) => (
-          <Text style={{ fontSize: "10px" }} className="text-gray-600">
-            {info.getValue().toFixed(2)}
-          </Text>
-        ),
+        key: "no_gravadas",
+        header: "No Gravadas",
+        width: 10,
       },
       {
-        accessorKey: "otros",
+        key: "otros",
         header: "Otros",
-        size: 80,
-        filterFn: numericFilterFn, // Aplicación del filtro
-        meta: { filterVariant: "inputnumber", textAlign: "right" },
-        cell: (info) => (
-          <Text style={{ fontSize: "10px" }} className="text-gray-600">
-            {info.getValue().toFixed(2)}
-          </Text>
-        ),
+        width: 10,
       },
       {
-        accessorKey: "total",
+        key: "total",
         header: "Total",
-        size: 90,
-        filterFn: numericFilterFn, // Aplicación del filtro
-        meta: { filterVariant: "inputnumber", textAlign: "right" },
-        cell: (info) => (
-          <Text style={{ fontSize: "10px", fontWeight: "bold" }}>
-            {info.getValue().toFixed(2)}
-          </Text>
-        ),
+        width: 10,
       },
       {
-        accessorKey: "tc",
-        header: "TC",
-        size: 50,
-        filterFn: numericFilterFn, // Aplicación del filtro
-        meta: { filterVariant: "inputnumber", textAlign: "center" },
-        cell: (info) => (
-          <Text style={{ fontSize: "10px" }} className="text-gray-600">
-            {info.getValue().toFixed(3)}
-          </Text>
-        ),
+        key: "moneda",
+        header: "Moneda",
+        width: 10,
       },
-    ],
-    [],
-  );
+      
+    ];
+  if (isLoading) return <SkeletonHeaderTable loading={isLoading} />;
 
-  const table = useReactTable({
-    data: dataSource,
-    columns,
-    state: { columnFilters },
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-    initialState: {
-      pagination: { pageSize: 15 },
-    },
-    filterFns: {
-      fuzzy: fuzzyFilter, //define as a filter function that can be used in column definitions
-    },
-  });
-
-  if (isLoading)
-    return (
-      <div className="flex justify-center p-20">
-        <Skeleton active paragraph={{ rows: 20 }} />
-      </div>
-    );
-  if (isError)
-    return (
-      <Card className="m-4 border-red-200 bg-red-50 text-red-600">
-        Error: {(error as any)?.message}
-      </Card>
-    );
+  if (isError) return <ApiErrorDisplay error={error} />;
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex justify-between items-center">
+    <div className="flex flex-col w-full h-[calc(100vh-58px)] gap-3">
+      <header className="px-2 flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold dark:text-white">Historial de Compras 2023 - 2025</h2>
-          <p className="text-[10px] text-gray-400 font-medium uppercase">
-            Total: {dataSource.length}
+          <h2 className="text-base md:text-xl font-bold text-gray-800 dark:text-mist-50 tracking-tight">
+            Historial de Compras
+          </h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Todas las compras realizadas por la empresa desde el 2023
           </p>
         </div>
-        <div className="flex gap-2">
-          <ButtomNew onClick={openModal.toggle} />
-          <HistorialComprasImportMasiva
-            open={openModal.isToggled}
-            onClose={openModal.setOff}
-          />
-        </div>
-      </div>
 
-      <div className="overflow-x-auto rounded-lg border shadow-sm">
-        <table className="w-full border-collapse text-sm table-fixed min-w-275">
-          <thead className="bg-gray-50 text-gray-900 uppercase text-[10px]">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  const align =
-                    (header.column.columnDef.meta as any)?.textAlign || "left";
-                  return (
-                    <th
-                      key={header.id}
-                      className="p-3 border-b font-bold"
-                      style={{ width: header.getSize() }}
-                    >
-                      <div
-                        className={`flex items-center gap-1 ${align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"} ${header.column.getCanSort() ? "cursor-pointer select-none hover:text-pink-600" : ""}`}
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                        {{ asc: " 🔼", desc: " 🔽" }[
-                          header.column.getIsSorted() as string
-                        ] ?? null}
-                      </div>
-                      {header.column.getCanFilter() && (
-                        <div className="mt-2 font-normal lowercase">
-                          <Filter column={header.column} />
-                        </div>
-                      )}
-                    </th>
-                  );
-                })}
-              </tr>
-            ))}
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className="dark:hover:bg-blue-50/20 hover:bg-slate-200 transition-all"
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const align =
-                      (cell.column.columnDef.meta as any)?.textAlign || "left";
-                    return (
-                      <td
-                        key={cell.id}
-                        className="p-2 whitespace-nowrap overflow-hidden"
-                        style={{
-                          textAlign: align as any,
-                          width: cell.column.getSize(),
-                        }}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={columns.length} className="py-20 text-center">
-                  <Empty
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    description="No hay registros"
-                  />
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+        <div className="flex flex-row items-center gap-2"></div>
+      </header>
 
-      <div className="flex items-center justify-between p-2 border rounded-lg">
-        <div className="flex gap-1">
-          <button
-            className="px-3 py-1 border rounded text-xs disabled:opacity-30 hover:bg-teal-400 cursor-pointer"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Anterior
-          </button>
-          <button
-            className="px-3 py-1 border rounded text-xs disabled:opacity-30 hover:bg-teal-400 cursor-pointer"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Siguiente
-          </button>
-        </div>
-        <div className="text-[11px] font-bold text-gray-400">
-          Pág.{" "}
-          <span className="text-blue-600">
-            {table.getState().pagination.pageIndex + 1}
-          </span>{" "}
-          de {table.getPageCount()}
-        </div>
-      </div>
+      <main className="flex-1 overflow-auto w-full">
+        <TableBaseFuzzyCntasPorCobrar<DataTable>
+          data={tableData}
+          columns={columns}
+          fuzzyFilter={fuzzyFilter}
+          columFiltersInitialValue={columnFilters}
+          cantidadFilas={15}
+          excelFileName="HistorialCompras"
+          columnsExcel={columnsExcel}
+        />
+      </main>
     </div>
   );
+
+  
 }
 
-// --- COMPONENTE DE FILTRO ---
-
-function Filter({ column }: { column: Column<any, unknown> }) {
-  const { filterVariant } = (column.columnDef.meta as any) ?? {};
-  const columnFilterValue = column.getFilterValue();
-
-  const sortedUniqueValues = React.useMemo(
-    () => Array.from(column.getFacetedUniqueValues().keys()).sort(),
-    [column.getFacetedUniqueValues()],
-  );
-
-  const inputStyle =
-    "border border-gray-400 rounded px-2 py-1 text-[9px] w-full bg-white outline-none focus:border-blue-300 transition-all";
-
-  if (filterVariant === "select") {
-    return (
-      <Select
-        onChange={(value) => column.setFilterValue(value)}
-        value={columnFilterValue?.toString() || ""}
-        className={inputStyle}
-        options={[
-          { value: "", label: "TODOS" },
-          ...sortedUniqueValues.map((value: any) => ({
-            value: value,
-            label: String(value).toUpperCase(),
-          })),
-        ]}
-        size="small"
-      >
-      </Select>
-    );
-  }
-
-  // Para números usamos texto para facilitar la escritura de decimales y el filtrado por "contains"
-  return (
-    <Input
-      type="text"
-      value={(columnFilterValue ?? "") as string}
-      onChange={(e) => column.setFilterValue(e.target.value)}
-      className={inputStyle}
-      allowClear
-      size="small"
-      placeholder="Buscar"
-    />
-  );
-}

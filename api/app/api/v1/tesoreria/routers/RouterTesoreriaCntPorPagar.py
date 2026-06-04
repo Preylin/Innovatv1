@@ -15,11 +15,18 @@ from app.api.v1.tesoreria.schemas.SchemaTesoreriaCntPorPagar import (
     ResponseCuentasPorPagarProveedoresLista,
     CuentasPorPagarProveedoresDetalleOnetoOneReadVentas,
     CuentasPorPagarProveedoresDetalleOnetoOneReadCajaVentas,
-    RegistrarCobroProveedores
+    RegistrarCobroProveedores,
+    CuentasPorPagarEventualesCreate,
+    CuentasPorPagarEventualesRead,
+    CuentasPorPagarEventualesUpdate,
+    CuentasPorPagarEventualesDetalleOnetoOneReadCajaVentas,
+    RegistrarPagoEventuales
 )
 from app.api.v1.tesoreria.models.ModelsTesoreriaCntPorpagar import (
     ObligacionCuentasPorPagar, 
-    RegistroCuentasPorPagar
+    RegistroCuentasPorPagar,
+    ObligacionCuentasPorPagarEventuales,
+    CajaMovimientoEventuales
 )
 
 from app.api.v1.contabilidad.compras.modelCompras import Compra, CajaMovimientoCompra
@@ -347,7 +354,6 @@ async def registrar_cobro(payload: RegistrarCobroProveedores, db: AsyncSession =
 async def eliminar_cobro(id: int, db: AsyncSession = Depends(get_session)):
     cobro = await db.get(CajaMovimientoCompra, id)
     
-
     if not cobro:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -366,3 +372,180 @@ async def eliminar_cobro(id: int, db: AsyncSession = Depends(get_session)):
         )
 
     return None
+
+@router_cuentasporpagar.post("/registrar-pago-eventuales", status_code=status.HTTP_201_CREATED)
+async def registrar_pago_eventuales(payload: CuentasPorPagarEventualesCreate, db: AsyncSession = Depends(get_session)):
+    new_pago = ObligacionCuentasPorPagarEventuales(**payload.model_dump())
+
+    try:
+        db.add(new_pago)
+        await db.commit()
+        await db.refresh(new_pago)
+        return new_pago
+
+    except SQLAlchemyError as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al registrar el pago: {str(e)}"
+        )
+    
+@router_cuentasporpagar.get("/resumen-eventuales", response_model=List[CuentasPorPagarEventualesRead])
+async def get_resumen_eventuales(db: AsyncSession = Depends(get_session)):
+    
+    query = (
+        select(
+            ObligacionCuentasPorPagarEventuales.id,
+            ObligacionCuentasPorPagarEventuales.fecha_emision,
+            ObligacionCuentasPorPagarEventuales.fecha_vencimiento,
+            ObligacionCuentasPorPagarEventuales.empresa,
+            ObligacionCuentasPorPagarEventuales.detalle,
+            ObligacionCuentasPorPagarEventuales.monto_esperado,
+            ObligacionCuentasPorPagarEventuales.moneda,
+            func.coalesce(func.sum(CajaMovimientoEventuales.monto_pagado), 0.00).label("monto_pagado")
+        )
+        .outerjoin(
+            CajaMovimientoEventuales,
+            (ObligacionCuentasPorPagarEventuales.id == CajaMovimientoEventuales.obligacion_id)
+        )
+        .where(ObligacionCuentasPorPagarEventuales.activo == True)
+        .group_by(ObligacionCuentasPorPagarEventuales.id)
+    )
+    
+    try:
+        result = await db.execute(query)
+        return result.mappings().all()
+    
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener el resumen: {str(e)}"
+        )
+
+@router_cuentasporpagar.get("/detalle-caja-eventuales/{id}", response_model=List[CuentasPorPagarEventualesDetalleOnetoOneReadCajaVentas])
+async def get_detalle_caja_eventuales(id: int, db: AsyncSession = Depends(get_session)):
+    query = (
+        select(
+            CajaMovimientoEventuales.id,
+            CajaMovimientoEventuales.fecha_operacion,
+            CajaMovimientoEventuales.lugar_salida,
+            CajaMovimientoEventuales.monto_pagado,
+            CajaMovimientoEventuales.medio_pago,
+            CajaMovimientoEventuales.glosa_pago,
+        )
+        .where(CajaMovimientoEventuales.obligacion_id == id)
+    )
+
+    try:
+        result = await db.execute(query)
+        registro = result.mappings().all()
+        return registro if registro else []
+    
+
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno al obtener el detalle: {str(e)}"
+        )
+
+@router_cuentasporpagar.post("/registrar-pago-unico-eventuales", status_code=status.HTTP_201_CREATED)
+async def registrar_pago_eventuales(payload: RegistrarPagoEventuales, db: AsyncSession = Depends(get_session)):
+    new_pago = CajaMovimientoEventuales(**payload.model_dump())
+
+    try:
+        db.add(new_pago)
+        await db.commit()
+        await db.refresh(new_pago)
+        return new_pago
+
+    except SQLAlchemyError as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al registrar el pago: {str(e)}"
+        )
+
+@router_cuentasporpagar.put("/actualizar-registro-eventuales/{id}")
+async def actualizar_pago_eventuales(id: int, payload: CuentasPorPagarEventualesUpdate, db: AsyncSession = Depends(get_session)):
+    stmt = select(ObligacionCuentasPorPagarEventuales).where(ObligacionCuentasPorPagarEventuales.id == id)
+    result = await db.execute(stmt)
+    obligacion_db = result.scalar_one_or_none()
+
+    if not obligacion_db:
+        raise HTTPException(
+            status_code=404, 
+            detail="La obligación solicitada no existe"
+        )
+
+    # 2. Actualizar los campos dinámicamente en el objeto rastreado por la sesión
+    update_data = payload.model_dump(exclude_unset=True) # Evita pisar campos omitidos
+    for key, value in update_data.items():
+        setattr(obligacion_db, key, value)
+
+    try:
+        await db.commit()
+        await db.refresh(obligacion_db)
+    except Exception as e:
+        await db.rollback()
+        print(f"Error al actualizar obligación: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail="Error interno al actualizar los datos de la obligación"
+        )
+
+    return obligacion_db
+
+@router_cuentasporpagar.delete("/eliminar-pago-eventuales/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def eliminar_pago_eventuales(id: int, db: AsyncSession = Depends(get_session)):
+    pago = await db.get(CajaMovimientoEventuales, id)
+    
+    if not pago:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No se encontró el pago con ID {id}"
+        )
+
+    try:
+        await db.delete(pago)
+        await db.commit()
+        
+    except SQLAlchemyError as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno al eliminar el pago: {str(e)}"
+        )
+
+    return None
+
+@router_cuentasporpagar.delete("/eliminar-obligacion-eventuales/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def eliminar_obligacion_eventuales(id: int, db: AsyncSession = Depends(get_session)):
+    stmt = (
+        update(ObligacionCuentasPorPagarEventuales)
+        .where(ObligacionCuentasPorPagarEventuales.id == id)
+        .values(activo=False)
+    )
+    
+    result = await db.execute(stmt)
+
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No se encontró la obligación con ID {id}"
+        )
+
+    try:
+        await db.commit()
+
+    except SQLAlchemyError as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno al eliminar la obligación: {str(e)}"
+        )
+
+    return None
+
+#
+
+#

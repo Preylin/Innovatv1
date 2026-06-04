@@ -70,3 +70,16 @@ export const UpdateFechaPagoRetencionDetraccionSchemaApi = z.object({
   fecha_pago_detraccion_retencion: z.string().nullish(),
 });
 export type UpdateFechaPagoRetencionDetraccionSchemaApiType = z.infer<typeof UpdateFechaPagoRetencionDetraccionSchemaApi>;
+
+
+export const ReporteCobrosPagosActualSchemaApi = z.object({
+  razon_social: z.string(),
+  fecha_vencimiento: z.coerce.date(),
+  moneda: z.string(),
+  monto_total: z.coerce.number(),
+  monto_pagado: z.coerce.number(),
+  tabla: z.string(),
+  is_check: z.boolean(),
+});
+
+export type ReporteCobrosPagosActualSchemaApiType = z.infer<typeof ReporteCobrosPagosActualSchemaApi>;

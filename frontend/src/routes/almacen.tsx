@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import { UseBarAlmacenIcons } from '../components/atoms/icons/AntDesign/almacen/barAlmacen';
 import { UseSpinnersIcons } from '../components/atoms/icons/OtrasLibs/Spinners';
 import { UseComercialesIconsLO } from '../components/atoms/icons/OtrasLibs/Comerciales';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export const Route = createFileRoute('/almacen')({
   beforeLoad: async ({ context }) => {
@@ -23,6 +24,8 @@ export const Route = createFileRoute('/almacen')({
 })
 
 function RouteComponent() {
+  useDocumentTitle("Almacén");
+
   return(
     <MainLayout header={<PanelSuperior title="ALMACÉN" MenuItems={useSiderBarContent()} />} />
   )

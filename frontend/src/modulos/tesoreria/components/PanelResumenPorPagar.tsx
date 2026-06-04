@@ -28,7 +28,7 @@ const LINKS_TESORERIA: LinkItem[] = [
 
 function PanelResumenTesoreria() {
   return (
-    <nav className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-mist-50 border border-mist-200 dark:bg-mist-600 dark:border-mist-700 rounded-md shadow-sm">
+    <nav className="grid grid-cols-1 md:grid-cols-2 gap-4 p-2 rounded-md shadow-xs">
       {LINKS_TESORERIA.map((item, index) => (
         <Link
           key={index}

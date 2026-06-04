@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from datetime import datetime
+from datetime import date, datetime
 
 class EfectivoBase(BaseModel):
     # Pydantic parsea automáticamente strings ISO de dayjs a objetos datetime
@@ -50,4 +50,14 @@ class ListasUnicasResponse(BaseModel):
     class Config:
         from_attributes = True
 
-
+class ReporteCobroPagoActual(BaseModel):
+    razon_social: str
+    fecha_vencimiento: date
+    moneda: str
+    monto_total: float
+    monto_pagado: float
+    tabla: str
+    is_check: bool
+    
+    class Config:
+        from_attributes = True

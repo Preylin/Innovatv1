@@ -1,10 +1,8 @@
 import { useMemo, useState } from "react";
 import {
   IoCalendarOutline,
-  IoReceiptOutline,
   IoPersonOutline,
   IoWalletOutline,
-  IoDocumentTextOutline,
   IoCheckmarkCircleOutline,
   IoStopwatchOutline,
 } from "react-icons/io5";
@@ -16,33 +14,36 @@ import {
   type SortingFn,
 } from "@tanstack/react-table";
 import { compareItems, rankItem } from "@tanstack/match-sorter-utils";
-import { Select, } from "antd";
+import { App, Button, Popconfirm, Tooltip } from "antd";
 import { differenceInCalendarDays, isValid } from "date-fns";
-
-import { LuListCheck } from "react-icons/lu";
+import { TbReplaceFilled } from "react-icons/tb";
+import { LuSquareCheckBig } from "react-icons/lu";
 import { SkeletonHeaderTable } from "../../../../../components/skeleton/SkeletonHeaderTable";
 import { ApiErrorDisplay } from "../../../../../components/Error/ApiErrorDisplay";
-import FloatingWindowButton from "../../../cuentasPorCobrar/components/VentanaDetalle";
 import { TableBaseFuzzyCntasPorCobrar } from "../../../../../components/tanstack-table/TablaBaseTsKFilterPaginacion";
-import type { ReporteCntsPorPagarProveedoresSchemaApiType } from "../../data/api.schemaPorPagarProveedores";
-import { useCuentasPorPagarProveedoresResumenMensual } from "../../data/api.cntsPorPagarProveedores";
-import { useYearsContabilidadCompras } from "../../../../contabilidad/compras/data/api.smallConsultasCompras";
-import ModalRegistroCntsPorCobrarProveedores from "./ModalRegistroPago";
+import { useToggle, useUpdateModal } from "../../../../../hooks/Toggle";
+import { FormNuevaObligacionEventual } from "./ModalRegistrarEvent";
+import {
+  useCuentasPorPagarEventualList,
+  useDeleteRegistoEventuales,
+} from "../../data/api.cuentasPorPagar";
+import type { CuentasPorPagarEventualResumenMensualSchemaApiOutType } from "../../data/api.shemaCuentasPorCobar";
+import ModalRegistroCntsPorPagarEventuales from "./ModalRegistroPagoEventuales";
+import { ModalEditarCntsPagarEventuales } from "./EditarRegistrosCntPagarEvent";
+import { MdDeleteForever } from "react-icons/md";
 
 export interface DataTableCntsPorPagar {
   key: number;
   id: number;
   fecha_emision: string | Date;
   fecha_vencimiento: string | Date;
-  documento: string;
-  nro_documento: string;
-  cliente_razon_social: string;
-  status_fecha: string; // Días restantes o de retraso
+  entidad: string;
+  detalle: string;
+  status_fecha: string;
+  total_exigible: number;
   total: number;
   moneda: string;
-  tipo_cambio: number;
   status_pago: string;
-  link_pdf: string;
 }
 
 const format = new Intl.NumberFormat("es-PE", {});
@@ -106,7 +107,7 @@ function obtenerTextoAlertaVencimiento(
 }
 
 const mapDataTable = (
-  data: ReporteCntsPorPagarProveedoresSchemaApiType[],
+  data: CuentasPorPagarEventualResumenMensualSchemaApiOutType[],
 ): DataTableCntsPorPagar[] => {
   return data.map((item, index) => {
     const textoStatusFecha = obtenerTextoAlertaVencimiento(
@@ -114,26 +115,22 @@ const mapDataTable = (
       item.status_cobro || "-",
     );
 
-    const Total = item?.total || 0;
-    const TipoCambio = item?.tipo_cambio || 1;
-    const MontoPagado = item?.monto_pagado || 0;
-    const PagoMaximo = Total / TipoCambio;
-    const SaldoPendiente = PagoMaximo - MontoPagado;
+    const Total = item.monto_esperado || 0;
+    const Pagado = item.monto_pagado || 0;
+    const MontoPorPagar = Total - Pagado;
 
     return {
       key: index + 1,
       id: item.id,
       fecha_emision: item.fecha_emision || "-",
       fecha_vencimiento: item.fecha_vencimiento || "-",
-      documento: `${item.serie || "-"}-${item.numero || "-"}`,
       status_fecha: textoStatusFecha,
-      nro_documento: item.nro_documento || "-",
-      cliente_razon_social: item.razon_social || "-",
-      total: SaldoPendiente,
+      entidad: item.empresa || "-",
+      detalle: item.detalle || "-",
+      total: MontoPorPagar,
+      total_exigible: Total,
       moneda: item.moneda || "-",
-      tipo_cambio: item.tipo_cambio || 1,
       status_pago: item.status_cobro || "-",
-      link_pdf: item.link_pdf || "-",
     };
   });
 };
@@ -186,28 +183,16 @@ const numericFilterFn: FilterFn<DataTableCntsPorPagar> = (
     .includes(String(filterValue).toLowerCase());
 };
 
-const formatPEN = new Intl.NumberFormat("es-PE", {
-  style: "currency",
-  currency: "PEN",
-});
-const formatUSD = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-});
-
-function CuentasPorPagarProveedores() {
-//   const yearPeru = new Intl.DateTimeFormat("es-PE", {
-//     timeZone: "America/Lima",
-//     year: "numeric",
-//   }).format(new Date());
-
-  const yearPeru = "2025";
-  const [selectedYear, setSelectedYear] = useState<string>(yearPeru);
-
+function CuentasPorPagarEventuales() {
   const [selectedCobroId, setSelectedCobroId] = useState<number | null>(null);
-  const [selectDay, setSelectDay] = useState<string>("");
+  const [selectedTotal, setSelectedTotal] = useState<number | null>(null);
+  const [selectedMoneda, setSelectedMoneda] = useState<string | null>(null);
+  const ModalRegistrarDeuda = useToggle();
+  const ModalEditar = useUpdateModal<number>();
+  const { mutate } = useDeleteRegistoEventuales();
+  const { message } = App.useApp();
 
-  const { data: years } = useYearsContabilidadCompras();
+  const [selectDay, setSelectDay] = useState<string>("");
 
   const [columnFilters] = useState<ColumnFiltersState>([
     {
@@ -221,7 +206,7 @@ function CuentasPorPagarProveedores() {
     isLoading,
     isError,
     error,
-  } = useCuentasPorPagarProveedoresResumenMensual(selectedYear);
+  } = useCuentasPorPagarEventualList();
 
   const tableData = useMemo(() => {
     if (!apiData) return [];
@@ -243,74 +228,6 @@ function CuentasPorPagarProveedores() {
       ? "-"
       : d.toLocaleDateString("es-PE", { timeZone: "UTC" });
   };
-
-  const summaryPanel = useMemo(() => {
-    const summary = {
-      PEN: {
-        CantidadVencer: 0,
-        CantidadVencido: 0,
-        porVencer: 0,
-        vencido: 0,
-        total: 0,
-      },
-      USD: {
-        CantidadVencer: 0,
-        CantidadVencido: 0,
-        porVencer: 0,
-        vencido: 0,
-        total: 0,
-      },
-    };
-
-    if (!apiData) return summary;
-
-    // Normalizamos "hoy" a la medianoche en la zona horaria de Perú
-    const formatter = new Intl.DateTimeFormat("fr-CA", {
-      timeZone: "America/Lima",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-    const [yA, mA, dA] = formatter.format(new Date()).split("-");
-    const hoyPeru = new Date(Number(yA), Number(mA) - 1, Number(dA));
-
-    return apiData.reduce((acc, item) => {
-      if (item.status_cobro !== "PENDIENTE") return acc;
-
-
-      const Total = item?.total || 0;
-      const TipoCambio = item?.tipo_cambio || 1;
-      const PagoMaximo = Total / TipoCambio;
-
-      const moneda = item.moneda as "PEN" | "USD";
-      if (!acc[moneda]) return acc;
-
-      const saldoPendiente = PagoMaximo - (item.monto_pagado || 0);
-
-      // Normalizamos la fecha de vencimiento del item a la medianoche de Perú
-      const fechaVencRaw = new Date(item.fecha_vencimiento);
-      if (isNaN(fechaVencRaw.getTime())) return acc;
-
-      const [yV, mV, dV] = formatter.format(fechaVencRaw).split("-");
-      const fechaVencimientoPeru = new Date(
-        Number(yV),
-        Number(mV) - 1,
-        Number(dV),
-      );
-
-      // Comparación limpia basada puramente en días de Perú
-      if (fechaVencimientoPeru >= hoyPeru) {
-        acc[moneda].porVencer += saldoPendiente;
-        acc[moneda].CantidadVencer += 1;
-      } else {
-        acc[moneda].vencido += saldoPendiente;
-        acc[moneda].CantidadVencido += 1;
-      }
-
-      acc[moneda].total += saldoPendiente;
-      return acc;
-    }, summary);
-  }, [apiData]);
 
   // 3. Definición de Columnas (apuntando a los nuevos campos mapeados)
   const columns = useMemo<ColumnDef<DataTableCntsPorPagar, any>[]>(
@@ -419,35 +336,32 @@ function CuentasPorPagarProveedores() {
         },
       },
       {
-        accessorKey: "documento",
-        size: 100,
-        meta: { textAlign: "center" },
-        header: () => (
-          <span className="flex text-[8px] md:text-[10px] items-center gap-1">
-            <IoPersonOutline className="text-gray-500" /> Documento
-          </span>
-        ),
-        cell: (info) => <StyleDataCell>{info.getValue()}</StyleDataCell>,
-        filterFn: "fuzzy",
-        sortingFn: fuzzySort,
-      },
-      {
-        accessorKey: "nro_documento",
-        size: 100,
-        meta: { textAlign: "center" },
-        header: () => (
-          <span className="flex text-[8px] md:text-[10px] items-center gap-1">
-            <IoReceiptOutline className="text-gray-500" /> RUC
-          </span>
-        ),
-        cell: (info) => <StyleDataCell>{info.getValue()}</StyleDataCell>,
-      },
-      {
-        accessorKey: "cliente_razon_social",
-        size: 300,
+        accessorKey: "entidad",
+        size: 200,
         header: () => (
           <span className="flex text-[8px] md:text-[10px] items-center gap-1">
             <IoPersonOutline className="text-gray-500" /> Proveedor
+          </span>
+        ),
+        cell: (info) => (
+          <StyleDataCell className="text-start">
+            {info.getValue()}
+          </StyleDataCell>
+        ),
+        filterFn: "fuzzy",
+        sortingFn: fuzzySort,
+        footer: () => (
+          <span className="text-[8px] md:text-[10px] font-extrabold text-gray-900 block w-full text-end">
+            TOTAL:
+          </span>
+        ),
+      },
+      {
+        accessorKey: "detalle",
+        size: 300,
+        header: () => (
+          <span className="flex text-[8px] md:text-[10px] items-center gap-1">
+            <IoPersonOutline className="text-gray-500" /> Detalle
           </span>
         ),
         cell: (info) => (
@@ -534,58 +448,54 @@ function CuentasPorPagarProveedores() {
         filterFn: "fuzzy",
         sortingFn: fuzzySort,
       },
-
-      {
-        accessorKey: "link_pdf",
-        size: 50,
-        meta: { textAlign: "center" },
-        header: () => (
-          <span className="flex text-[8px] md:text-[10px] items-center gap-1">
-            <IoDocumentTextOutline className="text-gray-500" /> PDF
-          </span>
-        ),
-        cell: (info) => {
-          const valor = info.getValue();
-          const styles =
-            valor !== "-" ? " text-teal-500" : "text-red-800 hidden";
-          return (
-            <div className="flex justify-center">
-              <a
-                href={info.getValue()}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <IoDocumentTextOutline
-                  size={14}
-                  className={` ${styles} rounded-md text-center `}
-                />
-              </a>
-            </div>
-          );
-        },
-        enableColumnFilter: false,
-        enableSorting: false,
-      },
       {
         accessorKey: "actions",
-        size: 50,
+        size: 70,
         meta: { textAlign: "center" },
         header: () => (
           <span className="flex text-[8px] md:text-[10px] items-center gap-1">
-            Acción
+            Acciones
           </span>
         ),
         cell: (info) => (
-          <div className="flex justify-center">
-            <button
-              className="cursor-pointer hover:text-cyan-500"
-              onClick={() => {
-                setSelectedCobroId(info.row.original.id);
-                setSelectDay(info.row.original.status_fecha);
-              }}
-            >
-              <LuListCheck fontSize={16} />
-            </button>
+          <div className="flex flex-row gap-2 items-center justify-center">
+            <Tooltip title="Realizar Pago">
+              <button
+                className="cursor-pointer hover:text-cyan-500"
+                onClick={() => {
+                  setSelectedCobroId(info.row.original.id);
+                  setSelectDay(info.row.original.status_fecha);
+                  setSelectedTotal(info.row.original.total_exigible);
+                  setSelectedMoneda(info.row.original.moneda);
+                }}
+              >
+                <LuSquareCheckBig fontSize={16} />
+              </button>
+            </Tooltip>
+            <Tooltip title="Actualizar">
+              <button
+                className="cursor-pointer hover:text-orange-500"
+                onClick={() => ModalEditar.handlerOpen(info.row.original.id)}
+              >
+                <TbReplaceFilled fontSize={16} />
+              </button>
+            </Tooltip>
+            <Tooltip title="Eliminar" placement="left">
+              <Popconfirm
+                title="¿Eliminar?"
+                placement="left"
+                onConfirm={() =>
+                  mutate(info.row.original.id, {
+                    onSuccess: () => message.success("Eliminado"),
+                  })
+                }
+              >
+                <MdDeleteForever
+                  fontSize={16}
+                  className="cursor-pointer hover:text-red-500"
+                />
+              </Popconfirm>
+            </Tooltip>
           </div>
         ),
         enableColumnFilter: false,
@@ -614,21 +524,16 @@ function CuentasPorPagarProveedores() {
       {
         header: "Estado Venc.",
         key: "status_fecha",
-        width: 10,
-      },
-      {
-        header: "Documento",
-        key: "documento",
-        width: 10,
-      },
-      {
-        header: "RUC",
-        key: "nro_documento",
         width: 20,
       },
       {
         header: "Proveedor",
-        key: "cliente_razon_social",
+        key: "entidad",
+        width: 30,
+      },
+      {
+        header: "Detalle",
+        key: "detalle",
         width: 30,
       },
       {
@@ -644,114 +549,29 @@ function CuentasPorPagarProveedores() {
       {
         header: "Moneda",
         key: "moneda",
-        width: 5,
+        width: 10,
       },
-      {
-        header: "PDF",
-        key: "link_pdf",
-        width: 15,
-      },
-
     ];
 
   if (isLoading) return <SkeletonHeaderTable loading={isLoading} />;
 
   if (isError) return <ApiErrorDisplay error={error} />;
 
+
+
   return (
     <div className="flex flex-col w-full h-[calc(100vh-58px)] gap-2">
       <header className=" px-2 flex items-center justify-between">
         <div>
-          <h2 className="text-base md:text-[17px] font-bold text-gray-800 tracking-tight uppercase">
-            Control de cuentas por pagar proveedores
+          <h2 className="text-base md:text-lg font-black text-slate-900 dark:text-mist-50 italic uppercase">
+            Obligaciones <span className="text-red-400">Eventuales</span>
           </h2>
-          <p className="text-xs text-gray-400 mt-0.5">
-            Gestión de obligaciones con proveedores.
-          </p>
         </div>
 
-        <div className="flex flex-row items-center gap-2 bg-mist-100 p-2 rounded-md shadow-md shadow-mist-300">
-          <Select
-            className="w-30"
-            placeholder="Año"
-            value={selectedYear}
-            onChange={setSelectedYear}
-            options={years?.map((y) => ({ value: y, label: y }))}
-          />
-          <FloatingWindowButton
-            titleButtom="Resumen"
-            titleWindow="Resumen de cuentas por cobrar"
-            heightWindow={250}
-            children={
-              <div className="p-1 w-full scroll-auto overflow-auto">
-                <table className="w-full text-[11px] text-slate-600 border-collapse">
-                  <thead>
-                    <tr className=" bg-mist-500 font-semibold uppercase tracking-wider text-mist-50">
-                      <th className="p-4 text-left font-medium">Concepto</th>
-                      <th className="p-4 text-right font-medium">
-                        Soles (PEN)
-                      </th>
-                      <th className="p-4 text-right font-medium">
-                        Dólares (USD)
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-mono">
-                    {/* Fila: Por Vencer */}
-                    <tr className="hover:bg-mist-200 transition-colors">
-                      <td className="p-4 text-left font-sans font-medium text-slate-700 capitalize">
-                        Por vencer
-                      </td>
-                      <td className="p-4 text-right text-emerald-600 font-semibold">
-                        <div>
-                          {summaryPanel.PEN.CantidadVencer}{" "}
-                          {formatPEN.format(summaryPanel.PEN.porVencer)}
-                        </div>
-                      </td>
-                      <td className="p-4 text-right text-emerald-600 font-semibold">
-                        <div>
-                          {summaryPanel.USD.CantidadVencer}{" "}
-                          {formatUSD.format(summaryPanel.USD.porVencer)}
-                        </div>
-                      </td>
-                    </tr>
-
-                    {/* Fila: Vencido */}
-                    <tr className="hover:bg-mist-200 transition-colors">
-                      <td className="p-4 text-left font-sans font-medium text-slate-700 capitalize">
-                        Vencido
-                      </td>
-                      <td className="p-4 text-right text-rose-600 font-semibold">
-                        <div>
-                          {summaryPanel.PEN.CantidadVencido}{" "}
-                          {formatPEN.format(summaryPanel.PEN.vencido)}
-                        </div>
-                      </td>
-                      <td className="p-4 text-right text-rose-600 font-semibold">
-                        <div>
-                          {summaryPanel.USD.CantidadVencido}{" "}
-                          {formatUSD.format(summaryPanel.USD.vencido)}
-                        </div>
-                      </td>
-                    </tr>
-
-                    {/* Fila: Total General */}
-                    <tr className="bg-mist-300 font-bold border-t-2 border-slate-200">
-                      <td className="p-4 text-left text-slate-900 uppercase tracking-wider">
-                        Total Pendiente
-                      </td>
-                      <td className="p-4 text-right text-slate-950 border-t border-slate-200">
-                        {formatPEN.format(summaryPanel.PEN.total)}
-                      </td>
-                      <td className="p-4 text-right text-slate-950 border-t border-slate-200">
-                        {formatUSD.format(summaryPanel.USD.total)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            }
-          />
+        <div className=" bg-mist-100 p-2 rounded-md shadow-md shadow-mist-300">
+          <Button type="primary" onClick={ModalRegistrarDeuda.toggle}>
+            Nuevo
+          </Button>
         </div>
       </header>
 
@@ -762,20 +582,35 @@ function CuentasPorPagarProveedores() {
           fuzzyFilter={fuzzyFilter}
           columFiltersInitialValue={columnFilters}
           cantidadFilas={13}
-          excelFileName="Cuentas por pagar proveedores"
+          excelFileName="Obligaciones Eventuales"
           columnsExcel={columnsExcel}
         />
       </main>
       {selectedCobroId !== null && (
-        <ModalRegistroCntsPorCobrarProveedores
+        <ModalRegistroCntsPorPagarEventuales
           id={selectedCobroId}
           open={selectedCobroId !== null}
+          totalMaximo={selectedTotal || 0}
+          moneda={selectedMoneda || "-"}
           onClose={() => setSelectedCobroId(null)}
           day={selectDay}
         />
       )}
+
+      {ModalRegistrarDeuda && (
+        <FormNuevaObligacionEventual
+          open={ModalRegistrarDeuda.isToggled}
+          onClose={ModalRegistrarDeuda.toggle}
+        />
+      )}
+
+      <ModalEditarCntsPagarEventuales
+        id={ModalEditar.data ?? 0}
+        open={ModalEditar.isToggled}
+        onClose={ModalEditar.handlerClose}
+      />
     </div>
   );
 }
 
-export default CuentasPorPagarProveedores;
+export default CuentasPorPagarEventuales;

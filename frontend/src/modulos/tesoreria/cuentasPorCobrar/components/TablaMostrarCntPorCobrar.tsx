@@ -686,6 +686,79 @@ function TablaMostrarCntPorCobrar() {
     [],
   );
 
+  const columnsExcel = [
+      {
+        header: "Nro.",
+        key: "key",
+        width: 5,
+      },
+      {
+        header: "F. Emisión",
+        key: "fecha_emision",
+        width: 15,
+      },
+      {
+        header: "F. Venc.",
+        key: "fecha_vencimiento",
+        width: 15,
+      },
+      {
+        header: "Estado Venc.",
+        key: "status_fecha",
+        width: 10,
+      },
+      {
+        header: "Documento",
+        key: "documento",
+        width: 10,
+      },
+      {
+        header: "RUC",
+        key: "nro_documento",
+        width: 20,
+      },
+      {
+        header: "Cliente",
+        key: "cliente_razon_social",
+        width: 30,
+      },
+      {
+        header: "Total",
+        key: "total",
+        width: 10,
+      },
+      {
+        header: "Cobro",
+        key: "status_pago",
+        width: 10,
+      },
+      {
+        header: "Moneda",
+        key: "moneda",
+        width: 10,
+      },
+      {
+        header: "Detracción",
+        key: "monto_detraccion",
+        width: 10,
+      },
+      {
+        header: "Retención",
+        key: "monto_retencion",
+        width: 10,
+      },
+      {
+        header: "F. Pago",
+        key: "fecha_pago_detraccion_retencion",
+        width: 15,
+      },
+      {
+        header: "PDF",
+        key: "link_pdf",
+        width: 10,
+      },
+    ];
+
   if (isLoading) return <SkeletonHeaderTable loading={isLoading} />;
 
   if (isError) return <ApiErrorDisplay error={error} />;
@@ -794,6 +867,8 @@ function TablaMostrarCntPorCobrar() {
           fuzzyFilter={fuzzyFilter}
           columFiltersInitialValue={columnFilters}
           cantidadFilas={13}
+          excelFileName="Cuentas por cobrar"
+          columnsExcel={columnsExcel}
         />
       </main>
       {selectedCobroId !== null && (

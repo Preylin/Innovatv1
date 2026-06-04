@@ -137,3 +137,76 @@ class RegistrarCobroProveedores(BaseModel):
 
     class Config:
         from_attributes = True
+
+# cuentas por pagar enventuales
+
+class CuentasPorPagarEventualesBase(BaseModel):
+    fecha_emision: date
+    fecha_vencimiento: date
+    empresa: str
+    detalle: str
+    monto_esperado: float
+    moneda: str
+
+class CuentasPorPagarEventualesCreate(CuentasPorPagarEventualesBase):
+    activo: bool = True
+    
+    class Config:
+        from_attributes = True
+
+class CuentasPorPagarEventualesRead(CuentasPorPagarEventualesBase):
+    id: int
+    status_cobro: str = "PENDIENTE"
+    monto_pagado: Decimal = Field(default=Decimal("0.00"))
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode='before')
+    @classmethod
+    def calcular_status_cobro(cls, data: Any) -> Any:
+        if hasattr(data, '_mapping'):
+            data = dict(data._mapping)
+        elif not isinstance(data, dict):
+            data = dict(data)
+        monto_esperado: Decimal = Decimal(str(data.get('monto_esperado', 0.00)))
+        monto_pagado: Decimal = Decimal(str(data.get('monto_pagado', 0.00)))
+
+
+        total_esperado = monto_esperado.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        monto_pagado = monto_pagado.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+        if monto_pagado >= total_esperado:
+            data['status_cobro'] = "CANCELADO"
+        else:
+            data['status_cobro'] = "PENDIENTE"
+
+        return data
+
+class CuentasPorPagarEventualesUpdate(CuentasPorPagarEventualesBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+class CuentasPorPagarEventualesDetalleOnetoOneReadCajaVentas(BaseModel):
+    id: int
+    fecha_operacion: Optional[date] = None
+    lugar_salida: Optional[str] = None
+    monto_pagado: Optional[Decimal] = None
+    medio_pago: Optional[str] = None
+    glosa_pago: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class RegistrarPagoEventuales(BaseModel):
+    obligacion_id: int
+    fecha_operacion: date
+    lugar_salida: str
+    monto_pagado: Decimal = Field(default=Decimal("0.00"))
+    medio_pago: str
+    status_cobro: str
+    glosa_pago: Optional[str] = None
+
+    class Config:
+        from_attributes = True

@@ -24,7 +24,7 @@ from app.api.v1.tesoreria.routers.RouterTesoreriaEfectivo import router_cajachic
 from app.api.v1.tesoreria.routers.RouterTesoreriaCntPorPagar import router_cuentasporpagar
 from app.api.v1.contabilidad.ventas.routerVentas import router_contabilidad_ventas
 from app.api.v1.tesoreria.routers.RouterTesoreriaCntPorCobrar import router_tesoreria_cuentasporcobrar
-from app.api.v1.administracion.historial.routers.routerHistorialVentas import router_administracion_historial_ventas
+from app.api.v1.administracion.historial.routers.routerHistorial import router_administracion_historial
 from app.api.v1.contabilidad.compras.routerCompras import router_contabilidad_compras
 
 
@@ -152,5 +152,5 @@ app.include_router(router_bcpdolares)
 app.include_router(router_cuentasporpagar)
 app.include_router(router_contabilidad_ventas)
 app.include_router(router_tesoreria_cuentasporcobrar)
-app.include_router(router_administracion_historial_ventas)
+app.include_router(router_administracion_historial)
 app.include_router(router_contabilidad_compras)
