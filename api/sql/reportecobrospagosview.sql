@@ -4,10 +4,10 @@ CREATE OR REPLACE VIEW reporte_cobros_pagos_actual AS
         gc.razon_social,
         v.fecha_vencimiento,
         v.moneda,
-        CASE 
-            WHEN v.moneda = 'USD' THEN ROUND((v.total / v.tipo_cambio)::numeric, 2)
-            ELSE v.total 
-        END AS monto_total,
+        CASE
+           WHEN v.moneda = 'USD' THEN ROUND((v.total - (COALESCE(v.monto_retencion, 0) + COALESCE(v.monto_detraccion, 0))) / NULLIF(v.tipo_cambio, 0), 2)
+           ELSE v.total - (COALESCE(v.monto_retencion, 0) + COALESCE(v.monto_detraccion, 0))
+       END AS monto_total,
         COALESCE(SUM(cmv.monto_pagado), 0.00) AS monto_pagado,
         'VENTAS' AS tabla,
         TRUE AS is_check
@@ -18,7 +18,7 @@ CREATE OR REPLACE VIEW reporte_cobros_pagos_actual AS
     GROUP BY v.id, gc.razon_social, v.fecha_vencimiento, v.moneda, v.total, v.tipo_cambio
     HAVING COALESCE(SUM(cmv.monto_pagado), 0.00) < 
            CASE 
-               WHEN v.moneda = 'USD' THEN ROUND((v.total / v.tipo_cambio)::numeric, 2)
+               WHEN v.moneda = 'USD' THEN ROUND((v.total / NULLIF(v.tipo_cambio, 0))::numeric, 2)
                ELSE v.total 
            END
 )
@@ -29,7 +29,7 @@ UNION ALL
         c.fecha_vencimiento,
         c.moneda,
         CASE 
-            WHEN c.moneda = 'USD' THEN ROUND((c.total / c.tipo_cambio)::numeric, 2)
+            WHEN c.moneda = 'USD' THEN ROUND((c.total / NULLIF(c.tipo_cambio, 0))::numeric, 2)
             ELSE c.total 
         END AS monto_total,
         COALESCE(SUM(cmc.monto_pagado), 0.00) AS monto_pagado,
@@ -42,7 +42,7 @@ UNION ALL
     GROUP BY c.id, gp.razon_social, c.fecha_vencimiento, c.moneda, c.total, c.tipo_cambio
     HAVING COALESCE(SUM(cmc.monto_pagado), 0.00) < 
            CASE 
-               WHEN c.moneda = 'USD' THEN ROUND((c.total / c.tipo_cambio)::numeric, 2)
+               WHEN c.moneda = 'USD' THEN ROUND((c.total / NULLIF(c.tipo_cambio, 0))::numeric, 2)
                ELSE c.total 
            END
 )
