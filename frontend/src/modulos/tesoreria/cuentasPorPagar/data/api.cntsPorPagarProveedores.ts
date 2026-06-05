@@ -84,11 +84,14 @@ export function useDeleteRegistoMovimientoCajaCompras() {
     mutationFn: (id: number) =>
       createDeleteMutation({
         request: () =>
-          api.delete(`/cuentasporpagar/eliminar-cobro-proveedores/${id}`),
+          api.delete(`/cuentasporpagar/eliminar-pago-proveedores-unico/${id}`),
       })(),
     onSuccess: () => {
       qc.invalidateQueries({
         queryKey: ["detalle_cuenta_por_pagar_moviento_caja_ventas"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["resumen_mensual_cuentas_por_pagar_proveedores"],
       });
     },
   });

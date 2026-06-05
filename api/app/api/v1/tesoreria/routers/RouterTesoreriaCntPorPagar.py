@@ -350,7 +350,7 @@ async def registrar_cobro(payload: RegistrarCobroProveedores, db: AsyncSession =
             detail=f"Error al registrar el cobro: {str(e)}"
         )
 
-@router_cuentasporpagar.delete("/eliminar-pago-proveedores/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router_cuentasporpagar.delete("/eliminar-pago-proveedores-unico/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def eliminar_cobro(id: int, db: AsyncSession = Depends(get_session)):
     cobro = await db.get(CajaMovimientoCompra, id)
     
