@@ -253,7 +253,7 @@ function ModalRegistroCntsPorPagarEventuales({
           </form>
         ) : (
           <div className="p-2 bg-green-300/70 shadow rounded-md">
-            Cobro completo.
+            Pago completado.
           </div>
         )}
       </div>

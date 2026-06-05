@@ -16,7 +16,7 @@ import {
   type SortingFn,
 } from "@tanstack/react-table";
 import { compareItems, rankItem } from "@tanstack/match-sorter-utils";
-import { Select, } from "antd";
+import { Select, Tooltip, } from "antd";
 import { differenceInCalendarDays, isValid } from "date-fns";
 
 import { LuListCheck } from "react-icons/lu";
@@ -196,12 +196,11 @@ const formatUSD = new Intl.NumberFormat("en-US", {
 });
 
 function CuentasPorPagarProveedores() {
-//   const yearPeru = new Intl.DateTimeFormat("es-PE", {
-//     timeZone: "America/Lima",
-//     year: "numeric",
-//   }).format(new Date());
+  const yearPeru = new Intl.DateTimeFormat("es-PE", {
+    timeZone: "America/Lima",
+    year: "numeric",
+  }).format(new Date());
 
-  const yearPeru = "2025";
   const [selectedYear, setSelectedYear] = useState<string>(yearPeru);
 
   const [selectedCobroId, setSelectedCobroId] = useState<number | null>(null);
@@ -577,7 +576,8 @@ function CuentasPorPagarProveedores() {
         ),
         cell: (info) => (
           <div className="flex justify-center">
-            <button
+            <Tooltip title="Ver detalle y pago">
+              <button
               className="cursor-pointer hover:text-cyan-500"
               onClick={() => {
                 setSelectedCobroId(info.row.original.id);
@@ -586,6 +586,7 @@ function CuentasPorPagarProveedores() {
             >
               <LuListCheck fontSize={16} />
             </button>
+            </Tooltip>
           </div>
         ),
         enableColumnFilter: false,

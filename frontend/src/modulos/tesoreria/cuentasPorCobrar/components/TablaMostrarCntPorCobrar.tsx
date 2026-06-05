@@ -668,7 +668,8 @@ function TablaMostrarCntPorCobrar() {
         ),
         cell: (info) => (
           <div className="flex justify-center">
-            <button
+            <Tooltip title="Ver detalle y cobro">
+              <button
               className="cursor-pointer hover:text-cyan-500"
               onClick={() => {
                 setSelectedCobroId(info.row.original.id);
@@ -677,6 +678,8 @@ function TablaMostrarCntPorCobrar() {
             >
               <LuListCheck fontSize={16} />
             </button>
+            </Tooltip>
+            
           </div>
         ),
         enableColumnFilter: false,
