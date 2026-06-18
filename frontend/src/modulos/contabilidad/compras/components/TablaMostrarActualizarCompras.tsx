@@ -9,10 +9,10 @@ import {
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { format } from "date-fns"; // ◄ Cambiado de dayjs a date-fns
 import type { Filters } from "../../ventas/components/TablaBaseVentas";
-import TablaGridBaseVentas from "../../ventas/components/TablaBaseVentas";
 import { useContabilidadComprasLista, useDeleteContabilidadCompras, useSyncbContabilidadCompras } from "../data/api.contabilidadCompras";
 import type { TablaComprasSchemaApiOutType } from "../data/api.schemaCompras";
 import type { RowTableCompras } from "../types/interfaceTablaCompras";
+import TablaGridBaseCompras from "./TablaBaseCompras";
 
 interface DropdownOption {
   value: string | number;
@@ -765,14 +765,16 @@ function TablaContabilidadCompras({ periodo }: Props = { periodo: "" }) {
   const { mutateAsync: deleteItems } = useDeleteContabilidadCompras();
 
   const totals = useMemo(() => {
-    if (!data) return { base: 0, igv: 0, total: 0 };
+    if (!data) return { base: 0, igv: 0, no_gravadas:0, otros:0, total: 0 };
     return data.reduce(
       (acc, item) => ({
         base: acc.base + (item.base_imponible || 0),
         igv: acc.igv + (item.igv || 0),
+        no_gravadas: acc.no_gravadas + (item.no_gravadas ||0),
+        otros: acc.otros + (item.otros ||0),
         total: acc.total + (item.total || 0),
       }),
-      { base: 0, igv: 0, total: 0 },
+      { base: 0, igv: 0, no_gravadas:0, otros:0, total: 0 },
     );
   }, [data]);
 
@@ -870,12 +872,14 @@ function TablaContabilidadCompras({ periodo }: Props = { periodo: "" }) {
 
 
   return (
-    <TablaGridBaseVentas
+    <TablaGridBaseCompras
       data={data}
       isLoading={isLoading}
       isError={isError}
       totalBaseImponible={totals.base}
       totalIgv={totals.igv}
+      totalNoGravadas={totals.no_gravadas}
+      totalOtros={totals.otros}
       totalTotal={totals.total}
       moneda="S/"
       excelFileName={periodo}

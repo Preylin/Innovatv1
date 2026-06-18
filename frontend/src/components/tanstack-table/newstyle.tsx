@@ -154,16 +154,16 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
   return (
     <div className="px-2 flex flex-col gap-2 w-full animate-in fade-in duration-500">
       {/* Barra superior */}
-      <div className="flex flex-row justify-between items-stretch sm:items-center gap-4 py-1 w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 w-full">
         <DebouncedInput
           value={globalFilter ?? ""}
           onChange={(value) => setGlobalFilter(String(value))}
           placeholder="Buscar en todas las columnas..."
-          className="w-full "
+          className="w-full sm:max-w-sm"
         />
 
         <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-sm font-normal px-3 py-1 bg-mist-600 text-mist-50">
+          <Badge variant="secondary" className="text-sm font-normal px-3 py-1">
             {table.getPrePaginationRowModel().rows.length} Registros
           </Badge>
           <Button
@@ -182,11 +182,9 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
       {/* Tabla */}
       <div className="rounded-md border shadow-sm overflow-auto">
         <Table>
-          <TableHeader
-          className=" font-bold uppercase bg-mist-600"
-          >
+          <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-transparent">
+              <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   const align =
                     (header.column.columnDef.meta as any)?.textAlign || "left";
@@ -194,7 +192,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
                     <TableHead
                       key={header.id}
                       style={{ width: header.getSize() }}
-                      className={`relative group text-mist-50 py-1 select-none ${
+                      className={`relative group select-none ${
                         align === "center"
                           ? "text-center"
                           : align === "right"
@@ -249,9 +247,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody
-          className=""
-          >
+          <TableBody>
             {table.getRowModel().rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-40 text-center">
@@ -367,19 +363,17 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
                 const page = e.target.value ? Number(e.target.value) - 1 : 0;
                 table.setPageIndex(page);
               }}
-              className="w-20 h-8 text-center text-mist-600"
+              className="w-20 h-8 text-center"
             />
           </span>
           <Select
             value={String(table.getState().pagination.pageSize)}
             onValueChange={(value) => table.setPageSize(Number(value))}
           >
-            <SelectTrigger className="w-36 h-8 ">
+            <SelectTrigger className="w-36 h-8">
               <SelectValue placeholder="Filas" />
             </SelectTrigger>
-            <SelectContent
-            className="bg-mist-50 text-mist-600"
-            >
+            <SelectContent>
               {[15, 20, 25, 30, 40, 50].map((pageSize) => (
                 <SelectItem key={pageSize} value={String(pageSize)}>
                   Mostrar {pageSize}
@@ -409,11 +403,11 @@ function Filter({ column }: { column: Column<any, unknown> }) {
         value={columnFilterValue?.toString() || ""}
         onValueChange={(value) => column.setFilterValue(value)}
       >
-        <SelectTrigger className="h-7 text-xs w-full bg-mist-50 text-mist-600">
+        <SelectTrigger className="h-7 text-xs">
           <SelectValue placeholder="TODOS" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">TODOS</SelectItem>
+          <SelectItem value="all">TODOS</SelectItem>
           {sortedUniqueValues.map((value: any) => (
             <SelectItem key={value} value={value}>
               {String(value).toUpperCase()}
@@ -430,7 +424,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
       value={(columnFilterValue ?? "") as string}
       onChange={(value) => column.setFilterValue(value)}
       placeholder="Filtrar..."
-      className="h-7 text-xs w-full bg-mist-50 text-mist-600"
+      className="h-7 text-xs"
     />
   );
 }

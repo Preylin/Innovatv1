@@ -7,7 +7,7 @@ export const FormularioRegistroCobro = z.object({
   venta_id: z.number(),
   fecha_pago: z.string().min(1, "Requerido"),
   lugar_ingreso: z.string().min(1, "Requerido"),
-  monto_pagado: z.number().min(1, "Requerido"),
+  monto_pagado: z.number().min(0, "Requerido"),
   medio_pago: z.string().min(1, "Requerido"),
   status_cobro: z.string().min(1, "Requerido"),
   glosa_pago: z.string(),

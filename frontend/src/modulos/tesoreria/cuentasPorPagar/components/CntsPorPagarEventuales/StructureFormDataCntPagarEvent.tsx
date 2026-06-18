@@ -8,7 +8,7 @@ export const CuentasPorPagarEventualCreateUISchema = z.object({
   fecha_vencimiento: z.string().min(1, "Requerido"),
   empresa: z.string().min(3, "Mínimo 3 caracteres").max(100, "Máximo 100 caracteres"),
   detalle: z.string().min(3, "Mínimo 3 caracteres").max(600, "Máximo 600 caracteres"),
-  monto_esperado: z.number().min(1, "Debe ser mayor a 0"),
+  monto_esperado: z.number().min(0, "Debe ser mayor a 0"),
   moneda: z.string().min(3, "Requerido"),
 });
 export const isUsuarioFieldCuentasPorPagarEventual = createFieldChecker(CuentasPorPagarEventualCreateUISchema);
@@ -33,7 +33,7 @@ export const FormularioRegistroPagoEventuales = z.object({
   obligacion_id: z.number(),
   fecha_operacion: z.string().min(1, "Requerido"),
   lugar_salida: z.string(),
-  monto_pagado: z.number().min(1, "Requerido"),
+  monto_pagado: z.number().min(0, "Requerido"),
   medio_pago: z.string().min(1, "Requerido"),
   status_cobro: z.string().min(1, "Requerido"),
   glosa_pago: z.string(),

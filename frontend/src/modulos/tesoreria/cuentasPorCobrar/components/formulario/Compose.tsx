@@ -45,7 +45,7 @@ export const FromCntsPorCobrarUnico = withForm({
         <form.AppField
           name="monto_pagado"
           children={(field) => (
-            <field.NumberFloatField label="Monto Pagado" placeholder="Ingrese monto"/>
+            <field.NumberFloatField label="Monto Cobrado" placeholder="Ingrese monto"/>
           )}
         />
         

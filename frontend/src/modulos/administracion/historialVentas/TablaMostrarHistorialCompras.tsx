@@ -528,7 +528,7 @@ const columnsExcel = [
           columns={columns}
           fuzzyFilter={fuzzyFilter}
           columFiltersInitialValue={columnFilters}
-          cantidadFilas={15}
+          cantidadFilas={20}
           excelFileName="HistorialCompras"
           columnsExcel={columnsExcel}
         />
