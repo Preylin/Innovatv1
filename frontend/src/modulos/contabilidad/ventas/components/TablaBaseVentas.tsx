@@ -456,7 +456,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
     >
       <header className="flex justify-between items-center px-2">
         <div className="flex gap-2">
-          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-mist-500 text-mist-50">
+          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-slate-500 text-mist-50">
             <span className="font-semibold italic">Base Imponible: </span>
             <span>
               {new Intl.NumberFormat("es-PE", {
@@ -465,7 +465,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
               }).format(totalBaseImponible)}
             </span>
           </div>
-          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-mist-500 text-mist-50">
+          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-gray-500 text-mist-50">
             <span className="font-semibold italic">IGV: </span>
             <span>
               {new Intl.NumberFormat("es-PE", {
@@ -474,7 +474,7 @@ function TablaGridBaseVentas<T extends BaseRow>({
               }).format(totalIgv)}
             </span>
           </div>
-          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-mist-500 text-mist-50">
+          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-stone-500 text-mist-50">
             <span className="font-semibold italic">Total: </span>
             <span>
               {new Intl.NumberFormat("es-PE", {

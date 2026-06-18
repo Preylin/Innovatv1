@@ -166,7 +166,8 @@ const formatToInputDate = (dateStr: string | null | undefined): string => {
   if (!dateStr || dateStr === "-") return "";
   try {
     // Reemplazamos guiones por barras para forzar la interpretación en hora local
-    const normalized = typeof dateStr === "string" ? dateStr.replace(/-/g, "/") : dateStr;
+    const normalized =
+      typeof dateStr === "string" ? dateStr.replace(/-/g, "/") : dateStr;
     return format(new Date(normalized), "yyyy-MM-dd");
   } catch {
     return "";
@@ -410,7 +411,7 @@ const getColumns = (
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }) => (
       <div
-        className={`text-right pr-4 font-medium text-[12px] ${row.base_imponible >= 0 ? "text-teal-700" : "text-orange-500"}`}
+        className={`pr-4 font-medium text-[12px] h-full flex items-center justify-end bg-slate-100 border-r border-black ${row.base_imponible >= 0 ? "text-teal-700" : "text-orange-500"}`}
       >
         {new Intl.NumberFormat("es-PE", {
           style: "currency",
@@ -420,10 +421,7 @@ const getColumns = (
     ),
     editable: true,
     renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.base_imponible !== 0) return "bg-stone-100";
-      return "";
-    },
+
   },
   {
     key: "igv",
@@ -438,7 +436,7 @@ const getColumns = (
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }) => (
       <div
-        className={`text-right pr-4 font-medium text-[12px] ${row.igv >= 0 ? "text-teal-700" : "text-orange-500"}`}
+        className={`text-right pr-4 font-medium text-[12px] bg-gray-100 border-r border-black flex items-center justify-end h-full ${row.igv >= 0 ? "text-teal-700" : "text-orange-500"}`}
       >
         {new Intl.NumberFormat("es-PE", {
           style: "currency",
@@ -448,10 +446,6 @@ const getColumns = (
     ),
     editable: true,
     renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.igv !== 0) return "bg-stone-100";
-      return "";
-    },
   },
   {
     key: "total",
@@ -466,7 +460,7 @@ const getColumns = (
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }) => (
       <div
-        className={`text-right pr-4 font-medium text-[12px] ${row.total >= 0 ? "text-teal-700" : "text-orange-500"}`}
+        className={`text-right pr-4 font-medium text-[12px] flex items-center justify-end h-full bg-stone-100  border-r border-black ${row.total >= 0 ? "text-teal-700" : "text-orange-500"}`}
       >
         {new Intl.NumberFormat("es-PE", {
           style: "currency",
@@ -476,10 +470,6 @@ const getColumns = (
     ),
     editable: true,
     renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.total !== 0) return "bg-stone-100";
-      return "";
-    },
   },
   {
     key: "moneda",
@@ -519,7 +509,7 @@ const getColumns = (
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }) => (
       <div
-        className={`text-right pr-4 font-medium text-[12px] ${row.tipo_cambio >= 0 ? "text-teal-700" : "text-orange-500"}`}
+        className={`text-right pr-4 font-medium text-[12px] flex items-center justify-end h-full bg-stone-100  border-x border-black ${row.tipo_cambio >= 0 ? "text-teal-700" : "text-orange-500"}`}
       >
         {new Intl.NumberFormat("es-PE", {
           style: "currency",
@@ -531,10 +521,7 @@ const getColumns = (
     ),
     editable: true,
     renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.tipo_cambio !== 0) return "bg-stone-100";
-      return "";
-    },
+
   },
   {
     key: "categoria",
@@ -594,7 +581,7 @@ const getColumns = (
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }) => (
       <div
-        className={`text-right pr-4 font-medium text-[12px] ${row.monto_detraccion || 0 >= 0 ? "text-teal-700" : "text-orange-500"}`}
+        className={`text-right pr-4 font-medium text-[12px] flex items-center justify-end h-full bg-taupe-100  border-l border-black ${row.monto_detraccion >= 0 ? "text-teal-700" : "text-orange-500"}`}
       >
         {new Intl.NumberFormat("es-PE", {
           style: "currency",
@@ -604,10 +591,7 @@ const getColumns = (
     ),
     editable: true,
     renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.monto_detraccion || 0 !== 0) return "bg-stone-100";
-      return "";
-    },
+
   },
   {
     key: "monto_retencion",
@@ -622,7 +606,7 @@ const getColumns = (
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }) => (
       <div
-        className={`text-right pr-4 font-medium text-[12px] ${row.monto_retencion >= 0 ? "text-teal-700" : "text-orange-500"}`}
+        className={`text-right pr-4 font-medium text-[12px] flex items-center justify-end h-full bg-mauve-100  border-x border-black ${row.monto_retencion >= 0 ? "text-teal-700" : "text-orange-500"}`}
       >
         {new Intl.NumberFormat("es-PE", {
           style: "currency",
@@ -632,10 +616,7 @@ const getColumns = (
     ),
     editable: true,
     renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.monto_retencion !== 0) return "bg-stone-100";
-      return "";
-    },
+
   },
   {
     key: "is_active",
@@ -775,9 +756,10 @@ interface Props {
 // Auxiliar seguro para formatear los objetos Date o strings de la fila antes de enviarlos a la API
 const safeFormatToApi = (dateInput: Date | string): string => {
   try {
-    const parsedDate = typeof dateInput === "string" 
-      ? new Date(dateInput.replace(/-/g, "/")) 
-      : dateInput;
+    const parsedDate =
+      typeof dateInput === "string"
+        ? new Date(dateInput.replace(/-/g, "/"))
+        : dateInput;
     return format(parsedDate, "yyyy-MM-dd");
   } catch (error) {
     console.error("Error formatting date for API:", error);
@@ -810,17 +792,21 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
       created: payload.created
         .filter((row) => {
           const hasRequiredText =
-            row.fecha_inicio &&
-            row.fecha_fin &&
-            row.tipo_comp?.trim() &&
-            row.serie_comp?.trim() &&
-            row.numero_comp?.trim() &&
-            row.nombre_empresa?.trim();
+            !!row.periodo &&
+            !!row.fecha_inicio &&
+            !!row.fecha_fin &&
+            !!row.tipo_comp?.trim() &&
+            !!row.serie_comp?.trim() &&
+            !!row.numero_comp?.trim() &&
+            !!row.nombre_empresa?.trim();
+
+          
+          const baseNum = Number(row.base_imponible);
+          const igvNum = Number(row.igv);
+          const totalNum = Number(row.total);
 
           const hasRequiredNumbers =
-            typeof row.base_imponible === "number" &&
-            typeof row.igv === "number" &&
-            typeof row.total === "number";
+            !isNaN(baseNum) && !isNaN(igvNum) && !isNaN(totalNum);
 
           return hasRequiredText && hasRequiredNumbers;
         })
@@ -875,22 +861,22 @@ function TablaContabilidadVentas({ periodo }: Props = { periodo: "" }) {
   };
 
   const columnsExcel = [
-      { header: "Periodo", key: "periodo", width: 12 },
-      { header: "F. Emisión", key: "fecha_inicio", width: 15 },
-      { header: "F. Vencimiento", key: "fecha_fin", width: 15 },
-      { header: "Tipo", key: "tipo_comp", width: 8 },
-      { header: "Serie", key: "serie_comp", width: 10 },
-      { header: "Número", key: "numero_comp", width: 15 },
-      { header: "Tipo Emp", key: "tipo_empresa", width: 15 },
-      { header: "Razón Social", key: "nombre_empresa", width: 35 },
-      { header: "Base Imponible", key: "base_imponible", width: 15 },
-      { header: "IGV", key: "igv", width: 15 },
-      { header: "Total", key: "total", width: 15 },
-      { header: "Moneda", key: "moneda", width: 15 },
-      { header: "Tipo Cambio", key: "tipo_cambio", width: 15 },
-      { header: "Categoria", key: "categoria", width: 15 },
-      { header: "Descripción", key: "descripcion", width: 15 },
-    ];
+    { header: "Periodo", key: "periodo", width: 12 },
+    { header: "F. Emisión", key: "fecha_inicio", width: 15 },
+    { header: "F. Vencimiento", key: "fecha_fin", width: 15 },
+    { header: "Tipo", key: "tipo_comp", width: 8 },
+    { header: "Serie", key: "serie_comp", width: 10 },
+    { header: "Número", key: "numero_comp", width: 15 },
+    { header: "Tipo Emp", key: "tipo_empresa", width: 15 },
+    { header: "Razón Social", key: "nombre_empresa", width: 35 },
+    { header: "Base Imponible", key: "base_imponible", width: 15 },
+    { header: "IGV", key: "igv", width: 15 },
+    { header: "Total", key: "total", width: 15 },
+    { header: "Moneda", key: "moneda", width: 15 },
+    { header: "Tipo Cambio", key: "tipo_cambio", width: 15 },
+    { header: "Categoria", key: "categoria", width: 15 },
+    { header: "Descripción", key: "descripcion", width: 15 },
+  ];
 
   return (
     <TablaGridBaseVentas

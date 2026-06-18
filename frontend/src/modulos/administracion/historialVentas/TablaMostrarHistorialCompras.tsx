@@ -117,7 +117,7 @@ const StyleDataCell: React.FC<PropsComponent> = ({ children, className }) => {
   return (
     <span
       title={children?.toString().trim() || "-"}
-      className={`text-[8px] md:text-[10px] text-center block ${className}`}
+      className={`text-[8px] md:text-[10px] max-w-62.5 text-center block ${className}`}
     >
       {children}
     </span>

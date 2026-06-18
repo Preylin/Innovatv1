@@ -869,7 +869,7 @@ function TablaMostrarCntPorCobrar() {
           columns={columns}
           fuzzyFilter={fuzzyFilter}
           columFiltersInitialValue={columnFilters}
-          cantidadFilas={13}
+          cantidadFilas={15}
           excelFileName="Cuentas por cobrar"
           columnsExcel={columnsExcel}
         />

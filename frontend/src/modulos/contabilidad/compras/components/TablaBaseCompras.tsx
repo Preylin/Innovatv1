@@ -469,7 +469,7 @@ function TablaGridBaseCompras<T extends BaseRow>({
               }).format(totalBaseImponible)}
             </span>
           </div>
-          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-mist-500 text-mist-50">
+          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-gray-500 text-mist-50">
             <span className="font-semibold">IGV: </span>
             <span>
               {new Intl.NumberFormat("es-PE", {
@@ -478,7 +478,7 @@ function TablaGridBaseCompras<T extends BaseRow>({
               }).format(totalIgv)}
             </span>
           </div>
-          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-mist-500 text-mist-50">
+          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-olive-500 text-mist-50">
             <span className="font-semibold">No Gravadas: </span>
             <span>
               {new Intl.NumberFormat("es-PE", {
@@ -487,7 +487,7 @@ function TablaGridBaseCompras<T extends BaseRow>({
               }).format(totalNoGravadas)}
             </span>
           </div>
-          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-mist-500 text-mist-50">
+          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-mauve-500 text-mist-50">
             <span className="font-semibold">Otros: </span>
             <span>
               {new Intl.NumberFormat("es-PE", {
@@ -496,7 +496,7 @@ function TablaGridBaseCompras<T extends BaseRow>({
               }).format(totalOtros)}
             </span>
           </div>
-          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-mist-500 text-mist-50">
+          <div className="shadow-md shadow-mist-500 px-2 rounded-md bg-stone-500 text-mist-50">
             <span className="font-semibold">Total: </span>
             <span>
               {new Intl.NumberFormat("es-PE", {

@@ -324,7 +324,7 @@ function TablaBCPSoles() {
       {
         key: "referencia",
         name: "Referencia",
-        width: 120,
+        width: 250,
         editable: true,
         renderEditCell: (props) => (
           <DatalistEditor {...props} externalSource={SUGERENCIAS_REFERENCIAS} />
@@ -361,17 +361,14 @@ function TablaBCPSoles() {
         ),
         renderCell: ({ row }: RenderCellProps<Row>) => (
           <div
-            className={`text-right pr-4 font-medium text-[10px] md:text-[12px] ${row.ingreso >= 0 ? "text-teal-700" : "text-orange-500"}`}
+            className={`text-right pr-4 font-medium text-[10px] md:text-[12px] flex items-center justify-end h-full bg-stone-100 border-x border-black ${row.ingreso >= 0 ? "text-teal-700" : "text-orange-500"}`}
           >
             {formatPEN.format(row.ingreso)}
           </div>
         ),
         editable: true, // Dejamos que este use el editor de texto normal para valores numéricos
         renderEditCell: renderTextEditor,
-        cellClass: (row) => {
-          if (row.ingreso !== 0) return "bg-stone-100";
-          return "";
-        },
+
       },
       {
         key: "egreso",
@@ -388,17 +385,13 @@ function TablaBCPSoles() {
         ),
         renderCell: ({ row }: RenderCellProps<Row>) => (
           <div
-            className={`text-right pr-4 font-medium text-[10px] md:text-[12px] ${row.egreso <= 0 ? "text-rose-600" : "text-cyan-500"}`}
+            className={`text-right pr-4 font-medium text-[10px] md:text-[12px] flex items-center justify-end h-full bg-mauve-100 ${row.egreso <= 0 ? "text-rose-600" : "text-cyan-500"}`}
           >
             {formatPEN.format(row.egreso)}
           </div>
         ),
         editable: true,
         renderEditCell: renderTextEditor,
-        cellClass: (row) => {
-          if (row.egreso !== 0) return "bg-mauve-100";
-          return "";
-        },
       },
       {
         key: "saldo",
@@ -407,20 +400,16 @@ function TablaBCPSoles() {
         headerCellClass: "text-center bg-gray-100",
         renderCell: ({ row }: RenderCellProps<Row>) => (
           <div
-            className={`text-right pr-4 font-semibold text-[11px] md:text-[13px] ${row.saldo < 0 ? "text-rose-600" : "text-sky-700"}`}
+            className={`text-right pr-4 font-semibold text-[11px] md:text-[13px] flex items-center justify-end bg-gray-100 h-full border-x border-black ${row.saldo < 0 ? "text-rose-600" : "text-sky-700"}`}
           >
             {formatPEN.format(row.saldo)}
           </div>
         ),
-        cellClass: (row) => {
-          if (row.saldo === 0) return "bg-red-100";
-          return "bg-gray-100";
-        },
       },
       {
         key: "adicionales",
         name: "Inf. Adicional",
-        minWidth: 200,
+        width: 300,
         renderEditCell: (props) => (
           <DatalistEditor {...props} externalSource={SUGERENCIAS_ADICIONALES} />
         ),

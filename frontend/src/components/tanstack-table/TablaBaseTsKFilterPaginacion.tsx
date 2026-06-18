@@ -382,7 +382,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
             >
               {[15, 20, 25, 30, 40, 50].map((pageSize) => (
                 <SelectItem key={pageSize} value={String(pageSize)}>
-                  Mostrar {pageSize}
+                  Mostrar {pageSize} filas
                 </SelectItem>
               ))}
             </SelectContent>

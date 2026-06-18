@@ -9,7 +9,11 @@ import {
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { format } from "date-fns"; // ◄ Cambiado de dayjs a date-fns
 import type { Filters } from "../../ventas/components/TablaBaseVentas";
-import { useContabilidadComprasLista, useDeleteContabilidadCompras, useSyncbContabilidadCompras } from "../data/api.contabilidadCompras";
+import {
+  useContabilidadComprasLista,
+  useDeleteContabilidadCompras,
+  useSyncbContabilidadCompras,
+} from "../data/api.contabilidadCompras";
 import type { TablaComprasSchemaApiOutType } from "../data/api.schemaCompras";
 import type { RowTableCompras } from "../types/interfaceTablaCompras";
 import TablaGridBaseCompras from "./TablaBaseCompras";
@@ -163,7 +167,8 @@ const formatToInputDate = (dateStr: string | null | undefined): string => {
   if (!dateStr || dateStr === "-") return "";
   try {
     // Reemplazamos guiones por barras para forzar la interpretación en hora local
-    const normalized = typeof dateStr === "string" ? dateStr.replace(/-/g, "/") : dateStr;
+    const normalized =
+      typeof dateStr === "string" ? dateStr.replace(/-/g, "/") : dateStr;
     return format(new Date(normalized), "yyyy-MM-dd");
   } catch {
     return "";
@@ -309,7 +314,7 @@ const getColumns = (
     key: "numero_comp",
     name: "Número",
     editable: true,
-    width: 70,
+    width: 90,
     renderEditCell: renderTextEditor,
     renderHeaderCell: (props: {
       column: Column<RowTableCompras>;
@@ -407,7 +412,7 @@ const getColumns = (
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }) => (
       <div
-        className={`text-right pr-4 font-medium text-[12px] ${row.base_imponible >= 0 ? "text-teal-700" : "text-orange-500"}`}
+        className={`pr-4 font-medium text-[12px] h-full flex items-center justify-end bg-slate-100 border-r border-black ${row.base_imponible >= 0 ? "text-teal-700" : "text-orange-500"}`}
       >
         {new Intl.NumberFormat("es-PE", {
           style: "currency",
@@ -417,10 +422,7 @@ const getColumns = (
     ),
     editable: true,
     renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.base_imponible !== 0) return "bg-stone-100";
-      return "";
-    },
+
   },
   {
     key: "igv",
@@ -435,7 +437,7 @@ const getColumns = (
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }) => (
       <div
-        className={`text-right pr-4 font-medium text-[12px] ${row.igv >= 0 ? "text-teal-700" : "text-orange-500"}`}
+        className={`text-right pr-4 font-medium text-[12px] bg-gray-100 border-r border-black flex items-center justify-end h-full ${row.igv >= 0 ? "text-teal-700" : "text-orange-500"}`}
       >
         {new Intl.NumberFormat("es-PE", {
           style: "currency",
@@ -445,10 +447,6 @@ const getColumns = (
     ),
     editable: true,
     renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.igv !== 0) return "bg-stone-100";
-      return "";
-    },
   },
   {
     key: "no_gravadas",
@@ -463,7 +461,7 @@ const getColumns = (
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }) => (
       <div
-        className={`text-right pr-4 font-medium text-[12px] ${row.no_gravadas >= 0 ? "text-teal-700" : "text-orange-500"}`}
+        className={`text-right pr-4 font-medium text-[12px] bg-olive-100  border-r border-black flex items-center justify-end h-full ${row.no_gravadas >= 0 ? "text-teal-700" : "text-orange-500"}`}
       >
         {new Intl.NumberFormat("es-PE", {
           style: "currency",
@@ -473,10 +471,6 @@ const getColumns = (
     ),
     editable: true,
     renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.no_gravadas !== 0) return "bg-stone-100";
-      return "";
-    },
   },
   {
     key: "otros",
@@ -491,7 +485,7 @@ const getColumns = (
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }) => (
       <div
-        className={`text-right pr-4 font-medium text-[12px] ${row.otros >= 0 ? "text-teal-700" : "text-orange-500"}`}
+        className={`text-right pr-4 font-medium text-[12px] flex items-center justify-end h-full bg-mauve-100  border-r border-black ${row.otros >= 0 ? "text-teal-700" : "text-orange-500"}`}
       >
         {new Intl.NumberFormat("es-PE", {
           style: "currency",
@@ -501,10 +495,6 @@ const getColumns = (
     ),
     editable: true,
     renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.otros !== 0) return "bg-stone-100";
-      return "";
-    },
   },
   {
     key: "total",
@@ -519,7 +509,7 @@ const getColumns = (
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }) => (
       <div
-        className={`text-right pr-4 font-medium text-[12px] ${row.total >= 0 ? "text-teal-700" : "text-orange-500"}`}
+        className={`text-right pr-4 font-medium text-[12px] flex items-center justify-end h-full bg-stone-100  border-r border-black ${row.total >= 0 ? "text-teal-700" : "text-orange-500"}`}
       >
         {new Intl.NumberFormat("es-PE", {
           style: "currency",
@@ -529,10 +519,6 @@ const getColumns = (
     ),
     editable: true,
     renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.total !== 0) return "bg-stone-100";
-      return "";
-    },
   },
   {
     key: "moneda",
@@ -572,7 +558,7 @@ const getColumns = (
     }) => <FilterHeader {...props} filters={filters} setFilters={setFilters} />,
     renderCell: ({ row }) => (
       <div
-        className={`text-right pr-4 font-medium text-[12px] ${row.tipo_cambio >= 0 ? "text-teal-700" : "text-orange-500"}`}
+        className={`text-right pr-4 font-medium text-[12px] flex items-center justify-end h-full bg-stone-100  border-x border-black ${row.tipo_cambio >= 0 ? "text-teal-700" : "text-orange-500"}`}
       >
         {new Intl.NumberFormat("es-PE", {
           style: "currency",
@@ -584,10 +570,6 @@ const getColumns = (
     ),
     editable: true,
     renderEditCell: renderTextEditor,
-    cellClass: (row) => {
-      if (row.tipo_cambio !== 0) return "bg-stone-100";
-      return "";
-    },
   },
 
   {
@@ -678,7 +660,9 @@ const getColumns = (
   },
 ];
 
-const mapDataApi = (data: TablaComprasSchemaApiOutType[]): RowTableCompras[] => {
+const mapDataApi = (
+  data: TablaComprasSchemaApiOutType[],
+): RowTableCompras[] => {
   return data.map((item, index) => ({
     key: index + 1,
     id: item.id,
@@ -749,9 +733,10 @@ interface Props {
 // Auxiliar seguro para formatear los objetos Date o strings de la fila antes de enviarlos a la API
 const safeFormatToApi = (dateInput: Date | string): string => {
   try {
-    const parsedDate = typeof dateInput === "string" 
-      ? new Date(dateInput.replace(/-/g, "/")) 
-      : dateInput;
+    const parsedDate =
+      typeof dateInput === "string"
+        ? new Date(dateInput.replace(/-/g, "/"))
+        : dateInput;
     return format(parsedDate, "yyyy-MM-dd");
   } catch (error) {
     console.error("Error formatting date for API:", error);
@@ -765,49 +750,71 @@ function TablaContabilidadCompras({ periodo }: Props = { periodo: "" }) {
   const { mutateAsync: deleteItems } = useDeleteContabilidadCompras();
 
   const totals = useMemo(() => {
-    if (!data) return { base: 0, igv: 0, no_gravadas:0, otros:0, total: 0 };
+    if (!data) return { base: 0, igv: 0, no_gravadas: 0, otros: 0, total: 0 };
     return data.reduce(
       (acc, item) => ({
         base: acc.base + (item.base_imponible || 0),
         igv: acc.igv + (item.igv || 0),
-        no_gravadas: acc.no_gravadas + (item.no_gravadas ||0),
-        otros: acc.otros + (item.otros ||0),
+        no_gravadas: acc.no_gravadas + (item.no_gravadas || 0),
+        otros: acc.otros + (item.otros || 0),
         total: acc.total + (item.total || 0),
       }),
-      { base: 0, igv: 0, no_gravadas:0, otros:0, total: 0 },
+      { base: 0, igv: 0, no_gravadas: 0, otros: 0, total: 0 },
     );
   }, [data]);
 
   const handleSync = async (payload: {
-  created: RowTableCompras[];
-  updates: RowTableCompras[];
-}) => {
-  const formattedPayload = {
-    created: payload.created
-      .filter((row) => {
-        const hasRequiredText =
-          !!row.fecha_inicio &&
-          !!row.fecha_fin &&
-          !!row.tipo_comp?.trim() &&
-          !!row.serie_comp?.trim() &&
-          !!row.numero_comp?.trim() &&
-          !!row.nombre_empresa?.trim();
+    created: RowTableCompras[];
+    updates: RowTableCompras[];
+  }) => {
+    const formattedPayload = {
+      created: payload.created
+        .filter((row) => {
+          const hasRequiredText =
+            !!row.periodo &&
+            !!row.fecha_inicio &&
+            !!row.fecha_fin &&
+            !!row.tipo_comp?.trim() &&
+            !!row.serie_comp?.trim() &&
+            !!row.numero_comp?.trim() &&
+            !!row.nombre_empresa?.trim();
 
-        const baseNum = Number(row.base_imponible);
-        const igvNum = Number(row.igv);
-        const totalNum = Number(row.total);
+          const baseNum = Number(row.base_imponible);
+          const igvNum = Number(row.igv);
+          const totalNum = Number(row.total);
 
-        const hasRequiredNumbers = 
-          !isNaN(baseNum) && 
-          !isNaN(igvNum) && 
-          !isNaN(totalNum);
+          const hasRequiredNumbers =
+            !isNaN(baseNum) && !isNaN(igvNum) && !isNaN(totalNum);
 
-        return hasRequiredText && hasRequiredNumbers;
-      })
-      .map((row) => ({
+          return hasRequiredText && hasRequiredNumbers;
+        })
+        .map((row) => ({
+          periodo: row.periodo,
+          fecha_emision: safeFormatToApi(row.fecha_inicio),
+          fecha_vencimiento: safeFormatToApi(row.fecha_fin),
+          tipo_cp_codigo: row.tipo_comp.trim(),
+          serie: row.serie_comp.trim(),
+          numero: row.numero_comp.trim(),
+          tipo_documento: row.tipo_empresa?.trim() || null,
+          nro_documento: row.numero_empresa?.trim() || null,
+          razon_social: row.nombre_empresa?.trim() || null,
+          base_imponible: Number(row.base_imponible) || 0,
+          igv: Number(row.igv) || 0,
+          no_gravadas: Number(row.no_gravadas) || 0,
+          otros: Number(row.otros) || 0,
+          total: Number(row.total) || 0,
+          moneda: row.moneda?.trim() || "PEN", // Valor por defecto si viene vacío
+          tipo_cambio: Number(row.tipo_cambio) || 0,
+          descripcion_comprobante: row.descripcion?.trim() || null,
+          is_active: row.is_active?.trim() || "1",
+          link_pdf: row.link_pdf || null,
+        })),
+
+      updates: payload.updates.map((row) => ({
+        id: row.id,
         periodo: row.periodo,
-        fecha_emision: safeFormatToApi(row.fecha_inicio), 
-        fecha_vencimiento: safeFormatToApi(row.fecha_fin), 
+        fecha_emision: safeFormatToApi(row.fecha_inicio),
+        fecha_vencimiento: safeFormatToApi(row.fecha_fin),
         tipo_cp_codigo: row.tipo_comp.trim(),
         serie: row.serie_comp.trim(),
         numero: row.numero_comp.trim(),
@@ -819,57 +826,33 @@ function TablaContabilidadCompras({ periodo }: Props = { periodo: "" }) {
         no_gravadas: Number(row.no_gravadas) || 0,
         otros: Number(row.otros) || 0,
         total: Number(row.total) || 0,
-        moneda: row.moneda?.trim() || "PEN", // Valor por defecto si viene vacío
+        moneda: row.moneda?.trim() || "PEN",
         tipo_cambio: Number(row.tipo_cambio) || 0,
         descripcion_comprobante: row.descripcion?.trim() || null,
         is_active: row.is_active?.trim() || "1",
         link_pdf: row.link_pdf || null,
       })),
-
-    updates: payload.updates.map((row) => ({
-      id: row.id,
-      periodo: row.periodo,
-      fecha_emision: safeFormatToApi(row.fecha_inicio), 
-      fecha_vencimiento: safeFormatToApi(row.fecha_fin), 
-      tipo_cp_codigo: row.tipo_comp.trim(),
-      serie: row.serie_comp.trim(),
-      numero: row.numero_comp.trim(),
-      tipo_documento: row.tipo_empresa?.trim() || null,
-      nro_documento: row.numero_empresa?.trim() || null,
-      razon_social: row.nombre_empresa?.trim() || null,
-      base_imponible: Number(row.base_imponible) || 0,
-      igv: Number(row.igv) || 0,
-      no_gravadas: Number(row.no_gravadas) || 0,
-      otros: Number(row.otros) || 0,
-      total: Number(row.total) || 0,
-      moneda: row.moneda?.trim() || "PEN",
-      tipo_cambio: Number(row.tipo_cambio) || 0,
-      descripcion_comprobante: row.descripcion?.trim() || null,
-      is_active: row.is_active?.trim() || "1",
-      link_pdf: row.link_pdf || null,
-    })),
-  };
+    };
 
     await syncData(formattedPayload);
-};
+  };
 
   const columnsExcel = [
-      { header: "Periodo", key: "periodo", width: 12 },
-      { header: "F. Emisión", key: "fecha_inicio", width: 15 },
-      { header: "F. Vencimiento", key: "fecha_fin", width: 15 },
-      { header: "Tipo", key: "tipo_comp", width: 8 },
-      { header: "Serie", key: "serie_comp", width: 10 },
-      { header: "Número", key: "numero_comp", width: 15 },
-      { header: "Tipo Emp", key: "tipo_empresa", width: 15 },
-      { header: "Razón Social", key: "nombre_empresa", width: 35 },
-      { header: "Base Imponible", key: "base_imponible", width: 15 },
-      { header: "IGV", key: "igv", width: 15 },
-      { header: "Total", key: "total", width: 15 },
-      { header: "Moneda", key: "moneda", width: 15 },
-      { header: "Tipo Cambio", key: "tipo_cambio", width: 15 },
-      { header: "Descripción", key: "descripcion", width: 15 },
-    ];
-
+    { header: "Periodo", key: "periodo", width: 12 },
+    { header: "F. Emisión", key: "fecha_inicio", width: 15 },
+    { header: "F. Vencimiento", key: "fecha_fin", width: 15 },
+    { header: "Tipo", key: "tipo_comp", width: 8 },
+    { header: "Serie", key: "serie_comp", width: 10 },
+    { header: "Número", key: "numero_comp", width: 15 },
+    { header: "Tipo Emp", key: "tipo_empresa", width: 15 },
+    { header: "Razón Social", key: "nombre_empresa", width: 35 },
+    { header: "Base Imponible", key: "base_imponible", width: 15 },
+    { header: "IGV", key: "igv", width: 15 },
+    { header: "Total", key: "total", width: 15 },
+    { header: "Moneda", key: "moneda", width: 15 },
+    { header: "Tipo Cambio", key: "tipo_cambio", width: 15 },
+    { header: "Descripción", key: "descripcion", width: 15 },
+  ];
 
   return (
     <TablaGridBaseCompras
@@ -890,7 +873,6 @@ function TablaContabilidadCompras({ periodo }: Props = { periodo: "" }) {
       rowProcessor={rowProcessor}
       syncData={handleSync}
       columnsExcel={columnsExcel}
-      
     />
   );
 }
