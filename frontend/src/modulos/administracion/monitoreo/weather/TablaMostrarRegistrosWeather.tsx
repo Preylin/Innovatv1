@@ -53,7 +53,7 @@ function EstadoItem({ status }: { status: number }){
 const mapWeatherToTable = (weather: WeatherOutApiType[]): DataType[] => {
   return weather.map((w, i) => ({
     key: i + 1,
-    id: w.id ?? "-",
+    id: w.id ?? -1,
     name: w.name ?? "-",
     ubicacion: w.ubicacion ?? "-",
     inicio: isoToDDMMYYYY(w.inicio) ?? "-",
@@ -306,7 +306,7 @@ function TablaMostrarRegistrosWather() {
   const columnsExcel = [
     {
       header: "N°",
-      key: "item",
+      key: "key",
       width: 5,
     },
     {
@@ -367,7 +367,7 @@ function TablaMostrarRegistrosWather() {
         fuzzyFilter={fuzzyFilter}
         columFiltersInitialValue={columnFilters}
         cantidadFilas={15}
-        excelFileName="Cuentas por pagar proveedores"
+        excelFileName="Registro de servicios weather"
         columnsExcel={columnsExcel}
       />
 
