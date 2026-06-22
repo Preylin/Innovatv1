@@ -6,7 +6,7 @@ import io
 
 # Importaciones de tus archivos
 from app.api.v1.contabilidad.ventas.modelVentas import Venta
-from app.api.v1.administracion.globalClienteProveedor.models.modelGlobalCliente import GlobalCliente
+from app.api.v1.administracion.globalClienteProveedor.modelGlobalCliente import GlobalCliente
 from app.api.v1.contabilidad.ventas.schemaVentas import VentaBase, ResponseVentaLista, DeleteVentasPayload, SyncVentasPayload
 from app.core.deps import get_current_user
 from app.core.db import get_session

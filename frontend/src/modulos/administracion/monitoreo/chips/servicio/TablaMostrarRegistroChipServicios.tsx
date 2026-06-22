@@ -12,7 +12,6 @@ import {
   useDeleteChipServicio,
 } from "../../../../../api/queries/modulos/administracion/monitoreo/chipservicio/chipservicio.api";
 import isoToDDMMYYYY from "../../../../../helpers/Fechas";
-import { ordenarPorFecha } from "../../../../../helpers/OrdenacionAscDscPorFechasISO";
 import ErrorResultServer from "../../../../../components/pages/resultado/ErrorResultServer";
 import ButtomNew from "../../../../../components/molecules/botons/BottomNew";
 import ButtonUpdate from "../../../../../components/molecules/botons/BottonUpdate";
@@ -370,13 +369,13 @@ function TablaMostrarRegistrosChipServicio() {
           <div className="flex justify-center gap-2">
             <ButtonUpdate
               style={{ height: "28px" }}
-              onClick={() => handleOpenModal(Number(info.row.original.key))}
+              onClick={() => handleOpenModal(Number(info.row.original.id))}
             />
             <Popconfirm
               title="¿Eliminar Registro?"
               okText="Eliminar"
               cancelText="Cancelar"
-              onConfirm={() => mutate(Number(info.row.original.key))}
+              onConfirm={() => mutate(Number(info.row.original.id))}
               okButtonProps={{ loading: isPending }}
             >
               <ButtonDelete style={{ height: "28px" }} />

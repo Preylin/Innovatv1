@@ -133,38 +133,7 @@ function useSiderBarContent(): AppMenuItem[] {
         label: "Monitoreo",
         key: "/administracion/monitoreo",
         icon: <UseBarAdministracionIcons name="monitoreo" />,
-        children: [
-          {
-            label: "Inicio",
-            key: "/administracion/monitoreo/inicio",
-            icon: <UseBarAdministracionIcons name="inicio" />,
-            to: "/administracion/monitoreo/inicio",
-          },
-          {
-            label: "Weather",
-            key: "/administracion/monitoreo/weather",
-            icon: <UseBarAdministracionIcons name="weather" />,
-            to: "/administracion/monitoreo/weather",
-          },
-          {
-            label: "Pro",
-            key: "/administracion/monitoreo/pro",
-            icon: <UseBarAdministracionIcons name="pro" />,
-            to: "/administracion/monitoreo/pro",
-          },
-          {
-            label: "Chips",
-            key: "/administracion/monitoreo/chips",
-            icon: <UseBarAdministracionIcons name="chips" />,
-            to: "/administracion/monitoreo/chips",
-          },
-          {
-            label: "Servicios de M/C",
-            key: "/administracion/monitoreo/servicios",
-            icon: <UseBarAdministracionIcons name="servicios" />,
-            to: "/administracion/monitoreo/servicios",
-          },
-        ],
+        to: "/administracion/monitoreo",
       },
       {
         label: "Activos",

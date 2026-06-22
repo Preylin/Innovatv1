@@ -14,7 +14,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.security import decode_access_token
 from app.core.db import get_session
-from app.models.auth.auth_models import Usuario
+from app.api.v1.auth.auth_models import Usuario
 
 reusable_oauth2 = HTTPBearer(auto_error=True)
 

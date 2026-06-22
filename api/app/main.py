@@ -4,27 +4,26 @@ import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.auth import auth
 from app.core.security import decode_access_token
 from app.core.realtime import db_to_redis_bridge, manager
 from app.core.db import init_db, dispose_db, check_db_connection
 
-from app.api.v1.routes.auth import auth, usuario
-from app.api.v1.routes.modulos.administracion.monitoreo.router_wather_pro_monitoreo_administracion import router_weather, router_pro, router_chipservicio
-from app.api.v1.routes.modulos.administracion.monitoreo.router_clientes_ubicacion_chips_monitoreo_administracion import router_clientes, router_chips, router_ubicaciones
-from app.api.v1.routes.modulos.almacen.catalogos.RouterAlmacenCatalogosMerMat import router_catalogoMercaderia, router_catalogoMaterial
-from app.api.v1.routes.modulos.administracion.monitoreo.routerAdministracionMonitoreoServiciosMC import router_serviciosmc
-from app.api.v1.routes.modulos.almacen.catalogos.RouterAlmacenIngresoMercaderia import router_ingresoMercaderia
-from app.api.v1.routes.modulos.almacen.catalogos.RouterAlmacenIngresoMaterial import router_ingresoMaterial
-from app.api.v1.routes.modulos.almacen.catalogos.RouterAlmacenSalidaMercaderia import router_salidaMercaderia
-from app.api.v1.routes.modulos.almacen.catalogos.RouterAlmacenSalidaMaterial import router_salidaMaterial
-from app.api.v1.routes.modulos.gerencia.inicio.RouterGerenciaInicioProvClient import router_clientesGerenciaInicio, router_proveedoresGerenciaInicio
-from app.api.v1.routes.modulos.administracion.ventas.RouterHistorialVentas import router_historialVentas
-from app.api.v1.routes.modulos.administracion.ventas.RouterHistorialCompras import router_historialCompras
+from app.api.v1.auth import usuario
+from app.api.v1.administracion.monitoreo.router_wather_pro_monitoreo_administracion import router_weather, router_pro, router_chipservicio
+from app.api.v1.administracion.monitoreo.router_clientes_ubicacion_chips_monitoreo_administracion import router_clientes, router_chips, router_ubicaciones
+from app.api.v1.almacen.catalogos.RouterAlmacenCatalogosMerMat import router_catalogoMercaderia, router_catalogoMaterial
+from app.api.v1.administracion.monitoreo.routerAdministracionMonitoreoServiciosMC import router_serviciosmc
+from app.api.v1.almacen.catalogos.RouterAlmacenIngresoMercaderia import router_ingresoMercaderia
+from app.api.v1.almacen.catalogos.RouterAlmacenIngresoMaterial import router_ingresoMaterial
+from app.api.v1.almacen.catalogos.RouterAlmacenSalidaMercaderia import router_salidaMercaderia
+from app.api.v1.almacen.catalogos.RouterAlmacenSalidaMaterial import router_salidaMaterial
+from app.api.v1.gerencia.inicio.RouterGerenciaInicioProvClient import router_clientesGerenciaInicio, router_proveedoresGerenciaInicio
 from app.api.v1.tesoreria.routers.RouterTesoreriaEfectivo import router_cajachica, router_bcpsoles, router_bcpdolares
 from app.api.v1.tesoreria.routers.RouterTesoreriaCntPorPagar import router_cuentasporpagar
 from app.api.v1.contabilidad.ventas.routerVentas import router_contabilidad_ventas
 from app.api.v1.tesoreria.routers.RouterTesoreriaCntPorCobrar import router_tesoreria_cuentasporcobrar
-from app.api.v1.administracion.historial.routers.routerHistorial import router_administracion_historial
+from app.api.v1.administracion.historial.routerHistorial import router_administracion_historial
 from app.api.v1.contabilidad.compras.routerCompras import router_contabilidad_compras
 
 
@@ -144,8 +143,6 @@ app.include_router(router_salidaMercaderia)
 app.include_router(router_salidaMaterial)
 app.include_router(router_clientesGerenciaInicio)
 app.include_router(router_proveedoresGerenciaInicio)
-app.include_router(router_historialVentas)
-app.include_router(router_historialCompras)
 app.include_router(router_cajachica)
 app.include_router(router_bcpsoles)
 app.include_router(router_bcpdolares)

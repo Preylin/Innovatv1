@@ -297,13 +297,13 @@ function TablaMostrarRegistrosPro() {
           <div className="flex justify-center gap-2">
             <ButtonUpdate
               style={{ height: "28px" }}
-              onClick={() => handleOpenModal(Number(info.row.original.key))}
+              onClick={() => handleOpenModal(Number(info.row.original.id))}
             />
             <Popconfirm
               title="¿Eliminar Registro?"
               okText="Eliminar"
               cancelText="Cancelar"
-              onConfirm={() => mutate(Number(info.row.original.key))}
+              onConfirm={() => mutate(Number(info.row.original.id))}
               okButtonProps={{ loading: isPending }}
             >
               <ButtonDelete style={{ height: "28px" }} />

@@ -10,7 +10,7 @@ from app.core.deps import get_current_user
 from app.core.db import get_session
 from app.api.v1.tesoreria.schemas.SchemaTesoreriaCntPorCobrar import CuentasPorCobrarMensualRead, CuentasPorCobrarDetalleOnetoOneReadVentas, CuentasPorCobrarDetalleOnetoOneReadCajaVentas, RegistrarCobro, UpdateFechaPagoRetencionDetraccionSchema
 from app.api.v1.contabilidad.ventas.modelVentas import Venta, CajaMovimientoVenta
-from app.api.v1.administracion.globalClienteProveedor.models.modelGlobalCliente import GlobalCliente
+from app.api.v1.administracion.globalClienteProveedor.modelGlobalCliente import GlobalCliente
 
 
 

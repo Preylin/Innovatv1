@@ -9,6 +9,6 @@
 
 -- select * from contabilidad.ventas;
 
-SELECT * 
-FROM contabilidad.compras 
-WHERE periodo like '2026%'
+-- SELECT * 
+-- FROM contabilidad.compras 
+-- WHERE periodo like '2026%'

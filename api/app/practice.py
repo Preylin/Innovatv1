@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from pydantic import BaseModel, model_validator
 
-from models.modulos.administracion.monitoreo.individuales.models_weather_pro_chips_monitoreo_administracion import Weather
+from api.app.api.v1.administracion.monitoreo.individuales.models_weather_pro_chips_monitoreo_administracion import Weather
 from core.db import get_session
 
 

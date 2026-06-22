@@ -18,13 +18,23 @@ import { Route as ContabilidadRouteImport } from './routes/contabilidad'
 import { Route as AlmacenRouteImport } from './routes/almacen'
 import { Route as AdministracionRouteImport } from './routes/administracion'
 import { Route as TesoreriaPagarIndexRouteImport } from './routes/tesoreria/pagar/index'
+import { Route as AdministracionMonitoreoIndexRouteImport } from './routes/administracion/monitoreo/index'
 import { Route as TesoreriaPagarLayoutRouteImport } from './routes/tesoreria/pagar/_layout'
+import { Route as AdministracionMonitoreoLayoutRouteImport } from './routes/administracion/monitoreo/_layout'
 import { Route as TesoreriaPagarLayoutProveedoresRouteImport } from './routes/tesoreria/pagar/_layout.proveedores'
 import { Route as TesoreriaPagarLayoutMensualesRouteImport } from './routes/tesoreria/pagar/_layout.mensuales'
 import { Route as TesoreriaPagarLayoutEventualesRouteImport } from './routes/tesoreria/pagar/_layout.eventuales'
+import { Route as AdministracionMonitoreoLayoutWeatherRouteImport } from './routes/administracion/monitoreo/_layout.weather'
+import { Route as AdministracionMonitoreoLayoutServiciosRouteImport } from './routes/administracion/monitoreo/_layout.servicios'
+import { Route as AdministracionMonitoreoLayoutProRouteImport } from './routes/administracion/monitoreo/_layout.pro'
+import { Route as AdministracionMonitoreoLayoutInicioRouteImport } from './routes/administracion/monitoreo/_layout.inicio'
+import { Route as AdministracionMonitoreoLayoutChipsRouteImport } from './routes/administracion/monitoreo/_layout.chips'
 
 const IndexLazyRouteImport = createFileRoute('/')()
 const TesoreriaPagarRouteImport = createFileRoute('/tesoreria/pagar')()
+const AdministracionMonitoreoRouteImport = createFileRoute(
+  '/administracion/monitoreo',
+)()
 const TesoreriaIndexLazyRouteImport = createFileRoute('/tesoreria/')()
 const ProduccionIndexLazyRouteImport = createFileRoute('/produccion/')()
 const GerenciaIndexLazyRouteImport = createFileRoute('/gerencia/')()
@@ -61,9 +71,6 @@ const TesoreriaMovimientoIndexLazyRouteImport = createFileRoute(
 const GerenciaCotizacionesIndexLazyRouteImport = createFileRoute(
   '/gerencia/cotizaciones/',
 )()
-const AdministracionMonitoreoIndexLazyRouteImport = createFileRoute(
-  '/administracion/monitoreo/',
-)()
 const AdministracionListaIndexLazyRouteImport = createFileRoute(
   '/administracion/lista/',
 )()
@@ -78,21 +85,6 @@ const TesoreriaMovimientoCajaLazyRouteImport = createFileRoute(
 )()
 const GerenciaCotizacionesCrearLazyRouteImport = createFileRoute(
   '/gerencia/cotizaciones/crear',
-)()
-const AdministracionMonitoreoWeatherLazyRouteImport = createFileRoute(
-  '/administracion/monitoreo/weather',
-)()
-const AdministracionMonitoreoServiciosLazyRouteImport = createFileRoute(
-  '/administracion/monitoreo/servicios',
-)()
-const AdministracionMonitoreoProLazyRouteImport = createFileRoute(
-  '/administracion/monitoreo/pro',
-)()
-const AdministracionMonitoreoInicioLazyRouteImport = createFileRoute(
-  '/administracion/monitoreo/inicio',
-)()
-const AdministracionMonitoreoChipsLazyRouteImport = createFileRoute(
-  '/administracion/monitoreo/chips',
 )()
 const AdministracionListaProveedoresLazyRouteImport = createFileRoute(
   '/administracion/lista/proveedores',
@@ -149,6 +141,11 @@ const TesoreriaPagarRoute = TesoreriaPagarRouteImport.update({
   id: '/pagar',
   path: '/pagar',
   getParentRoute: () => TesoreriaRoute,
+} as any)
+const AdministracionMonitoreoRoute = AdministracionMonitoreoRouteImport.update({
+  id: '/monitoreo',
+  path: '/monitoreo',
+  getParentRoute: () => AdministracionRoute,
 } as any)
 const TesoreriaIndexLazyRoute = TesoreriaIndexLazyRouteImport.update({
   id: '/',
@@ -304,14 +301,6 @@ const GerenciaCotizacionesIndexLazyRoute =
   } as any).lazy(() =>
     import('./routes/gerencia/cotizaciones/index.lazy').then((d) => d.Route),
   )
-const AdministracionMonitoreoIndexLazyRoute =
-  AdministracionMonitoreoIndexLazyRouteImport.update({
-    id: '/monitoreo/',
-    path: '/monitoreo/',
-    getParentRoute: () => AdministracionRoute,
-  } as any).lazy(() =>
-    import('./routes/administracion/monitoreo/index.lazy').then((d) => d.Route),
-  )
 const AdministracionListaIndexLazyRoute =
   AdministracionListaIndexLazyRouteImport.update({
     id: '/lista/',
@@ -325,6 +314,12 @@ const TesoreriaPagarIndexRoute = TesoreriaPagarIndexRouteImport.update({
   path: '/',
   getParentRoute: () => TesoreriaPagarRoute,
 } as any)
+const AdministracionMonitoreoIndexRoute =
+  AdministracionMonitoreoIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdministracionMonitoreoRoute,
+  } as any)
 const TesoreriaMovimientoSolesLazyRoute =
   TesoreriaMovimientoSolesLazyRouteImport.update({
     id: '/movimiento/soles',
@@ -356,52 +351,6 @@ const GerenciaCotizacionesCrearLazyRoute =
     getParentRoute: () => GerenciaCotizacionesLazyRoute,
   } as any).lazy(() =>
     import('./routes/gerencia/cotizaciones/crear.lazy').then((d) => d.Route),
-  )
-const AdministracionMonitoreoWeatherLazyRoute =
-  AdministracionMonitoreoWeatherLazyRouteImport.update({
-    id: '/monitoreo/weather',
-    path: '/monitoreo/weather',
-    getParentRoute: () => AdministracionRoute,
-  } as any).lazy(() =>
-    import('./routes/administracion/monitoreo/weather.lazy').then(
-      (d) => d.Route,
-    ),
-  )
-const AdministracionMonitoreoServiciosLazyRoute =
-  AdministracionMonitoreoServiciosLazyRouteImport.update({
-    id: '/monitoreo/servicios',
-    path: '/monitoreo/servicios',
-    getParentRoute: () => AdministracionRoute,
-  } as any).lazy(() =>
-    import('./routes/administracion/monitoreo/servicios.lazy').then(
-      (d) => d.Route,
-    ),
-  )
-const AdministracionMonitoreoProLazyRoute =
-  AdministracionMonitoreoProLazyRouteImport.update({
-    id: '/monitoreo/pro',
-    path: '/monitoreo/pro',
-    getParentRoute: () => AdministracionRoute,
-  } as any).lazy(() =>
-    import('./routes/administracion/monitoreo/pro.lazy').then((d) => d.Route),
-  )
-const AdministracionMonitoreoInicioLazyRoute =
-  AdministracionMonitoreoInicioLazyRouteImport.update({
-    id: '/monitoreo/inicio',
-    path: '/monitoreo/inicio',
-    getParentRoute: () => AdministracionRoute,
-  } as any).lazy(() =>
-    import('./routes/administracion/monitoreo/inicio.lazy').then(
-      (d) => d.Route,
-    ),
-  )
-const AdministracionMonitoreoChipsLazyRoute =
-  AdministracionMonitoreoChipsLazyRouteImport.update({
-    id: '/monitoreo/chips',
-    path: '/monitoreo/chips',
-    getParentRoute: () => AdministracionRoute,
-  } as any).lazy(() =>
-    import('./routes/administracion/monitoreo/chips.lazy').then((d) => d.Route),
   )
 const AdministracionListaProveedoresLazyRoute =
   AdministracionListaProveedoresLazyRouteImport.update({
@@ -453,6 +402,11 @@ const TesoreriaPagarLayoutRoute = TesoreriaPagarLayoutRouteImport.update({
   id: '/_layout',
   getParentRoute: () => TesoreriaPagarRoute,
 } as any)
+const AdministracionMonitoreoLayoutRoute =
+  AdministracionMonitoreoLayoutRouteImport.update({
+    id: '/_layout',
+    getParentRoute: () => AdministracionMonitoreoRoute,
+  } as any)
 const TesoreriaPagarLayoutProveedoresRoute =
   TesoreriaPagarLayoutProveedoresRouteImport.update({
     id: '/proveedores',
@@ -470,6 +424,36 @@ const TesoreriaPagarLayoutEventualesRoute =
     id: '/eventuales',
     path: '/eventuales',
     getParentRoute: () => TesoreriaPagarLayoutRoute,
+  } as any)
+const AdministracionMonitoreoLayoutWeatherRoute =
+  AdministracionMonitoreoLayoutWeatherRouteImport.update({
+    id: '/weather',
+    path: '/weather',
+    getParentRoute: () => AdministracionMonitoreoLayoutRoute,
+  } as any)
+const AdministracionMonitoreoLayoutServiciosRoute =
+  AdministracionMonitoreoLayoutServiciosRouteImport.update({
+    id: '/servicios',
+    path: '/servicios',
+    getParentRoute: () => AdministracionMonitoreoLayoutRoute,
+  } as any)
+const AdministracionMonitoreoLayoutProRoute =
+  AdministracionMonitoreoLayoutProRouteImport.update({
+    id: '/pro',
+    path: '/pro',
+    getParentRoute: () => AdministracionMonitoreoLayoutRoute,
+  } as any)
+const AdministracionMonitoreoLayoutInicioRoute =
+  AdministracionMonitoreoLayoutInicioRouteImport.update({
+    id: '/inicio',
+    path: '/inicio',
+    getParentRoute: () => AdministracionMonitoreoLayoutRoute,
+  } as any)
+const AdministracionMonitoreoLayoutChipsRoute =
+  AdministracionMonitoreoLayoutChipsRouteImport.update({
+    id: '/chips',
+    path: '/chips',
+    getParentRoute: () => AdministracionMonitoreoLayoutRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -500,26 +484,27 @@ export interface FileRoutesByFullPath {
   '/gerencia/': typeof GerenciaIndexLazyRoute
   '/produccion/': typeof ProduccionIndexLazyRoute
   '/tesoreria/': typeof TesoreriaIndexLazyRoute
+  '/administracion/monitoreo': typeof AdministracionMonitoreoLayoutRouteWithChildren
   '/tesoreria/pagar': typeof TesoreriaPagarLayoutRouteWithChildren
   '/administracion/historial/compras': typeof AdministracionHistorialComprasLazyRoute
   '/administracion/historial/indez': typeof AdministracionHistorialIndezLazyRoute
   '/administracion/historial/ventas': typeof AdministracionHistorialVentasLazyRoute
   '/administracion/lista/clientes': typeof AdministracionListaClientesLazyRoute
   '/administracion/lista/proveedores': typeof AdministracionListaProveedoresLazyRoute
-  '/administracion/monitoreo/chips': typeof AdministracionMonitoreoChipsLazyRoute
-  '/administracion/monitoreo/inicio': typeof AdministracionMonitoreoInicioLazyRoute
-  '/administracion/monitoreo/pro': typeof AdministracionMonitoreoProLazyRoute
-  '/administracion/monitoreo/servicios': typeof AdministracionMonitoreoServiciosLazyRoute
-  '/administracion/monitoreo/weather': typeof AdministracionMonitoreoWeatherLazyRoute
   '/gerencia/cotizaciones/crear': typeof GerenciaCotizacionesCrearLazyRoute
   '/tesoreria/movimiento/caja': typeof TesoreriaMovimientoCajaLazyRoute
   '/tesoreria/movimiento/dolares': typeof TesoreriaMovimientoDolaresLazyRoute
   '/tesoreria/movimiento/soles': typeof TesoreriaMovimientoSolesLazyRoute
+  '/administracion/monitoreo/': typeof AdministracionMonitoreoIndexRoute
   '/tesoreria/pagar/': typeof TesoreriaPagarIndexRoute
   '/administracion/lista': typeof AdministracionListaIndexLazyRoute
-  '/administracion/monitoreo': typeof AdministracionMonitoreoIndexLazyRoute
   '/gerencia/cotizaciones/': typeof GerenciaCotizacionesIndexLazyRoute
   '/tesoreria/movimiento': typeof TesoreriaMovimientoIndexLazyRoute
+  '/administracion/monitoreo/chips': typeof AdministracionMonitoreoLayoutChipsRoute
+  '/administracion/monitoreo/inicio': typeof AdministracionMonitoreoLayoutInicioRoute
+  '/administracion/monitoreo/pro': typeof AdministracionMonitoreoLayoutProRoute
+  '/administracion/monitoreo/servicios': typeof AdministracionMonitoreoLayoutServiciosRoute
+  '/administracion/monitoreo/weather': typeof AdministracionMonitoreoLayoutWeatherRoute
   '/tesoreria/pagar/eventuales': typeof TesoreriaPagarLayoutEventualesRoute
   '/tesoreria/pagar/mensuales': typeof TesoreriaPagarLayoutMensualesRoute
   '/tesoreria/pagar/proveedores': typeof TesoreriaPagarLayoutProveedoresRoute
@@ -545,25 +530,25 @@ export interface FileRoutesByTo {
   '/gerencia': typeof GerenciaIndexLazyRoute
   '/produccion': typeof ProduccionIndexLazyRoute
   '/tesoreria': typeof TesoreriaIndexLazyRoute
+  '/administracion/monitoreo': typeof AdministracionMonitoreoIndexRoute
   '/tesoreria/pagar': typeof TesoreriaPagarIndexRoute
   '/administracion/historial/compras': typeof AdministracionHistorialComprasLazyRoute
   '/administracion/historial/indez': typeof AdministracionHistorialIndezLazyRoute
   '/administracion/historial/ventas': typeof AdministracionHistorialVentasLazyRoute
   '/administracion/lista/clientes': typeof AdministracionListaClientesLazyRoute
   '/administracion/lista/proveedores': typeof AdministracionListaProveedoresLazyRoute
-  '/administracion/monitoreo/chips': typeof AdministracionMonitoreoChipsLazyRoute
-  '/administracion/monitoreo/inicio': typeof AdministracionMonitoreoInicioLazyRoute
-  '/administracion/monitoreo/pro': typeof AdministracionMonitoreoProLazyRoute
-  '/administracion/monitoreo/servicios': typeof AdministracionMonitoreoServiciosLazyRoute
-  '/administracion/monitoreo/weather': typeof AdministracionMonitoreoWeatherLazyRoute
   '/gerencia/cotizaciones/crear': typeof GerenciaCotizacionesCrearLazyRoute
   '/tesoreria/movimiento/caja': typeof TesoreriaMovimientoCajaLazyRoute
   '/tesoreria/movimiento/dolares': typeof TesoreriaMovimientoDolaresLazyRoute
   '/tesoreria/movimiento/soles': typeof TesoreriaMovimientoSolesLazyRoute
   '/administracion/lista': typeof AdministracionListaIndexLazyRoute
-  '/administracion/monitoreo': typeof AdministracionMonitoreoIndexLazyRoute
   '/gerencia/cotizaciones': typeof GerenciaCotizacionesIndexLazyRoute
   '/tesoreria/movimiento': typeof TesoreriaMovimientoIndexLazyRoute
+  '/administracion/monitoreo/chips': typeof AdministracionMonitoreoLayoutChipsRoute
+  '/administracion/monitoreo/inicio': typeof AdministracionMonitoreoLayoutInicioRoute
+  '/administracion/monitoreo/pro': typeof AdministracionMonitoreoLayoutProRoute
+  '/administracion/monitoreo/servicios': typeof AdministracionMonitoreoLayoutServiciosRoute
+  '/administracion/monitoreo/weather': typeof AdministracionMonitoreoLayoutWeatherRoute
   '/tesoreria/pagar/eventuales': typeof TesoreriaPagarLayoutEventualesRoute
   '/tesoreria/pagar/mensuales': typeof TesoreriaPagarLayoutMensualesRoute
   '/tesoreria/pagar/proveedores': typeof TesoreriaPagarLayoutProveedoresRoute
@@ -597,6 +582,8 @@ export interface FileRoutesById {
   '/gerencia/': typeof GerenciaIndexLazyRoute
   '/produccion/': typeof ProduccionIndexLazyRoute
   '/tesoreria/': typeof TesoreriaIndexLazyRoute
+  '/administracion/monitoreo': typeof AdministracionMonitoreoRouteWithChildren
+  '/administracion/monitoreo/_layout': typeof AdministracionMonitoreoLayoutRouteWithChildren
   '/tesoreria/pagar': typeof TesoreriaPagarRouteWithChildren
   '/tesoreria/pagar/_layout': typeof TesoreriaPagarLayoutRouteWithChildren
   '/administracion/historial/compras': typeof AdministracionHistorialComprasLazyRoute
@@ -604,20 +591,20 @@ export interface FileRoutesById {
   '/administracion/historial/ventas': typeof AdministracionHistorialVentasLazyRoute
   '/administracion/lista/clientes': typeof AdministracionListaClientesLazyRoute
   '/administracion/lista/proveedores': typeof AdministracionListaProveedoresLazyRoute
-  '/administracion/monitoreo/chips': typeof AdministracionMonitoreoChipsLazyRoute
-  '/administracion/monitoreo/inicio': typeof AdministracionMonitoreoInicioLazyRoute
-  '/administracion/monitoreo/pro': typeof AdministracionMonitoreoProLazyRoute
-  '/administracion/monitoreo/servicios': typeof AdministracionMonitoreoServiciosLazyRoute
-  '/administracion/monitoreo/weather': typeof AdministracionMonitoreoWeatherLazyRoute
   '/gerencia/cotizaciones/crear': typeof GerenciaCotizacionesCrearLazyRoute
   '/tesoreria/movimiento/caja': typeof TesoreriaMovimientoCajaLazyRoute
   '/tesoreria/movimiento/dolares': typeof TesoreriaMovimientoDolaresLazyRoute
   '/tesoreria/movimiento/soles': typeof TesoreriaMovimientoSolesLazyRoute
+  '/administracion/monitoreo/': typeof AdministracionMonitoreoIndexRoute
   '/tesoreria/pagar/': typeof TesoreriaPagarIndexRoute
   '/administracion/lista/': typeof AdministracionListaIndexLazyRoute
-  '/administracion/monitoreo/': typeof AdministracionMonitoreoIndexLazyRoute
   '/gerencia/cotizaciones/': typeof GerenciaCotizacionesIndexLazyRoute
   '/tesoreria/movimiento/': typeof TesoreriaMovimientoIndexLazyRoute
+  '/administracion/monitoreo/_layout/chips': typeof AdministracionMonitoreoLayoutChipsRoute
+  '/administracion/monitoreo/_layout/inicio': typeof AdministracionMonitoreoLayoutInicioRoute
+  '/administracion/monitoreo/_layout/pro': typeof AdministracionMonitoreoLayoutProRoute
+  '/administracion/monitoreo/_layout/servicios': typeof AdministracionMonitoreoLayoutServiciosRoute
+  '/administracion/monitoreo/_layout/weather': typeof AdministracionMonitoreoLayoutWeatherRoute
   '/tesoreria/pagar/_layout/eventuales': typeof TesoreriaPagarLayoutEventualesRoute
   '/tesoreria/pagar/_layout/mensuales': typeof TesoreriaPagarLayoutMensualesRoute
   '/tesoreria/pagar/_layout/proveedores': typeof TesoreriaPagarLayoutProveedoresRoute
@@ -652,26 +639,27 @@ export interface FileRouteTypes {
     | '/gerencia/'
     | '/produccion/'
     | '/tesoreria/'
+    | '/administracion/monitoreo'
     | '/tesoreria/pagar'
     | '/administracion/historial/compras'
     | '/administracion/historial/indez'
     | '/administracion/historial/ventas'
     | '/administracion/lista/clientes'
     | '/administracion/lista/proveedores'
+    | '/gerencia/cotizaciones/crear'
+    | '/tesoreria/movimiento/caja'
+    | '/tesoreria/movimiento/dolares'
+    | '/tesoreria/movimiento/soles'
+    | '/administracion/monitoreo/'
+    | '/tesoreria/pagar/'
+    | '/administracion/lista'
+    | '/gerencia/cotizaciones/'
+    | '/tesoreria/movimiento'
     | '/administracion/monitoreo/chips'
     | '/administracion/monitoreo/inicio'
     | '/administracion/monitoreo/pro'
     | '/administracion/monitoreo/servicios'
     | '/administracion/monitoreo/weather'
-    | '/gerencia/cotizaciones/crear'
-    | '/tesoreria/movimiento/caja'
-    | '/tesoreria/movimiento/dolares'
-    | '/tesoreria/movimiento/soles'
-    | '/tesoreria/pagar/'
-    | '/administracion/lista'
-    | '/administracion/monitoreo'
-    | '/gerencia/cotizaciones/'
-    | '/tesoreria/movimiento'
     | '/tesoreria/pagar/eventuales'
     | '/tesoreria/pagar/mensuales'
     | '/tesoreria/pagar/proveedores'
@@ -697,25 +685,25 @@ export interface FileRouteTypes {
     | '/gerencia'
     | '/produccion'
     | '/tesoreria'
+    | '/administracion/monitoreo'
     | '/tesoreria/pagar'
     | '/administracion/historial/compras'
     | '/administracion/historial/indez'
     | '/administracion/historial/ventas'
     | '/administracion/lista/clientes'
     | '/administracion/lista/proveedores'
-    | '/administracion/monitoreo/chips'
-    | '/administracion/monitoreo/inicio'
-    | '/administracion/monitoreo/pro'
-    | '/administracion/monitoreo/servicios'
-    | '/administracion/monitoreo/weather'
     | '/gerencia/cotizaciones/crear'
     | '/tesoreria/movimiento/caja'
     | '/tesoreria/movimiento/dolares'
     | '/tesoreria/movimiento/soles'
     | '/administracion/lista'
-    | '/administracion/monitoreo'
     | '/gerencia/cotizaciones'
     | '/tesoreria/movimiento'
+    | '/administracion/monitoreo/chips'
+    | '/administracion/monitoreo/inicio'
+    | '/administracion/monitoreo/pro'
+    | '/administracion/monitoreo/servicios'
+    | '/administracion/monitoreo/weather'
     | '/tesoreria/pagar/eventuales'
     | '/tesoreria/pagar/mensuales'
     | '/tesoreria/pagar/proveedores'
@@ -748,6 +736,8 @@ export interface FileRouteTypes {
     | '/gerencia/'
     | '/produccion/'
     | '/tesoreria/'
+    | '/administracion/monitoreo'
+    | '/administracion/monitoreo/_layout'
     | '/tesoreria/pagar'
     | '/tesoreria/pagar/_layout'
     | '/administracion/historial/compras'
@@ -755,20 +745,20 @@ export interface FileRouteTypes {
     | '/administracion/historial/ventas'
     | '/administracion/lista/clientes'
     | '/administracion/lista/proveedores'
-    | '/administracion/monitoreo/chips'
-    | '/administracion/monitoreo/inicio'
-    | '/administracion/monitoreo/pro'
-    | '/administracion/monitoreo/servicios'
-    | '/administracion/monitoreo/weather'
     | '/gerencia/cotizaciones/crear'
     | '/tesoreria/movimiento/caja'
     | '/tesoreria/movimiento/dolares'
     | '/tesoreria/movimiento/soles'
+    | '/administracion/monitoreo/'
     | '/tesoreria/pagar/'
     | '/administracion/lista/'
-    | '/administracion/monitoreo/'
     | '/gerencia/cotizaciones/'
     | '/tesoreria/movimiento/'
+    | '/administracion/monitoreo/_layout/chips'
+    | '/administracion/monitoreo/_layout/inicio'
+    | '/administracion/monitoreo/_layout/pro'
+    | '/administracion/monitoreo/_layout/servicios'
+    | '/administracion/monitoreo/_layout/weather'
     | '/tesoreria/pagar/_layout/eventuales'
     | '/tesoreria/pagar/_layout/mensuales'
     | '/tesoreria/pagar/_layout/proveedores'
@@ -841,6 +831,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/tesoreria/pagar'
       preLoaderRoute: typeof TesoreriaPagarRouteImport
       parentRoute: typeof TesoreriaRoute
+    }
+    '/administracion/monitoreo': {
+      id: '/administracion/monitoreo'
+      path: '/monitoreo'
+      fullPath: '/administracion/monitoreo'
+      preLoaderRoute: typeof AdministracionMonitoreoRouteImport
+      parentRoute: typeof AdministracionRoute
     }
     '/tesoreria/': {
       id: '/tesoreria/'
@@ -996,13 +993,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GerenciaCotizacionesIndexLazyRouteImport
       parentRoute: typeof GerenciaCotizacionesLazyRoute
     }
-    '/administracion/monitoreo/': {
-      id: '/administracion/monitoreo/'
-      path: '/monitoreo'
-      fullPath: '/administracion/monitoreo'
-      preLoaderRoute: typeof AdministracionMonitoreoIndexLazyRouteImport
-      parentRoute: typeof AdministracionRoute
-    }
     '/administracion/lista/': {
       id: '/administracion/lista/'
       path: '/lista'
@@ -1016,6 +1006,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/tesoreria/pagar/'
       preLoaderRoute: typeof TesoreriaPagarIndexRouteImport
       parentRoute: typeof TesoreriaPagarRoute
+    }
+    '/administracion/monitoreo/': {
+      id: '/administracion/monitoreo/'
+      path: '/'
+      fullPath: '/administracion/monitoreo/'
+      preLoaderRoute: typeof AdministracionMonitoreoIndexRouteImport
+      parentRoute: typeof AdministracionMonitoreoRoute
     }
     '/tesoreria/movimiento/soles': {
       id: '/tesoreria/movimiento/soles'
@@ -1044,41 +1041,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/gerencia/cotizaciones/crear'
       preLoaderRoute: typeof GerenciaCotizacionesCrearLazyRouteImport
       parentRoute: typeof GerenciaCotizacionesLazyRoute
-    }
-    '/administracion/monitoreo/weather': {
-      id: '/administracion/monitoreo/weather'
-      path: '/monitoreo/weather'
-      fullPath: '/administracion/monitoreo/weather'
-      preLoaderRoute: typeof AdministracionMonitoreoWeatherLazyRouteImport
-      parentRoute: typeof AdministracionRoute
-    }
-    '/administracion/monitoreo/servicios': {
-      id: '/administracion/monitoreo/servicios'
-      path: '/monitoreo/servicios'
-      fullPath: '/administracion/monitoreo/servicios'
-      preLoaderRoute: typeof AdministracionMonitoreoServiciosLazyRouteImport
-      parentRoute: typeof AdministracionRoute
-    }
-    '/administracion/monitoreo/pro': {
-      id: '/administracion/monitoreo/pro'
-      path: '/monitoreo/pro'
-      fullPath: '/administracion/monitoreo/pro'
-      preLoaderRoute: typeof AdministracionMonitoreoProLazyRouteImport
-      parentRoute: typeof AdministracionRoute
-    }
-    '/administracion/monitoreo/inicio': {
-      id: '/administracion/monitoreo/inicio'
-      path: '/monitoreo/inicio'
-      fullPath: '/administracion/monitoreo/inicio'
-      preLoaderRoute: typeof AdministracionMonitoreoInicioLazyRouteImport
-      parentRoute: typeof AdministracionRoute
-    }
-    '/administracion/monitoreo/chips': {
-      id: '/administracion/monitoreo/chips'
-      path: '/monitoreo/chips'
-      fullPath: '/administracion/monitoreo/chips'
-      preLoaderRoute: typeof AdministracionMonitoreoChipsLazyRouteImport
-      parentRoute: typeof AdministracionRoute
     }
     '/administracion/lista/proveedores': {
       id: '/administracion/lista/proveedores'
@@ -1122,6 +1084,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TesoreriaPagarLayoutRouteImport
       parentRoute: typeof TesoreriaPagarRoute
     }
+    '/administracion/monitoreo/_layout': {
+      id: '/administracion/monitoreo/_layout'
+      path: '/monitoreo'
+      fullPath: '/administracion/monitoreo'
+      preLoaderRoute: typeof AdministracionMonitoreoLayoutRouteImport
+      parentRoute: typeof AdministracionMonitoreoRoute
+    }
     '/tesoreria/pagar/_layout/proveedores': {
       id: '/tesoreria/pagar/_layout/proveedores'
       path: '/proveedores'
@@ -1143,29 +1112,104 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TesoreriaPagarLayoutEventualesRouteImport
       parentRoute: typeof TesoreriaPagarLayoutRoute
     }
+    '/administracion/monitoreo/_layout/weather': {
+      id: '/administracion/monitoreo/_layout/weather'
+      path: '/weather'
+      fullPath: '/administracion/monitoreo/weather'
+      preLoaderRoute: typeof AdministracionMonitoreoLayoutWeatherRouteImport
+      parentRoute: typeof AdministracionMonitoreoLayoutRoute
+    }
+    '/administracion/monitoreo/_layout/servicios': {
+      id: '/administracion/monitoreo/_layout/servicios'
+      path: '/servicios'
+      fullPath: '/administracion/monitoreo/servicios'
+      preLoaderRoute: typeof AdministracionMonitoreoLayoutServiciosRouteImport
+      parentRoute: typeof AdministracionMonitoreoLayoutRoute
+    }
+    '/administracion/monitoreo/_layout/pro': {
+      id: '/administracion/monitoreo/_layout/pro'
+      path: '/pro'
+      fullPath: '/administracion/monitoreo/pro'
+      preLoaderRoute: typeof AdministracionMonitoreoLayoutProRouteImport
+      parentRoute: typeof AdministracionMonitoreoLayoutRoute
+    }
+    '/administracion/monitoreo/_layout/inicio': {
+      id: '/administracion/monitoreo/_layout/inicio'
+      path: '/inicio'
+      fullPath: '/administracion/monitoreo/inicio'
+      preLoaderRoute: typeof AdministracionMonitoreoLayoutInicioRouteImport
+      parentRoute: typeof AdministracionMonitoreoLayoutRoute
+    }
+    '/administracion/monitoreo/_layout/chips': {
+      id: '/administracion/monitoreo/_layout/chips'
+      path: '/chips'
+      fullPath: '/administracion/monitoreo/chips'
+      preLoaderRoute: typeof AdministracionMonitoreoLayoutChipsRouteImport
+      parentRoute: typeof AdministracionMonitoreoLayoutRoute
+    }
   }
 }
+
+interface AdministracionMonitoreoLayoutRouteChildren {
+  AdministracionMonitoreoLayoutChipsRoute: typeof AdministracionMonitoreoLayoutChipsRoute
+  AdministracionMonitoreoLayoutInicioRoute: typeof AdministracionMonitoreoLayoutInicioRoute
+  AdministracionMonitoreoLayoutProRoute: typeof AdministracionMonitoreoLayoutProRoute
+  AdministracionMonitoreoLayoutServiciosRoute: typeof AdministracionMonitoreoLayoutServiciosRoute
+  AdministracionMonitoreoLayoutWeatherRoute: typeof AdministracionMonitoreoLayoutWeatherRoute
+}
+
+const AdministracionMonitoreoLayoutRouteChildren: AdministracionMonitoreoLayoutRouteChildren =
+  {
+    AdministracionMonitoreoLayoutChipsRoute:
+      AdministracionMonitoreoLayoutChipsRoute,
+    AdministracionMonitoreoLayoutInicioRoute:
+      AdministracionMonitoreoLayoutInicioRoute,
+    AdministracionMonitoreoLayoutProRoute:
+      AdministracionMonitoreoLayoutProRoute,
+    AdministracionMonitoreoLayoutServiciosRoute:
+      AdministracionMonitoreoLayoutServiciosRoute,
+    AdministracionMonitoreoLayoutWeatherRoute:
+      AdministracionMonitoreoLayoutWeatherRoute,
+  }
+
+const AdministracionMonitoreoLayoutRouteWithChildren =
+  AdministracionMonitoreoLayoutRoute._addFileChildren(
+    AdministracionMonitoreoLayoutRouteChildren,
+  )
+
+interface AdministracionMonitoreoRouteChildren {
+  AdministracionMonitoreoLayoutRoute: typeof AdministracionMonitoreoLayoutRouteWithChildren
+  AdministracionMonitoreoIndexRoute: typeof AdministracionMonitoreoIndexRoute
+}
+
+const AdministracionMonitoreoRouteChildren: AdministracionMonitoreoRouteChildren =
+  {
+    AdministracionMonitoreoLayoutRoute:
+      AdministracionMonitoreoLayoutRouteWithChildren,
+    AdministracionMonitoreoIndexRoute: AdministracionMonitoreoIndexRoute,
+  }
+
+const AdministracionMonitoreoRouteWithChildren =
+  AdministracionMonitoreoRoute._addFileChildren(
+    AdministracionMonitoreoRouteChildren,
+  )
 
 interface AdministracionRouteChildren {
   AdministracionActivosLazyRoute: typeof AdministracionActivosLazyRoute
   AdministracionIndexLazyRoute: typeof AdministracionIndexLazyRoute
+  AdministracionMonitoreoRoute: typeof AdministracionMonitoreoRouteWithChildren
   AdministracionHistorialComprasLazyRoute: typeof AdministracionHistorialComprasLazyRoute
   AdministracionHistorialIndezLazyRoute: typeof AdministracionHistorialIndezLazyRoute
   AdministracionHistorialVentasLazyRoute: typeof AdministracionHistorialVentasLazyRoute
   AdministracionListaClientesLazyRoute: typeof AdministracionListaClientesLazyRoute
   AdministracionListaProveedoresLazyRoute: typeof AdministracionListaProveedoresLazyRoute
-  AdministracionMonitoreoChipsLazyRoute: typeof AdministracionMonitoreoChipsLazyRoute
-  AdministracionMonitoreoInicioLazyRoute: typeof AdministracionMonitoreoInicioLazyRoute
-  AdministracionMonitoreoProLazyRoute: typeof AdministracionMonitoreoProLazyRoute
-  AdministracionMonitoreoServiciosLazyRoute: typeof AdministracionMonitoreoServiciosLazyRoute
-  AdministracionMonitoreoWeatherLazyRoute: typeof AdministracionMonitoreoWeatherLazyRoute
   AdministracionListaIndexLazyRoute: typeof AdministracionListaIndexLazyRoute
-  AdministracionMonitoreoIndexLazyRoute: typeof AdministracionMonitoreoIndexLazyRoute
 }
 
 const AdministracionRouteChildren: AdministracionRouteChildren = {
   AdministracionActivosLazyRoute: AdministracionActivosLazyRoute,
   AdministracionIndexLazyRoute: AdministracionIndexLazyRoute,
+  AdministracionMonitoreoRoute: AdministracionMonitoreoRouteWithChildren,
   AdministracionHistorialComprasLazyRoute:
     AdministracionHistorialComprasLazyRoute,
   AdministracionHistorialIndezLazyRoute: AdministracionHistorialIndezLazyRoute,
@@ -1174,16 +1218,7 @@ const AdministracionRouteChildren: AdministracionRouteChildren = {
   AdministracionListaClientesLazyRoute: AdministracionListaClientesLazyRoute,
   AdministracionListaProveedoresLazyRoute:
     AdministracionListaProveedoresLazyRoute,
-  AdministracionMonitoreoChipsLazyRoute: AdministracionMonitoreoChipsLazyRoute,
-  AdministracionMonitoreoInicioLazyRoute:
-    AdministracionMonitoreoInicioLazyRoute,
-  AdministracionMonitoreoProLazyRoute: AdministracionMonitoreoProLazyRoute,
-  AdministracionMonitoreoServiciosLazyRoute:
-    AdministracionMonitoreoServiciosLazyRoute,
-  AdministracionMonitoreoWeatherLazyRoute:
-    AdministracionMonitoreoWeatherLazyRoute,
   AdministracionListaIndexLazyRoute: AdministracionListaIndexLazyRoute,
-  AdministracionMonitoreoIndexLazyRoute: AdministracionMonitoreoIndexLazyRoute,
 }
 
 const AdministracionRouteWithChildren = AdministracionRoute._addFileChildren(

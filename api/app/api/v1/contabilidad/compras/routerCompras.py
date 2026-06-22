@@ -8,7 +8,7 @@ import io
 
 # Importaciones de tus archivos
 from app.api.v1.contabilidad.compras.modelCompras import Compra, CajaMovimientoCompra
-from app.api.v1.administracion.globalClienteProveedor.models.modelGlobalProveedor import GlobalProveedor
+from app.api.v1.administracion.globalClienteProveedor.modelGlobalProveedor import GlobalProveedor
 from app.api.v1.contabilidad.compras.schemaCompras import CompraBase, SyncComrpasPayload, ResponseCompraLista, DeleteComprasPayload
 from app.core.deps import get_current_user
 from app.core.db import get_session

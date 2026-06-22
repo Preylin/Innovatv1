@@ -11,7 +11,6 @@ import {
 import isoToDDMMYYYY from "../../../../helpers/Fechas";
 import type { ServiciosMCOutApiType } from "../../../../api/queries/modulos/administracion/monitoreo/serviciosMC/serviciosMC.api.schema";
 import {  useMemo, useState } from "react";
-import { ordenarPorFecha } from "../../../../helpers/OrdenacionAscDscPorFechasISO";
 
 import ButtonUpdate from "../../../../components/molecules/botons/BottonUpdate";
 import ButtonDelete from "../../../../components/molecules/botons/BottonDelete";
@@ -377,13 +376,13 @@ const columns = useMemo<ColumnDef<DataType, any>[]>(
           <div className="flex justify-center gap-2">
             <ButtonUpdate
               style={{ height: "28px" }}
-              onClick={() => handleOpenModal(Number(info.row.original.key))}
+              onClick={() => handleOpenModal(Number(info.row.original.id))}
             />
             <Popconfirm
               title="¿Eliminar Registro?"
               okText="Eliminar"
               cancelText="Cancelar"
-              onConfirm={() => mutate(Number(info.row.original.key))}
+              onConfirm={() => mutate(Number(info.row.original.id))}
               okButtonProps={{ loading: isPending }}
             >
               <ButtonDelete style={{ height: "28px" }} />

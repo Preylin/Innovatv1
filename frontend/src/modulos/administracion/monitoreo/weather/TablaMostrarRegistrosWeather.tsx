@@ -283,13 +283,13 @@ function TablaMostrarRegistrosWather() {
           <div className="flex justify-center gap-2">
             <ButtonUpdate
               style={{ height: "28px" }}
-              onClick={() => handleOpenModal(Number(info.row.original.key))}
+              onClick={() => handleOpenModal(Number(info.row.original.id))}
             />
             <Popconfirm
               title="¿Eliminar Registro?"
               okText="Eliminar"
               cancelText="Cancelar"
-              onConfirm={() => mutate(Number(info.row.original.key))}
+              onConfirm={() => mutate(Number(info.row.original.id))}
               okButtonProps={{ loading: isPending }}
             >
               <ButtonDelete style={{ height: "28px" }} />
@@ -351,9 +351,9 @@ function TablaMostrarRegistrosWather() {
   if (!data) return <ErrorResultServer />;
 
   return (
-    <div className="px-1">
-      <div className="flex flex-row justify-between items-center p-2">
-        <h2 className="text-base lg:text-2xl text-mist-700 dark:text-mist-50 font-bold">
+    <div className="">
+      <div className="flex flex-row justify-between items-center">
+        <h2 className="text-base lg:text-2xl text-mist-700 dark:text-mist-50 font-bold ml-2">
           Registros de Innovat-Weather
         </h2>
         <ButtomNew

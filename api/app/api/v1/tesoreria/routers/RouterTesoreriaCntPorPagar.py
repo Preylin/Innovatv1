@@ -30,7 +30,7 @@ from app.api.v1.tesoreria.models.ModelsTesoreriaCntPorpagar import (
 )
 
 from app.api.v1.contabilidad.compras.modelCompras import Compra, CajaMovimientoCompra
-from app.api.v1.administracion.globalClienteProveedor.models.modelGlobalProveedor import GlobalProveedor
+from app.api.v1.administracion.globalClienteProveedor.modelGlobalProveedor import GlobalProveedor
 
 
 
