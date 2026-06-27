@@ -1,5 +1,5 @@
 import { createLazyFileRoute } from '@tanstack/react-router'
-import MostrarClientesList from '../../../modulos/administracion/lista/clientes/MostrarRegistrosClientes';
+import ShowClientesLista from '../../../modulos/administracion/lista/clientes/view/panel-principal-clientes';
 
 export const Route = createLazyFileRoute('/administracion/lista/clientes')({
   component: RouteComponent,
@@ -7,6 +7,6 @@ export const Route = createLazyFileRoute('/administracion/lista/clientes')({
 
 function RouteComponent() {
   return (
-        <MostrarClientesList />
+        <ShowClientesLista />
   )
 }

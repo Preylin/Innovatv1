@@ -9,7 +9,6 @@ import { PanelSuperior } from "../components/interfaz_modulos/TopPanel";
 import { useMemo } from "react";
 import SpinAtom from "../components/atoms/spin/Spin";
 import { UseBarGerenciaIcons } from "../components/atoms/icons/AntDesign/gerencia/BarGerencia";
-import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export const Route = createFileRoute("/gerencia")({
   beforeLoad: async ({ context }) => {
@@ -19,6 +18,12 @@ export const Route = createFileRoute("/gerencia")({
     if (!auth.isAuthenticated) {
       throw redirect({ to: "/" });
     }
+
+    return {
+      meta: {
+        title: "Gerencia",
+      },
+    };
   },
   pendingComponent: () => (
     <SpinAtom size="large" fullscreen styles={{indicator: {color: '#00d4ff'}}}/>
@@ -27,7 +32,6 @@ export const Route = createFileRoute("/gerencia")({
 });
 
 function RouteComponent() {
-  useDocumentTitle("Gerencia");
 
   return (
     <MainLayout

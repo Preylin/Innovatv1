@@ -7,6 +7,7 @@ export const Route = createFileRoute('/administracion/monitoreo/')({
     throw redirect({
       to: '/administracion/monitoreo/inicio',
     })
+    
   },
 })
 

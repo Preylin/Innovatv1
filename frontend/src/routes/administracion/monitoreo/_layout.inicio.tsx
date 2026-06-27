@@ -6,10 +6,16 @@ import {
   CardTitle,
 } from "#components/ui/card";
 import { createFileRoute } from "@tanstack/react-router";
-
+import { ContextMenu, ContextMenuContent, ContextMenuGroup, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "#components/ui/context-menu";
+import { PencilIcon, ShareIcon, TrashIcon } from "lucide-react";
 export const Route = createFileRoute(
   "/administracion/monitoreo/_layout/inicio",
 )({
+  beforeLoad: () => {
+    return {
+      meta: { title: 'Monitoreo - Inicio' },
+    }
+  },
   component: RouteComponent,
 });
 
@@ -72,7 +78,38 @@ function RouteComponent() {
         <section>busqueda</section>
         <section>filtros de fechas y filtros de tipo de servicios</section>
         <section>tabla de registros</section>
+        <OtherContent />
       </section>
     </div>
+  );
+}
+
+
+function OtherContent() {
+  return (
+     <ContextMenu>
+      <ContextMenuTrigger>
+        <div>home</div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuGroup>
+          <ContextMenuItem>
+            <PencilIcon />
+            Edit
+          </ContextMenuItem>
+          <ContextMenuItem>
+            <ShareIcon />
+            Share
+          </ContextMenuItem>
+        </ContextMenuGroup>
+        <ContextMenuSeparator />
+        <ContextMenuGroup>
+          <ContextMenuItem variant="destructive">
+            <TrashIcon />
+            Delete
+          </ContextMenuItem>
+        </ContextMenuGroup>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }

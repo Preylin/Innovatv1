@@ -16,13 +16,25 @@ import {
 } from "@tanstack/react-table";
 import { type RankingInfo } from "@tanstack/match-sorter-utils";
 
-// Componentes shadcn/ui
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "../ui/table";
+// Componentes shadcn/ui originales
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { Badge } from "../ui/badge";
-import { Inbox, FileSpreadsheet, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import {
+  Inbox,
+  FileSpreadsheet,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 
 declare module "@tanstack/react-table" {
   interface FilterFns {
@@ -154,16 +166,19 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
   return (
     <div className="px-2 flex flex-col gap-2 w-full animate-in fade-in duration-500">
       {/* Barra superior */}
-      <div className="flex flex-row justify-between items-stretch sm:items-center gap-4 py-1 w-full">
+      <div className="flex flex-row justify-between items-center gap-4 py-1 w-full">
         <DebouncedInput
           value={globalFilter ?? ""}
           onChange={(value) => setGlobalFilter(String(value))}
           placeholder="Buscar en todas las columnas..."
-          className="w-full "
+          className="w-full text-mist-900 dark:text-mist-50"
         />
 
         <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-sm font-normal px-3 py-1 bg-mist-600 text-mist-50">
+          <Badge
+            variant="secondary"
+            className="text-sm font-normal p-3 bg-mist-600 text-mist-50 whitespace-nowrap"
+          >
             {table.getPrePaginationRowModel().rows.length} Registros
           </Badge>
           <Button
@@ -171,55 +186,49 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
             size="sm"
             onClick={handleExportExcel}
             title="Exportar Excel"
-            className="gap-2"
+            className="gap-2 text-mist-900 dark:text-mist-50"
           >
-            <FileSpreadsheet className="h-4 w-4" />
+            <FileSpreadsheet className="h-4 w-4 " />
             Exportar
           </Button>
         </div>
       </div>
 
-      {/* Tabla */}
-      <div className="rounded-md border shadow-sm overflow-auto">
-        <Table>
-          <TableHeader
-          className=" font-bold uppercase bg-mist-600"
-          >
+      {/* Contenedor de la Tabla Flex */}
+      <div className="rounded-md border shadow-sm overflow-auto w-full bg-background">
+        <div className="flex flex-col w-full min-w-full">
+          {/* HEADER */}
+          <div className="flex flex-col w-full bg-mist-600 font-bold uppercase text-xs text-mist-50 tracking-wider">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-transparent">
+              <div key={headerGroup.id} className="flex w-full items-stretch">
                 {headerGroup.headers.map((header) => {
                   const align =
                     (header.column.columnDef.meta as any)?.textAlign || "left";
                   return (
-                    <TableHead
+                    <div
                       key={header.id}
-                      style={{ width: header.getSize() }}
-                      className={`relative group text-mist-50 py-1 select-none ${
-                        align === "center"
-                          ? "text-center"
-                          : align === "right"
-                          ? "text-right"
-                          : "text-left"
-                      }`}
+                      style={{
+                        flex: `${header.getSize()} ${header.getSize()} 0%`,
+                        minWidth: `${header.getSize()}px`,
+                      }}
+                      className="relative p-2 flex flex-col justify-between border-r border-mist-500/20 last:border-0"
                     >
                       <div
-                        className={`flex items-center gap-1 ${
+                        className={`flex items-center gap-1 w-full ${
                           align === "center"
-                            ? "justify-center"
+                            ? "justify-center text-center"
                             : align === "right"
-                            ? "justify-end"
-                            : "justify-start"
-                        } ${
-                          header.column.getCanSort()
-                            ? "cursor-pointer select-none hover:text-primary"
-                            : ""
-                        }`}
+                              ? "justify-end text-right"
+                              : "justify-start text-left"
+                        } ${header.column.getCanSort() ? "cursor-pointer select-none hover:text-primary-foreground/80" : ""}`}
                         onClick={header.column.getToggleSortingHandler()}
                       >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                        <span className="truncate">
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                        </span>
                         {{
                           asc: " 🔼",
                           desc: " 🔽",
@@ -227,7 +236,7 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
                       </div>
 
                       {header.column.getCanFilter() && (
-                        <div className="mt-2 font-normal">
+                        <div className="mt-2 font-normal lowercase w-full">
                           <Filter column={header.column} />
                         </div>
                       )}
@@ -243,76 +252,97 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
                           }`}
                         />
                       )}
-                    </TableHead>
+                    </div>
                   );
                 })}
-              </TableRow>
+              </div>
             ))}
-          </TableHeader>
-          <TableBody
-          className=""
-          >
+          </div>
+
+          {/* CUERPO */}
+          <div className="flex flex-col w-full divide-y bg-mist-50">
             {table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-40 text-center">
-                  <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                    <Inbox className="h-10 w-10" />
-                    <span>No hay registros</span>
-                  </div>
-                </TableCell>
-              </TableRow>
+              <div className="flex flex-col items-center justify-center h-40 gap-2 text-muted-foreground w-full">
+                <Inbox className="h-10 w-10" />
+                <span>No hay registros</span>
+              </div>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="hover:bg-muted/50">
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      style={{ width: cell.column.getSize() }}
-                      className="truncate"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-          {table.getFooterGroups().length > 0 && (
-            <TableFooter>
-              {table.getFooterGroups().map((footerGroup) => (
-                <TableRow key={footerGroup.id}>
-                  {footerGroup.headers.map((footer) => {
+                <div
+                  key={row.id}
+                  className="flex w-full hover:bg-mist-200 transition-colors items-stretch"
+                >
+                  {row.getVisibleCells().map((cell) => {
                     const align =
-                      (footer.column.columnDef.meta as any)?.textAlign || "left";
+                      (cell.column.columnDef.meta as any)?.textAlign || "left";
                     return (
-                      <TableCell
-                        key={footer.id}
-                        style={{ width: footer.column.getSize() }}
-                        className={
+                      <div
+                        key={cell.id}
+                        style={{
+                          flex: `${cell.column.getSize()} ${cell.column.getSize()} 0%`,
+                          minWidth: `${cell.column.getSize()}px`,
+                        }}
+                        className={`p-2 truncate flex items-center border-r last:border-0 border-muted/30 ${
                           align === "center"
-                            ? "text-center"
+                            ? "justify-center text-center"
                             : align === "right"
-                            ? "text-right"
-                            : "text-left"
-                        }
+                              ? "justify-end text-right"
+                              : "justify-start text-left"
+                        }`}
                       >
-                        {footer.isPlaceholder
-                          ? null
-                          : flexRender(
-                              footer.column.columnDef.footer,
-                              footer.getContext(),
-                            )}
-                      </TableCell>
+                        <div className="truncate w-full">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </div>
+                      </div>
                     );
                   })}
-                </TableRow>
+                </div>
+              ))
+            )}
+          </div>
+          {/* FOOTER */}
+          {table.getFooterGroups().length > 0 && (
+            <div className="flex flex-col w-full border-t border-muted bg-mist-100 font-semibold text-xs text-mist-900">
+              {table.getFooterGroups().map((footerGroup) => (
+                <div key={footerGroup.id} className="flex w-full items-stretch">
+                  {footerGroup.headers.map((footer) => {
+                    const align =
+                      (footer.column.columnDef.meta as any)?.textAlign ||
+                      "left";
+                    return (
+                      <div
+                        key={footer.id}
+                        style={{
+                          flex: `${footer.column.getSize()} ${footer.column.getSize()} 0%`,
+                          minWidth: `${footer.column.getSize()}px`,
+                        }}
+                        className={`p-2 flex items-center border-r last:border-0 border-muted/30 ${
+                          align === "center"
+                            ? "justify-center text-center"
+                            : align === "right"
+                              ? "justify-end text-right"
+                              : "justify-start text-left"
+                        }`}
+                      >
+                        <div className="truncate w-full">
+                          {footer.isPlaceholder
+                            ? null
+                            : flexRender(
+                                footer.column.columnDef.footer,
+                                footer.getContext(),
+                              )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               ))}
-            </TableFooter>
+            </div>
           )}
-        </Table>
+        </div>
       </div>
 
       {/* Paginación */}
@@ -350,15 +380,14 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
           >
             <ChevronsRight className="h-4 w-4" />
           </Button>
-          <span className="text-sm text-muted-foreground ml-2">
-            Página{" "}
-            <strong>{table.getState().pagination.pageIndex + 1}</strong> de{" "}
-            <strong>{table.getPageCount()}</strong>
+          <span className="text-xs text-muted-foreground ml-2">
+            Página <strong>{table.getState().pagination.pageIndex + 1}</strong>{" "}
+            de <strong>{table.getPageCount()}</strong>
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground flex items-center gap-2">
+          <span className="text-xs text-muted-foreground flex items-center gap-2">
             Ir a:
             <Input
               type="number"
@@ -367,19 +396,17 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
                 const page = e.target.value ? Number(e.target.value) - 1 : 0;
                 table.setPageIndex(page);
               }}
-              className="w-20 h-8 text-center text-mist-600"
+              className="w-16 h-8 text-center text-mist-600"
             />
           </span>
           <Select
             value={String(table.getState().pagination.pageSize)}
             onValueChange={(value) => table.setPageSize(Number(value))}
           >
-            <SelectTrigger className="w-36 h-8 ">
+            <SelectTrigger className="w-36 h-8 text-mist-900 dark:text-mist-50">
               <SelectValue placeholder="Filas" />
             </SelectTrigger>
-            <SelectContent
-            className="bg-mist-50 text-mist-600"
-            >
+            <SelectContent className="bg-popover text-popover-foreground dark:text-mist-50">
               {[15, 20, 25, 30, 40, 50].map((pageSize) => (
                 <SelectItem key={pageSize} value={String(pageSize)}>
                   Mostrar {pageSize} filas
@@ -393,7 +420,6 @@ export function TableBaseFuzzyCntasPorCobrar<T>({
   );
 }
 
-// ---------- Subcomponentes sin cambios de lógica, solo maquetación ----------
 function Filter({ column }: { column: Column<any, unknown> }) {
   const { filterVariant } = (column.columnDef.meta as any) ?? {};
   const columnFilterValue = column.getFilterValue();
@@ -409,7 +435,10 @@ function Filter({ column }: { column: Column<any, unknown> }) {
         value={columnFilterValue?.toString() || ""}
         onValueChange={(value) => column.setFilterValue(value)}
       >
-        <SelectTrigger className="h-7 text-xs w-full bg-mist-50 text-mist-600">
+        <SelectTrigger
+          className=" rounded-sm text-[10px] w-full bg-background text-foreground"
+          size="sm"
+        >
           <SelectValue placeholder="TODOS" />
         </SelectTrigger>
         <SelectContent>
@@ -426,11 +455,11 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 
   return (
     <DebouncedInput
-      type="text"
+      type="search"
       value={(columnFilterValue ?? "") as string}
       onChange={(value) => column.setFilterValue(value)}
       placeholder="Filtrar..."
-      className="h-7 text-xs w-full bg-mist-50 text-mist-600"
+      className="h-7 rounded-sm text-[10px] w-full bg-background text-foreground"
     />
   );
 }
@@ -461,6 +490,7 @@ function DebouncedInput({
 
   return (
     <Input
+      type="search"
       {...props}
       value={value}
       onChange={(e) => setValue(e.target.value)}

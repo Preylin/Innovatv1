@@ -10,10 +10,7 @@ from app.core.realtime import db_to_redis_bridge, manager
 from app.core.db import init_db, dispose_db, check_db_connection
 
 from app.api.v1.auth import usuario
-from app.api.v1.administracion.monitoreo.router_wather_pro_monitoreo_administracion import router_weather, router_pro, router_chipservicio
-from app.api.v1.administracion.monitoreo.router_clientes_ubicacion_chips_monitoreo_administracion import router_clientes, router_chips, router_ubicaciones
 from app.api.v1.almacen.catalogos.RouterAlmacenCatalogosMerMat import router_catalogoMercaderia, router_catalogoMaterial
-from app.api.v1.administracion.monitoreo.routerAdministracionMonitoreoServiciosMC import router_serviciosmc
 from app.api.v1.almacen.catalogos.RouterAlmacenIngresoMercaderia import router_ingresoMercaderia
 from app.api.v1.almacen.catalogos.RouterAlmacenIngresoMaterial import router_ingresoMaterial
 from app.api.v1.almacen.catalogos.RouterAlmacenSalidaMercaderia import router_salidaMercaderia
@@ -25,7 +22,12 @@ from app.api.v1.contabilidad.ventas.routerVentas import router_contabilidad_vent
 from app.api.v1.tesoreria.routers.RouterTesoreriaCntPorCobrar import router_tesoreria_cuentasporcobrar
 from app.api.v1.administracion.historial.routerHistorial import router_administracion_historial
 from app.api.v1.contabilidad.compras.routerCompras import router_contabilidad_compras
-
+from app.api.v1.administracion.monitoreo.routers.router_weather import router_servicio_weather
+from app.api.v1.administracion.monitoreo.routers.router_pro import router_servicio_pro
+from app.api.v1.administracion.monitoreo.routers.router_MC import router_servicio_mc
+from app.api.v1.administracion.monitoreo.routers.router_inventario_chips import router_servicio_inventario_chips
+from app.api.v1.administracion.monitoreo.routers.router_chips import router_servicio_chips
+from app.api.v1.administracion.globalClienteProveedor.router_clientes_global import router_clientes_global
 
 
 
@@ -128,13 +130,6 @@ async def on_shutdown():
 # Rutas de la API v1
 app.include_router(auth.router)
 app.include_router(usuario.router)
-app.include_router(router_clientes)
-app.include_router(router_chips)
-app.include_router(router_ubicaciones)
-app.include_router(router_weather)
-app.include_router(router_pro)
-app.include_router(router_chipservicio)
-app.include_router(router_serviciosmc)
 app.include_router(router_catalogoMercaderia)
 app.include_router(router_catalogoMaterial)
 app.include_router(router_ingresoMercaderia)
@@ -151,3 +146,9 @@ app.include_router(router_contabilidad_ventas)
 app.include_router(router_tesoreria_cuentasporcobrar)
 app.include_router(router_administracion_historial)
 app.include_router(router_contabilidad_compras)
+app.include_router(router_servicio_weather)
+app.include_router(router_servicio_pro)
+app.include_router(router_servicio_mc)
+app.include_router(router_servicio_inventario_chips)
+app.include_router(router_servicio_chips)
+app.include_router(router_clientes_global)

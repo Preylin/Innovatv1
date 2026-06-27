@@ -228,7 +228,7 @@ export default function HistorialComprasImportMasivaExcel({
         </Button>,
       ]}
     >
-      <Space direction="vertical" style={{ width: "100%" }} size="middle">
+      <Space orientation="vertical" style={{ width: "100%" }} size="middle">
         <Upload.Dragger
           accept=".xlsx"
           beforeUpload={(file) => {

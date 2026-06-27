@@ -3,7 +3,6 @@ import MainLayout, { mapNavToMenu, type AppMenuItem, type NavNodeInterface } fro
 import { PanelSuperior } from "../components/interfaz_modulos/TopPanel";
 import { useMemo } from "react";
 import { UseBarGerenciaIcons } from "../components/atoms/icons/AntDesign/gerencia/BarGerencia";
-import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 
 
@@ -15,13 +14,18 @@ export const Route = createFileRoute("/contabilidad")({
     if (!auth.isAuthenticated) {
       throw redirect({ to: "/" });
     }
+
+    return {
+      meta: {
+        title: "Contabilidad",
+      },
+    };
   },
   component: RouteComponent,
 });
 
 
 function RouteComponent() {
-  useDocumentTitle("Contabilidad");
 
   return (
     <MainLayout

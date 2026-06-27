@@ -2,42 +2,85 @@ import { z } from "zod";
 import ExcelJS from "exceljs";
 import { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Upload, Button, Alert, Typography, Space, App, Modal, Progress } from "antd";
+import {
+  Upload,
+  Button,
+  Alert,
+  Typography,
+  Space,
+  App,
+  Modal,
+  Progress,
+} from "antd";
 import { UploadOutlined, LoadingOutlined } from "@ant-design/icons";
 import type { ApiError } from "../../../../api/normalizeError";
 import api from "../../../../api/client";
 
+
+
+
+// import type { ApiError } from "../../../api/normalizeError"; // Ajusta según tu proyecto
+// import api from "../../../api/client";
+
 const { Text } = Typography;
 
-
-// --- Esquema de Validación ---
-const HistorialMantenimientoCalibracionUISchema = z.object({
-  empresa: z.string().min(1, "Empresa requerida"),
-  ubicacion: z.string().min(1, "Ubicación requerida"),
-  inicio: z.union([z.date(), z.string().transform((v) => new Date(v))]).pipe(z.date()),
-  fin: z.union([z.date(), z.string().transform((v) => new Date(v))]).pipe(z.date()),
-  servicio: z.string().min(1, "Servicio requerido"),
-  informe: z.string().min(1, "Informe requerido"),
-  certificado: z.string().min(1, "Certificado requerido"),
-  encargado: z.string().min(1, "Encargado requerido"),
-  tecnico: z.string().min(1, "Técnico requerido"),
-  incidencia: z.string().min(1, "Incidencia requerida"),
-  status: z.number(),
+// --- Esquema de Validación Ajustado a tu BD de Ventas ---
+const HistorialMcSchema = z.object({
+  nro_documento: z.coerce.string().min(8).max(11),
+  razon_social: z.string().min(1),
+  ubicacion: z.string().optional(),
+  fecha_inicio: z
+    .union([z.date(), z.string().transform((v) => new Date(v))])
+    .pipe(z.date()),
+  fecha_fin: z
+    .union([z.date(), z.string().transform((v) => new Date(v))])
+    .pipe(z.date()),
+  servicio: z.string().optional(),
+  informe: z.string().optional().nullable(),
+  certificado: z.string().optional().nullable(),
+  encargado: z.string().optional().nullable(),
+  tecnico: z.string().optional().nullable(),
+  estado: z.string(),
+  incidencia: z.string().optional().nullable(),
 });
 
-type HistorialMCUISchemaType = z.infer<typeof HistorialMantenimientoCalibracionUISchema>;
-const EXPECTED_HEADERS = ['empresa', 'ubicacion', 'inicio', 'fin', 'servicio', 'informe', 'certificado', 'encargado', 'tecnico', 'incidencia', 'status'];
+type HistorialMc = z.infer<typeof HistorialMcSchema>;
 
-export default function HistorialMantenimientoCalibracionModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+// Headers esperados en el Excel (deben coincidir con las llaves del Schema)
+const EXPECTED_HEADERS = [
+  "nro_documento",
+  "razon_social",
+  "ubicacion",
+  "fecha_inicio",
+  "fecha_fin",
+  "servicio",
+  "informe",
+  "certificado",
+  "encargado",
+  "tecnico",
+  "estado",
+  "incidencia"
+];
+
+export default function HistorialMcMasivaExcel({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   const [file, setFile] = useState<File | null>(null);
   const [rowsCount, setRowsCount] = useState(0);
-  const [errors, setErrors] = useState<{ row: number; messages: string[] }[]>([]);
+  const [errors, setErrors] = useState<{ row: number; messages: string[] }[]>(
+    [],
+  );
   const [parsingProgress, setParsingProgress] = useState(0);
-  const [status, setStatus] = useState<"idle" | "parsing" | "ready" | "error" | "uploading">("idle");
-  
+  const [status, setStatus] = useState<
+    "idle" | "parsing" | "ready" | "error" | "uploading"
+  >("idle");
+
   const { message } = App.useApp();
   const qc = useQueryClient();
-
   const reset = useCallback(() => {
     setFile(null);
     setRowsCount(0);
@@ -45,7 +88,6 @@ export default function HistorialMantenimientoCalibracionModal({ open, onClose }
     setParsingProgress(0);
     setStatus("idle");
   }, []);
-
   const handleClose = useCallback(() => {
     if (status === "uploading" || status === "parsing") return;
     onClose();
@@ -56,22 +98,24 @@ export default function HistorialMantenimientoCalibracionModal({ open, onClose }
     setStatus("parsing");
     setErrors([]);
     setParsingProgress(0);
-    
+
     try {
       const workbook = new ExcelJS.Workbook();
       const buffer = await file.arrayBuffer();
       await workbook.xlsx.load(buffer);
       const worksheet = workbook.getWorksheet(1);
-
-      if (!worksheet) throw new Error("Hoja de cálculo no encontrada");
+      if (!worksheet) throw new Error("Hoja no encontrada");
 
       const headers: string[] = [];
-      worksheet.getRow(1).eachCell((c) => headers.push(c.text.toLowerCase().trim()));
+      worksheet
+        .getRow(1)
+        .eachCell((c) => headers.push(c.text?.toLowerCase().trim()));
 
-      const missing = EXPECTED_HEADERS.filter(h => !headers.includes(h));
-      if (missing.length > 0) throw new Error(`Columnas faltantes: ${missing.join(", ")}`);
+      const missing = EXPECTED_HEADERS.filter((h) => !headers.includes(h));
+      if (missing.length > 0)
+        throw new Error(`Columnas faltantes: ${missing.join(", ")}`);
 
-      const validRows: HistorialMCUISchemaType[] = [];
+      const validRows: HistorialMc[] = [];
       const rowErrors: { row: number; messages: string[] }[] = [];
       const totalRows = worksheet.rowCount - 1;
 
@@ -82,19 +126,22 @@ export default function HistorialMantenimientoCalibracionModal({ open, onClose }
         row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           const h = headers[colNumber - 1];
           if (h) {
-            // Manejo de celdas con fórmulas o valores enriquecidos
             const rawValue = cell.value;
-            rowData[h] = (rawValue && typeof rawValue === 'object' && 'result' in rawValue) 
-              ? rawValue.result 
-              : rawValue;
+            // Manejo de fechas de ExcelJS y resultados de fórmulas
+            rowData[h] =
+              rawValue && typeof rawValue === "object" && "result" in rawValue
+                ? rawValue.result
+                : rawValue;
           }
         });
 
-        const result = HistorialMantenimientoCalibracionUISchema.safeParse(rowData);
+        const result = HistorialMcSchema.safeParse(rowData);
         if (!result.success) {
-          rowErrors.push({ 
-            row: rowNumber, 
-            messages: result.error.issues.map(e => `${e.path.join('.')}: ${e.message}`) 
+          rowErrors.push({
+            row: rowNumber,
+            messages: result.error.issues.map(
+              (e) => `${e.path.join(".")}: ${e.message}`,
+            ),
           });
         } else {
           validRows.push(result.data);
@@ -113,7 +160,6 @@ export default function HistorialMantenimientoCalibracionModal({ open, onClose }
         setFile(file);
         setStatus("ready");
       }
-
     } catch (err: any) {
       setErrors([{ row: 0, messages: [err.message] }]);
       setStatus("error");
@@ -121,18 +167,21 @@ export default function HistorialMantenimientoCalibracionModal({ open, onClose }
   };
 
   const mutation = useMutation<void, ApiError, FormData>({
-    mutationFn: (fd) => api.post("/serviciosmc/import", fd, {
-      headers: { "Content-Type": "multipart/form-data" }
-    }),
+    mutationFn: (fd) =>
+      api.post("/servicio-mc/importar", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
     onMutate: () => setStatus("uploading"),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["serviciosMC"] });
+      qc.invalidateQueries({ queryKey: ["serviciosMC-lista"] });
       message.success("Importación completada correctamente");
     },
-    onError: (err) => {
+    onError: (err: any) => {
       setStatus("error");
-      message.error(err.message || "Error en el servidor");
-    }
+      const finalMessage = err.message || "Error en el servidor";
+
+      message.error(finalMessage);
+    },
   });
 
   const onSubmit = () => {
@@ -145,29 +194,36 @@ export default function HistorialMantenimientoCalibracionModal({ open, onClose }
 
   return (
     <Modal
-      title="Importación Masiva de M/C"
+      title="Importación Masiva MC"
       open={open}
       onCancel={handleClose}
       closable={status !== "uploading"}
       footer={[
-        <Button key="cancel" onClick={handleClose} disabled={status === "uploading"}>
+        <Button
+          key="cancel"
+          onClick={handleClose}
+          disabled={status === "uploading"}
+        >
           Cancelar
         </Button>,
-        <Button 
-          key="ok" 
-          type="primary" 
-          onClick={onSubmit} 
+        <Button
+          key="ok"
+          type="primary"
+          onClick={onSubmit}
           loading={status === "uploading"}
           disabled={status !== "ready"}
         >
           Confirmar e Importar {rowsCount > 0 && `(${rowsCount} filas)`}
-        </Button>
+        </Button>,
       ]}
     >
-      <Space direction="vertical" style={{ width: "100%" }} size="middle">
+      <Space orientation="vertical" style={{ width: "100%" }} size="middle">
         <Upload.Dragger
           accept=".xlsx"
-          beforeUpload={(file) => { parseFile(file); return false; }}
+          beforeUpload={(file) => {
+            parseFile(file);
+            return false;
+          }}
           showUploadList={false}
           disabled={status === "parsing" || status === "uploading"}
         >
@@ -178,7 +234,7 @@ export default function HistorialMantenimientoCalibracionModal({ open, onClose }
         </Upload.Dragger>
 
         {status === "parsing" && (
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: "center" }}>
             <Text>Validando datos...</Text>
             <Progress percent={parsingProgress} status="active" />
           </div>
@@ -186,7 +242,7 @@ export default function HistorialMantenimientoCalibracionModal({ open, onClose }
 
         {status === "ready" && (
           <Alert
-            message="Validación exitosa"
+            title="Validación exitosa"
             description={`Se han procesado ${rowsCount} registros correctamente.`}
             type="success"
             showIcon
@@ -196,12 +252,13 @@ export default function HistorialMantenimientoCalibracionModal({ open, onClose }
         {errors.length > 0 && (
           <Alert
             type="error"
-            message="Errores encontrados"
+            title="Errores encontrados"
             description={
-              <div style={{ maxHeight: 180, overflowY: 'auto' }}>
+              <div style={{ maxHeight: 180, overflowY: "auto" }}>
                 {errors.map((e, i) => (
-                  <div key={i} style={{ fontSize: '12px' }}>
-                    <strong>Fila {e.row || "General"}:</strong> {e.messages.join(", ")}
+                  <div key={i} style={{ fontSize: "12px" }}>
+                    <strong>Fila {e.row || "General"}:</strong>{" "}
+                    {e.messages.join(", ")}
                   </div>
                 ))}
               </div>

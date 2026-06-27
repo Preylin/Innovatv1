@@ -9,7 +9,6 @@ import SpinAtom from "../components/atoms/spin/Spin";
 import { useMemo } from "react";
 import { UseBarTesoreriaIcons } from "../components/atoms/icons/AntDesign/tesoreria/BarTesoreria";
 import { UseComercialesIconsLO } from "../components/atoms/icons/OtrasLibs/Comerciales";
-import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export const Route = createFileRoute("/tesoreria")({
   beforeLoad: async ({ context }) => {
@@ -19,6 +18,12 @@ export const Route = createFileRoute("/tesoreria")({
     if (!auth.isAuthenticated) {
       throw redirect({ to: "/" });
     }
+
+    return {
+        meta: {
+          title: "Tesorería",
+        },
+      };
   },
   pendingComponent: () => (
     <SpinAtom
@@ -31,7 +36,6 @@ export const Route = createFileRoute("/tesoreria")({
 });
 
 function RouteComponent() {
-  useDocumentTitle("Tesorería");
 
   return (
     <MainLayout

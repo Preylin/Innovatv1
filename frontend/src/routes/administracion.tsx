@@ -10,7 +10,6 @@ import SpinAtom from "../components/atoms/spin/Spin";
 import { UseBarAdministracionIcons } from "../components/atoms/icons/AntDesign/administracion/barAdmIcons";
 import { UseComercialesIconsLO } from "../components/atoms/icons/OtrasLibs/Comerciales";
 import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
-import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export const Route = createFileRoute("/administracion")({
   beforeLoad: async ({ context }) => {
@@ -20,6 +19,12 @@ export const Route = createFileRoute("/administracion")({
     if (!auth.isAuthenticated) {
       throw redirect({ to: "/" });
     }
+    
+    return {
+      meta: {
+        title: "Administración",
+      },
+    };
   },
   pendingComponent: () => (
     <SpinAtom
@@ -32,8 +37,6 @@ export const Route = createFileRoute("/administracion")({
 });
 
 function RouteComponent() {
-  useDocumentTitle("Administración");
-
   return (
     <MainLayout
       header={

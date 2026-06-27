@@ -13,6 +13,7 @@ import { StrictMode, useMemo } from "react";
 import { ThemeProvider } from "./Theme/useTheme";
 import { App as AntdApp } from "antd";
 import { useDatabaseWatcher } from "./hooks/useDatabaseWatcher";
+import { TooltipProvider } from '#components/ui/tooltip';
 
 interface MyRouterContext {
   auth: AuthContextValue;
@@ -52,10 +53,12 @@ createRoot(document.getElementById("root")!).render(
       <AuthProvider>
         <ThemeProvider>
           <AntdApp>
+            <TooltipProvider delayDuration={400}>
             <InnerApp />
             {import.meta.env.DEV && (
               <ReactQueryDevtools initialIsOpen={false} />
             )}
+            </TooltipProvider>
           </AntdApp>
         </ThemeProvider>
       </AuthProvider>

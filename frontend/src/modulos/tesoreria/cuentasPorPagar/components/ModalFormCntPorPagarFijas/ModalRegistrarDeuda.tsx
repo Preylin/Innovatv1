@@ -47,7 +47,6 @@ export function FormNuevaObligacion({ open, onClose, mesActual }: Props) {
           }
         } else {
           message.error("Error inesperado. Intente de nuevo.");
-          console.error("Form Error:", err);
         }
       }
     },

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import MainLayout, {
   mapNavToMenu,
   type AppMenuItem,
@@ -8,14 +8,30 @@ import { PanelSuperior } from "../components/interfaz_modulos/TopPanel";
 import { useMemo } from "react";
 import { UseBarTesoreriaIcons } from "../components/atoms/icons/AntDesign/tesoreria/BarTesoreria";
 import { UseSpinnersIcons } from "../components/atoms/icons/OtrasLibs/Spinners";
-import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import SpinAtom from "#components/atoms/spin/Spin";
 
 export const Route = createFileRoute("/produccion")({
+  beforeLoad: async ({ context }) => {
+      const auth = context.auth;
+      await auth.ensureReady();
+  
+      if (!auth.isAuthenticated) {
+        throw redirect({ to: "/" });
+      }
+  
+      return {
+        meta: {
+          title: "Producción",
+        },
+      };
+    },
+    pendingComponent: () => (
+      <SpinAtom size="large" fullscreen styles={{indicator: {color: '#00d4ff'}}}/>
+    ),
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  useDocumentTitle("Producción");
 
   return (
     <MainLayout

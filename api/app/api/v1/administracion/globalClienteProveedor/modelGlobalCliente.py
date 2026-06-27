@@ -21,3 +21,7 @@ class GlobalCliente(Base):
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("CURRENT_TIMESTAMP"))
 
     ventas: Mapped[List["Venta"]] = relationship(back_populates="cliente")
+    servicio_weather: Mapped[List["ServicioWeather"]] = relationship(back_populates="cliente")
+    servicio_chips: Mapped[List["ServicioChips"]] = relationship(back_populates="cliente")
+    servicio_mc: Mapped[List["ServicioMC"]] = relationship(back_populates="cliente")
+    servicio_pro: Mapped[List["ServicioPro"]] = relationship(back_populates="cliente")

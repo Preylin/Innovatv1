@@ -2,49 +2,74 @@ import { z } from "zod";
 import ExcelJS from "exceljs";
 import { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Upload, Button, Alert, Typography, Space, App, Modal, Progress } from "antd";
+import {
+  Upload,
+  Button,
+  Alert,
+  Typography,
+  Space,
+  App,
+  Modal,
+  Progress,
+} from "antd";
 import { UploadOutlined, LoadingOutlined } from "@ant-design/icons";
+import type { ApiError } from "../../../api/normalizeError";
 import api from "../../../api/client";
-import { ApiError } from "../../../api/normalizeError";
+
+// import type { ApiError } from "../../../api/normalizeError"; // Ajusta según tu proyecto
+// import api from "../../../api/client";
 
 const { Text } = Typography;
 
-/* ====================================================== 
-   1️⃣ Esquema de Validación
-   ====================================================== */
-const dateSchema = z.union([
-  z.date(),
-  z.iso.datetime(),
-  z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Fecha inválida" })
-]).pipe(z.coerce.date());
-
-const ChipImportSchema = z.object({
-  numero: z.coerce.number().int().positive("Número requerido"),
-  iccid: z.string().min(10, "ICCID inválido"),
-  operador: z.string().min(1, "Operador requerido"),
-  mb: z.coerce.string().min(1, "MB requerido"),
-  activacion: dateSchema,
-  instalacion: dateSchema,
-  adicional: z.string().optional().nullable().transform(val => val ?? ""),
+// --- Esquema de Validación Ajustado a tu BD de Ventas ---
+const HistorialWeatherSchema = z.object({
+  nro_documento: z.coerce.string().min(8).max(11),
+  razon_social: z.string().min(1),
+  ubicacion: z.string().optional(),
+  fecha_inicio: z
+    .union([z.date(), z.string().transform((v) => new Date(v))])
+    .pipe(z.date()),
+  fecha_fin: z
+    .union([z.date(), z.string().transform((v) => new Date(v))])
+    .pipe(z.date()),
+  fact_relacionada: z.string().optional(),
+  estado: z.string().optional(),
+  adicional: z.string().optional(),
 });
 
-type ChipImport = z.infer<typeof ChipImportSchema>;
-const EXPECTED_HEADERS = ["numero", "iccid", "operador", "mb", "activacion", "instalacion"];
+type HistorialWeather = z.infer<typeof HistorialWeatherSchema>;
 
-/* ====================================================== 
-   2️⃣ Componente UI
-   ====================================================== */
-export default function ChipImport({ open, onClose }: { open: boolean; onClose: () => void }) {
+// Headers esperados en el Excel (deben coincidir con las llaves del Schema)
+const EXPECTED_HEADERS = [
+  "nro_documento",
+  "razon_social",
+  "ubicacion",
+  "fecha_inicio",
+  "fecha_fin",
+  "fact_relacionada",
+  "estado",
+  "adicional",
+];
+
+export default function HistorialWeatherMasivaExcel({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   const [file, setFile] = useState<File | null>(null);
   const [rowsCount, setRowsCount] = useState(0);
-  const [errors, setErrors] = useState<{ row: number; messages: string[] }[]>([]);
+  const [errors, setErrors] = useState<{ row: number; messages: string[] }[]>(
+    [],
+  );
   const [parsingProgress, setParsingProgress] = useState(0);
-  const [status, setStatus] = useState<"idle" | "parsing" | "ready" | "error" | "uploading">("idle");
-  
+  const [status, setStatus] = useState<
+    "idle" | "parsing" | "ready" | "error" | "uploading"
+  >("idle");
+
   const { message } = App.useApp();
   const qc = useQueryClient();
-
-  // Reset de estados
   const reset = useCallback(() => {
     setFile(null);
     setRowsCount(0);
@@ -52,35 +77,35 @@ export default function ChipImport({ open, onClose }: { open: boolean; onClose: 
     setParsingProgress(0);
     setStatus("idle");
   }, []);
-
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (status === "uploading" || status === "parsing") return;
-    reset();
     onClose();
-  };
+    setTimeout(reset, 300);
+  }, [status, onClose, reset]);
 
-  /* ---- Lógica de parseo con progreso ---- */
   const parseFile = async (file: File) => {
     setStatus("parsing");
+    setErrors([]);
     setParsingProgress(0);
-    
+
     try {
       const workbook = new ExcelJS.Workbook();
       const buffer = await file.arrayBuffer();
       await workbook.xlsx.load(buffer);
       const worksheet = workbook.getWorksheet(1);
-
-      if (!worksheet) throw new Error("Hoja de cálculo no encontrada");
+      if (!worksheet) throw new Error("Hoja no encontrada");
 
       const headers: string[] = [];
-      worksheet.getRow(1).eachCell((c) => headers.push(c.text.toLowerCase().trim()));
+      worksheet
+        .getRow(1)
+        .eachCell((c) => headers.push(c.text?.toLowerCase().trim()));
 
-      const missing = EXPECTED_HEADERS.filter(h => !headers.includes(h));
-      if (missing.length > 0) throw new Error(`Columnas faltantes: ${missing.join(", ")}`);
+      const missing = EXPECTED_HEADERS.filter((h) => !headers.includes(h));
+      if (missing.length > 0)
+        throw new Error(`Columnas faltantes: ${missing.join(", ")}`);
 
-      const validRows: ChipImport[] = [];
+      const validRows: HistorialWeather[] = [];
       const rowErrors: { row: number; messages: string[] }[] = [];
-      const seenIccid = new Set();
       const totalRows = worksheet.rowCount - 1;
 
       worksheet.eachRow((row, rowNumber) => {
@@ -89,51 +114,63 @@ export default function ChipImport({ open, onClose }: { open: boolean; onClose: 
         const rowData: any = {};
         row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           const h = headers[colNumber - 1];
-          if (h) rowData[h] = cell.value;
+          if (h) {
+            const rawValue = cell.value;
+            // Manejo de fechas de ExcelJS y resultados de fórmulas
+            rowData[h] =
+              rawValue && typeof rawValue === "object" && "result" in rawValue
+                ? rawValue.result
+                : rawValue;
+          }
         });
 
-        const result = ChipImportSchema.safeParse(rowData);
+        const result = HistorialWeatherSchema.safeParse(rowData);
         if (!result.success) {
-          rowErrors.push({ row: rowNumber, messages: result.error.issues.map(e => e.message) });
+          rowErrors.push({
+            row: rowNumber,
+            messages: result.error.issues.map(
+              (e) => `${e.path.join(".")}: ${e.message}`,
+            ),
+          });
         } else {
-          if (seenIccid.has(result.data.iccid)) {
-            rowErrors.push({ row: rowNumber, messages: ["ICCID duplicado en el archivo"] });
-          } else {
-            seenIccid.add(result.data.iccid);
-            validRows.push(result.data);
-          }
+          validRows.push(result.data);
         }
 
-        // Actualizar progreso cada 50 filas para no saturar el renderizado
-        if (rowNumber % 50 === 0 || rowNumber === worksheet.rowCount) {
+        if (rowNumber % 20 === 0 || rowNumber === worksheet.rowCount) {
           setParsingProgress(Math.round(((rowNumber - 1) / totalRows) * 100));
         }
       });
 
-      setRowsCount(validRows.length);
-      setErrors(rowErrors);
-      setStatus(rowErrors.length > 0 ? "error" : "ready");
-      setFile(file);
-
+      if (rowErrors.length > 0) {
+        setErrors(rowErrors);
+        setStatus("error");
+      } else {
+        setRowsCount(validRows.length);
+        setFile(file);
+        setStatus("ready");
+      }
     } catch (err: any) {
       setErrors([{ row: 0, messages: [err.message] }]);
       setStatus("error");
     }
   };
 
-  /* ---- Mutación de subida ---- */
   const mutation = useMutation<void, ApiError, FormData>({
-    mutationFn: (fd) => api.post("/chips/import", fd),
+    mutationFn: (fd) =>
+      api.post("/servicio-weather/importar", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
     onMutate: () => setStatus("uploading"),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["chips"] });
-      message.success("Datos importados correctamente");
-      handleClose();
+      qc.invalidateQueries({ queryKey: ["chips-lista"] });
+      message.success("Importación completada correctamente");
     },
-    onError: (err) => {
+    onError: (err: any) => {
       setStatus("error");
-      message.error(err.message || "Error al subir el archivo");
-    }
+      const finalMessage = err.message || "Error en el servidor";
+
+      message.error(finalMessage);
+    },
   });
 
   const onSubmit = () => {
@@ -141,60 +178,61 @@ export default function ChipImport({ open, onClose }: { open: boolean; onClose: 
     const fd = new FormData();
     fd.append("file", file);
     mutation.mutate(fd);
+    onClose();
   };
 
   return (
     <Modal
-      title="Importación Masiva"
+      title="Importación Masiva Weather"
       open={open}
       onCancel={handleClose}
       closable={status !== "uploading"}
       footer={[
-        <Button key="cancel" onClick={handleClose} disabled={status === "uploading"}>
+        <Button
+          key="cancel"
+          onClick={handleClose}
+          disabled={status === "uploading"}
+        >
           Cancelar
         </Button>,
-        <Button 
-          key="ok" 
-          type="primary" 
-          onClick={onSubmit} 
+        <Button
+          key="ok"
+          type="primary"
+          onClick={onSubmit}
           loading={status === "uploading"}
           disabled={status !== "ready"}
         >
-          {status === "uploading" ? "Subiendo..." : "Confirmar Importación"}
-        </Button>
+          Confirmar e Importar {rowsCount > 0 && `(${rowsCount} filas)`}
+        </Button>,
       ]}
     >
       <Space orientation="vertical" style={{ width: "100%" }} size="middle">
         <Upload.Dragger
           accept=".xlsx"
-          beforeUpload={(file) => { parseFile(file); return false; }}
+          beforeUpload={(file) => {
+            parseFile(file);
+            return false;
+          }}
           showUploadList={false}
           disabled={status === "parsing" || status === "uploading"}
         >
           <p className="ant-upload-drag-icon">
             {status === "parsing" ? <LoadingOutlined /> : <UploadOutlined />}
           </p>
-          <p className="ant-upload-text">Haz clic o arrastra el archivo Excel aquí</p>
+          <p className="ant-upload-text">Haz clic o arrastra el Excel aquí</p>
         </Upload.Dragger>
 
         {status === "parsing" && (
-          <div style={{ textAlign: 'center' }}>
-            <Text>Analizando registros...</Text>
+          <div style={{ textAlign: "center" }}>
+            <Text>Validando datos...</Text>
             <Progress percent={parsingProgress} status="active" />
-          </div>
-        )}
-
-        {status === "uploading" && (
-          <div style={{ textAlign: 'center' }}>
-            <Text strong>Subiendo al servidor...</Text>
-            <Progress percent={100} status="active" strokeColor="#52c41a" />
           </div>
         )}
 
         {status === "ready" && (
           <Alert
-            title="Archivo validado"
-            description={`Se procesarán ${rowsCount} chips exitosamente.`}
+            title="Validación exitosa"
+            description={`Se han procesado ${rowsCount} registros correctamente.`}
             type="success"
             showIcon
           />
@@ -203,11 +241,14 @@ export default function ChipImport({ open, onClose }: { open: boolean; onClose: 
         {errors.length > 0 && (
           <Alert
             type="error"
-            title="Errores de validación encontrados"
+            title="Errores encontrados"
             description={
-              <div style={{ maxHeight: 180, overflowY: 'auto' }}>
+              <div style={{ maxHeight: 180, overflowY: "auto" }}>
                 {errors.map((e, i) => (
-                  <div key={i}><Text strong>Fila {e.row}:</Text> {e.messages.join(", ")}</div>
+                  <div key={i} style={{ fontSize: "12px" }}>
+                    <strong>Fila {e.row || "General"}:</strong>{" "}
+                    {e.messages.join(", ")}
+                  </div>
                 ))}
               </div>
             }
