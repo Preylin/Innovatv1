@@ -9,14 +9,10 @@ import { useProList } from "../model/api/pro-api";
 import TablaMostrarRegistrosPro from "./tabla-pro";
 import { ContentModal } from "../../weather/view/modal-general-consultas";
 import { FormCreatePro } from "./form-create-pro";
-import HistorialProMasivaExcel from "../ExampleCargaMasiva";
-import { useToggle } from "#hooks/Toggle";
 
 
 
 export function ShowPro(){
-
-    const MostrarDialog = useToggle();
 
     const { data: apiData, isLoading, isError, error } = useProList();
     // --- 1. Carga de Listas Maestras ---
@@ -53,19 +49,6 @@ export function ShowPro(){
               />
             </DialogContent>
           </Dialog>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-2"
-            onClick={MostrarDialog.toggle}
-          >
-            Importar
-          </Button>
-          <HistorialProMasivaExcel
-            open={MostrarDialog.isToggled}
-            onClose={MostrarDialog.toggle}
-          />
         </div>
       </header>
       <main className="">

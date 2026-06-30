@@ -1,12 +1,10 @@
 import ErrorResultServer from "#components/pages/resultado/ErrorResultServer";
 import { SkeletonHeaderTable } from "#components/skeleton/SkeletonHeaderTable";
 import { Button } from "#components/ui/button";
-import { useToggle } from "#hooks/Toggle";
 import { Plus } from "lucide-react";
 import { useManagerDataWeather } from "../hooks/use-manager-data-weather";
 import { useWeatherList } from "../model/api/weather-api";
 import TablaMostrarRegistrosWather from "./tabla-weather";
-import HistorialWeatherMasivaExcel from "../../ExampleCargaMasiva";
 import { Dialog, DialogContent, DialogTrigger } from "#components/ui/dialog";
 import { ContentModal } from "./modal-general-consultas";
 import { FormCreateWeather } from "./form-create-weather";
@@ -26,7 +24,6 @@ export function ShowWeather() {
 
   // Consumimos nuestro hook customizado
   const { weatherList } = useManagerDataWeather(apiData);
-  const MostrarDialog = useToggle();
 
   if (isLoading) return <SkeletonHeaderTable loading={isLoading} />;
   if (!apiData) return <ErrorResultServer />;
@@ -53,19 +50,6 @@ export function ShowWeather() {
               />
             </DialogContent>
           </Dialog>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-2"
-            onClick={MostrarDialog.toggle}
-          >
-            Importar
-          </Button>
-          <HistorialWeatherMasivaExcel
-            open={MostrarDialog.isToggled}
-            onClose={MostrarDialog.toggle}
-          />
         </div>
       </header>
       <main className="">

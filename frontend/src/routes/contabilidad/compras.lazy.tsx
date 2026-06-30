@@ -1,9 +1,7 @@
 import { createLazyFileRoute } from '@tanstack/react-router'
-import { useToggle } from '../../hooks/Toggle';
 import { useState } from 'react';
 import { Button, Empty, Select, Spin } from 'antd';
-import { LuCalendarDays, LuFileUp, LuInfo, LuSearch } from 'react-icons/lu';
-import HistorialComprasImportMasivaExcel from '../../modulos/contabilidad/ventas/components/ModalImportalMasivoCompras';
+import { LuCalendarDays, LuInfo, LuSearch } from 'react-icons/lu';
 import { useYearsContabilidadCompras } from '../../modulos/contabilidad/compras/data/api.smallConsultasCompras';
 import TablaContabilidadCompras from '../../modulos/contabilidad/compras/components/TablaMostrarActualizarCompras';
 
@@ -33,7 +31,6 @@ const OPCIONES_MESES = [
 ];
 
  function PanelCompras() {
-  const { isToggled, toggle } = useToggle();
   const { data: years, error, isLoading } = useYearsContabilidadCompras();
 
 
@@ -124,15 +121,6 @@ const OPCIONES_MESES = [
           >
             Buscar
           </Button>
-
-          <div className="h-8 w-px bg-gray-200 mx-1 hidden md:block" />
-
-          <Button
-            onClick={toggle}
-            icon={<LuFileUp size={16} />}
-          >
-            Importar
-          </Button>
         </div>
       </header>
 
@@ -155,8 +143,7 @@ const OPCIONES_MESES = [
         )}
       </main>
 
-      {/* Modales Externos */}
-      <HistorialComprasImportMasivaExcel open={isToggled} onClose={toggle} />
+
 
       {/* Manejo de error flotante o inline */}
       {error && (

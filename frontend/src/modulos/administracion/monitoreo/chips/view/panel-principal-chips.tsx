@@ -2,11 +2,8 @@ import ErrorResultServer from "#components/pages/resultado/ErrorResultServer";
 import { SkeletonHeaderTable } from "#components/skeleton/SkeletonHeaderTable";
 import { Button } from "#components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "#components/ui/dialog";
-import { useToggle } from "#hooks/Toggle";
 import { Cpu, Plus } from "lucide-react";
 import { useManagerDataChips } from "../hooks/use-manager-data-chips";
-import HistorialChipsMasivaExcel from "../ModalImportacionSerChips";
-import HistoriaInventarioChipsMasivaExcel from "../ModalImportarInventarioChips";
 import { useChipServicioList } from "../model/api/chips-api";
 import TablaMostrarRegistrosChips from "./tabla-chips";
 import {
@@ -20,8 +17,6 @@ import { ShowChipsInventario } from "./panel-principal-chips-inventario";
 export function ShowChips() {
   // Asumiendo que useWeatherList maneja un { data, isLoading }
   const { data: apiData, isLoading, isError, error } = useChipServicioList();
-  const MostrarDialog = useToggle();
-  const MostrarDialogInventario = useToggle();
 
   const { data: UbicacionesList = [], isLoading: loadingUbicaciones } =
     useUbicacionesList();
@@ -67,31 +62,7 @@ export function ShowChips() {
               <ShowChipsInventario />
             </DialogContent>
           </Dialog> 
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-2"
-            onClick={MostrarDialog.toggle}
-          >
-            Importar chips
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-2"
-            onClick={MostrarDialogInventario.toggle}
-          >
-            Importar Inventario
-          </Button>
         </div>
-        <HistorialChipsMasivaExcel
-          open={MostrarDialog.isToggled}
-          onClose={MostrarDialog.toggle}
-        />
-        <HistoriaInventarioChipsMasivaExcel
-          open={MostrarDialogInventario.isToggled}
-          onClose={MostrarDialogInventario.toggle}
-        />
       </header>
       <main className="">
         <div>

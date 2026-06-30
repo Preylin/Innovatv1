@@ -1,10 +1,8 @@
 import { createLazyFileRoute } from "@tanstack/react-router";
-import { useToggle } from "../../hooks/Toggle";
 import { Button, Empty, Select, Spin } from "antd";
-import HistorialVentasImportMasivaExcel from "../../modulos/contabilidad/ventas/components/ModalImportarMasivoVentas";
 import { useYearsContabilidadVentas } from "../../modulos/contabilidad/ventas/data/api.ventas/api.smallConsultas";
 import { useState } from "react";
-import { LuSearch, LuFileUp, LuCalendarDays, LuInfo } from "react-icons/lu"; // Opcional: Iconos para mejor UX
+import { LuSearch, LuCalendarDays, LuInfo } from "react-icons/lu"; // Opcional: Iconos para mejor UX
 import TablaContabilidadVentas from "../../modulos/contabilidad/ventas/components/TablaMostrarActualizarVentas";
 
 export const Route = createLazyFileRoute("/contabilidad/ventas")({
@@ -14,8 +12,6 @@ export const Route = createLazyFileRoute("/contabilidad/ventas")({
 function RouteComponent() {
   return <PanelVentas />;
 }
-
-
 
 // Constante fuera del componente para evitar re-renders
 const OPCIONES_MESES = [
@@ -34,7 +30,6 @@ const OPCIONES_MESES = [
 ];
 
 function PanelVentas() {
-  const { isToggled, toggle } = useToggle();
   const { data: years, error, isLoading } = useYearsContabilidadVentas();
 
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
@@ -124,22 +119,15 @@ function PanelVentas() {
           >
             Buscar
           </Button>
-
-          <div className="h-8 w-px bg-gray-200 mx-1 hidden md:block" />
-
-          <Button
-            onClick={toggle}
-            icon={<LuFileUp size={16} />}
-          >
-            Importar
-          </Button>
         </div>
       </header>
 
       {/* Área de Contenido / Resultados */}
       <main className="flex-1 py-1 overflow-hidden relative">
         {busquedaPeriodo ? (
-          <div className=""><TablaContabilidadVentas periodo={busquedaPeriodo} /></div>
+          <div className="">
+            <TablaContabilidadVentas periodo={busquedaPeriodo} />
+          </div>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-8 transition-all">
             <Empty
@@ -154,9 +142,6 @@ function PanelVentas() {
           </div>
         )}
       </main>
-
-      {/* Modales Externos */}
-      <HistorialVentasImportMasivaExcel open={isToggled} onClose={toggle} />
 
       {/* Manejo de error flotante o inline */}
       {error && (
