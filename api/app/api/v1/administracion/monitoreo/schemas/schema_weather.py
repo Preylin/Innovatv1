@@ -47,7 +47,7 @@ class WeatherOut(BaseModel):
     adicional: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class WeatherUpdate(BaseModel):
     cliente_id: Optional[int]
@@ -61,7 +61,11 @@ class WeatherUpdate(BaseModel):
 class ActualizarEstadoSchema(BaseModel):
     estado: str
 
+class WeatherCalendarVencimientos(BaseModel):
+    fecha_fin: date
 
+    class Config:
+        model_config = ConfigDict(from_attributes=True)
 
 
 # clases consulta masiva
@@ -74,7 +78,7 @@ class WeatherMasiva(BaseModel):
     estado: Optional[str] = None
     adicional: Optional[str] = None    
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class ProMasiva(BaseModel):
     id: int
@@ -84,7 +88,7 @@ class ProMasiva(BaseModel):
     estado: Optional[str] = None
     adicional: Optional[str] = None
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class ChipsMasiva(BaseModel):
     id: int
@@ -96,7 +100,7 @@ class ChipsMasiva(BaseModel):
     adicional: Optional[str] = None
     
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class MCMasiva(BaseModel):
     id: int
@@ -112,4 +116,4 @@ class MCMasiva(BaseModel):
     estado: Optional[str] = "PENDIENTE"
     
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)

@@ -47,7 +47,7 @@ class ProOut(BaseModel):
     adicional: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class ProUpdate(BaseModel):
     cliente_id: Optional[int]
@@ -60,3 +60,9 @@ class ProUpdate(BaseModel):
 
 class ActualizarEstadoSchema(BaseModel):
     estado: str
+
+class ProCalendarioVencimientosApiSchema(BaseModel):
+    fecha_fin: date
+
+    class Config:
+        model_config = ConfigDict(from_attributes=True)

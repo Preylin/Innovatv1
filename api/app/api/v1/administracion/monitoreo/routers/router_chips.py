@@ -13,7 +13,7 @@ from app.api.v1.administracion.globalClienteProveedor.modelGlobalCliente import 
 from app.api.v1.administracion.monitoreo.models.model_ubicaciones import TablaUbicacionesMonitoreo
 from app.api.v1.administracion.monitoreo.models.model_inventario_chips import InventarioChips
 from app.api.v1.administracion.monitoreo.models.model_chips import ServicioChips
-from app.api.v1.administracion.monitoreo.schemas.schema_chips import ChipsImportacion, ChipsCreate, CreateCliente, CreateUbicacion, CreateIventarioChips, ChipsOut, ChipsUpdate, ActualizarEstadoSchema
+from app.api.v1.administracion.monitoreo.schemas.schema_chips import ChipsImportacion, ChipsCreate, CreateCliente, CreateUbicacion, ChipsOut, ChipsUpdate, ActualizarEstadoSchema, ChipsCalendarioVencimientosApiSchema
 
 router_servicio_chips = APIRouter(prefix="/servicio-chips", tags=["Servicio Chips"], dependencies=[Depends(get_current_user)])
 
@@ -356,3 +356,23 @@ async def actualizar_servicio_chips_estado(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"Error interno del servidor al actualizar: {str(e)}"
         )
+
+@router_servicio_chips.get("/calendario-vencimientos", response_model=List[ChipsCalendarioVencimientosApiSchema])
+async def calendario_vencimientos(db: AsyncSession = Depends(get_session)):
+    query = (
+        select(
+            ServicioChips.fecha_fin
+        )
+        .select_from(ServicioChips)
+        .where(ServicioChips.estado == "PENDIENTE")
+        .order_by(ServicioChips.fecha_fin.asc())
+    )
+
+    try:
+        result = await db.execute(query)
+        servicios = result.mappings().all()
+        return servicios
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error interno: {str(e)}")

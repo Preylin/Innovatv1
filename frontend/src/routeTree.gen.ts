@@ -86,12 +86,6 @@ const TesoreriaMovimientoCajaLazyRouteImport = createFileRoute(
 const GerenciaCotizacionesCrearLazyRouteImport = createFileRoute(
   '/gerencia/cotizaciones/crear',
 )()
-const AdministracionListaProveedoresLazyRouteImport = createFileRoute(
-  '/administracion/lista/proveedores',
-)()
-const AdministracionListaClientesLazyRouteImport = createFileRoute(
-  '/administracion/lista/clientes',
-)()
 const AdministracionHistorialVentasLazyRouteImport = createFileRoute(
   '/administracion/historial/ventas',
 )()
@@ -352,24 +346,6 @@ const GerenciaCotizacionesCrearLazyRoute =
   } as any).lazy(() =>
     import('./routes/gerencia/cotizaciones/crear.lazy').then((d) => d.Route),
   )
-const AdministracionListaProveedoresLazyRoute =
-  AdministracionListaProveedoresLazyRouteImport.update({
-    id: '/lista/proveedores',
-    path: '/lista/proveedores',
-    getParentRoute: () => AdministracionRoute,
-  } as any).lazy(() =>
-    import('./routes/administracion/lista/proveedores.lazy').then(
-      (d) => d.Route,
-    ),
-  )
-const AdministracionListaClientesLazyRoute =
-  AdministracionListaClientesLazyRouteImport.update({
-    id: '/lista/clientes',
-    path: '/lista/clientes',
-    getParentRoute: () => AdministracionRoute,
-  } as any).lazy(() =>
-    import('./routes/administracion/lista/clientes.lazy').then((d) => d.Route),
-  )
 const AdministracionHistorialVentasLazyRoute =
   AdministracionHistorialVentasLazyRouteImport.update({
     id: '/historial/ventas',
@@ -489,8 +465,6 @@ export interface FileRoutesByFullPath {
   '/administracion/historial/compras': typeof AdministracionHistorialComprasLazyRoute
   '/administracion/historial/indez': typeof AdministracionHistorialIndezLazyRoute
   '/administracion/historial/ventas': typeof AdministracionHistorialVentasLazyRoute
-  '/administracion/lista/clientes': typeof AdministracionListaClientesLazyRoute
-  '/administracion/lista/proveedores': typeof AdministracionListaProveedoresLazyRoute
   '/gerencia/cotizaciones/crear': typeof GerenciaCotizacionesCrearLazyRoute
   '/tesoreria/movimiento/caja': typeof TesoreriaMovimientoCajaLazyRoute
   '/tesoreria/movimiento/dolares': typeof TesoreriaMovimientoDolaresLazyRoute
@@ -535,8 +509,6 @@ export interface FileRoutesByTo {
   '/administracion/historial/compras': typeof AdministracionHistorialComprasLazyRoute
   '/administracion/historial/indez': typeof AdministracionHistorialIndezLazyRoute
   '/administracion/historial/ventas': typeof AdministracionHistorialVentasLazyRoute
-  '/administracion/lista/clientes': typeof AdministracionListaClientesLazyRoute
-  '/administracion/lista/proveedores': typeof AdministracionListaProveedoresLazyRoute
   '/gerencia/cotizaciones/crear': typeof GerenciaCotizacionesCrearLazyRoute
   '/tesoreria/movimiento/caja': typeof TesoreriaMovimientoCajaLazyRoute
   '/tesoreria/movimiento/dolares': typeof TesoreriaMovimientoDolaresLazyRoute
@@ -589,8 +561,6 @@ export interface FileRoutesById {
   '/administracion/historial/compras': typeof AdministracionHistorialComprasLazyRoute
   '/administracion/historial/indez': typeof AdministracionHistorialIndezLazyRoute
   '/administracion/historial/ventas': typeof AdministracionHistorialVentasLazyRoute
-  '/administracion/lista/clientes': typeof AdministracionListaClientesLazyRoute
-  '/administracion/lista/proveedores': typeof AdministracionListaProveedoresLazyRoute
   '/gerencia/cotizaciones/crear': typeof GerenciaCotizacionesCrearLazyRoute
   '/tesoreria/movimiento/caja': typeof TesoreriaMovimientoCajaLazyRoute
   '/tesoreria/movimiento/dolares': typeof TesoreriaMovimientoDolaresLazyRoute
@@ -644,8 +614,6 @@ export interface FileRouteTypes {
     | '/administracion/historial/compras'
     | '/administracion/historial/indez'
     | '/administracion/historial/ventas'
-    | '/administracion/lista/clientes'
-    | '/administracion/lista/proveedores'
     | '/gerencia/cotizaciones/crear'
     | '/tesoreria/movimiento/caja'
     | '/tesoreria/movimiento/dolares'
@@ -690,8 +658,6 @@ export interface FileRouteTypes {
     | '/administracion/historial/compras'
     | '/administracion/historial/indez'
     | '/administracion/historial/ventas'
-    | '/administracion/lista/clientes'
-    | '/administracion/lista/proveedores'
     | '/gerencia/cotizaciones/crear'
     | '/tesoreria/movimiento/caja'
     | '/tesoreria/movimiento/dolares'
@@ -743,8 +709,6 @@ export interface FileRouteTypes {
     | '/administracion/historial/compras'
     | '/administracion/historial/indez'
     | '/administracion/historial/ventas'
-    | '/administracion/lista/clientes'
-    | '/administracion/lista/proveedores'
     | '/gerencia/cotizaciones/crear'
     | '/tesoreria/movimiento/caja'
     | '/tesoreria/movimiento/dolares'
@@ -1042,20 +1006,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GerenciaCotizacionesCrearLazyRouteImport
       parentRoute: typeof GerenciaCotizacionesLazyRoute
     }
-    '/administracion/lista/proveedores': {
-      id: '/administracion/lista/proveedores'
-      path: '/lista/proveedores'
-      fullPath: '/administracion/lista/proveedores'
-      preLoaderRoute: typeof AdministracionListaProveedoresLazyRouteImport
-      parentRoute: typeof AdministracionRoute
-    }
-    '/administracion/lista/clientes': {
-      id: '/administracion/lista/clientes'
-      path: '/lista/clientes'
-      fullPath: '/administracion/lista/clientes'
-      preLoaderRoute: typeof AdministracionListaClientesLazyRouteImport
-      parentRoute: typeof AdministracionRoute
-    }
     '/administracion/historial/ventas': {
       id: '/administracion/historial/ventas'
       path: '/historial/ventas'
@@ -1201,8 +1151,6 @@ interface AdministracionRouteChildren {
   AdministracionHistorialComprasLazyRoute: typeof AdministracionHistorialComprasLazyRoute
   AdministracionHistorialIndezLazyRoute: typeof AdministracionHistorialIndezLazyRoute
   AdministracionHistorialVentasLazyRoute: typeof AdministracionHistorialVentasLazyRoute
-  AdministracionListaClientesLazyRoute: typeof AdministracionListaClientesLazyRoute
-  AdministracionListaProveedoresLazyRoute: typeof AdministracionListaProveedoresLazyRoute
   AdministracionListaIndexLazyRoute: typeof AdministracionListaIndexLazyRoute
 }
 
@@ -1215,9 +1163,6 @@ const AdministracionRouteChildren: AdministracionRouteChildren = {
   AdministracionHistorialIndezLazyRoute: AdministracionHistorialIndezLazyRoute,
   AdministracionHistorialVentasLazyRoute:
     AdministracionHistorialVentasLazyRoute,
-  AdministracionListaClientesLazyRoute: AdministracionListaClientesLazyRoute,
-  AdministracionListaProveedoresLazyRoute:
-    AdministracionListaProveedoresLazyRoute,
   AdministracionListaIndexLazyRoute: AdministracionListaIndexLazyRoute,
 }
 

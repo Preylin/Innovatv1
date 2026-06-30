@@ -162,7 +162,7 @@ export default function HistorialWeatherMasivaExcel({
       }),
     onMutate: () => setStatus("uploading"),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["chips-lista"] });
+      qc.invalidateQueries({ queryKey: ["weather-lista"] });
       message.success("Importación completada correctamente");
     },
     onError: (err: any) => {

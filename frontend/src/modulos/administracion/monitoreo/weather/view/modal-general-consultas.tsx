@@ -458,15 +458,18 @@ export function ContentModal({
                         >
                           <div className="flex justify-between items-start gap-2">
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" /> Desde{" "}
-                                <span className="text-foreground">
-                                  {item.fecha_inicio}
-                                </span>{" "}
-                                hasta{" "}
-                                <span className="text-foreground">
-                                  {item.fecha_fin}
-                                </span>
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-5 w-5" />
+                                <div>
+                                  Desde{" "}
+                                  <span className="text-foreground">
+                                    {item.fecha_inicio}
+                                  </span>{" "}
+                                  hasta{" "}
+                                  <span className="text-foreground">
+                                    {item.fecha_fin}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                             {renderStatusBadge(item.estado)}
@@ -492,7 +495,7 @@ export function ContentModal({
                               )}
                             </div>
                             {item.adicional && (
-                              <p className="text-muted-foreground italic">
+                              <p className="text-muted-foreground text-[9px] italic">
                                 "{item.adicional}"
                               </p>
                             )}
@@ -526,15 +529,18 @@ export function ContentModal({
                         >
                           <div className="flex justify-between items-start gap-2">
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" /> Desde{" "}
-                                <span className="text-foreground">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-5 w-5" />
+                                <div>
+                                  Desde{" "}
+                                  <span className="text-foreground">
                                   {item.fecha_inicio}
-                                </span>{" "}
-                                hasta{" "}
-                                <span className="text-foreground">
-                                  {item.fecha_fin}
-                                </span>
+                                  </span>{" "}
+                                  hasta{" "}
+                                  <span className="text-foreground">
+                                    {item.fecha_fin}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                             {renderStatusBadge(item.estado)}
@@ -560,7 +566,7 @@ export function ContentModal({
                               )}
                             </div>
                             {item.adicional && (
-                              <p className="text-muted-foreground italic">
+                              <p className="text-muted-foreground text-[9px] italic">
                                 "{item.adicional}"
                               </p>
                             )}
@@ -601,14 +607,17 @@ export function ContentModal({
                           <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] text-muted-foreground pt-1.5">
                             <div className="col-span-2 flex items-center gap-1 w-full justify-between">
                               <div className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" /> Desde{" "}
-                                <span className="text-foreground">
+                                <Calendar className="h-3 w-3" />
+                                <div>
+                                  Desde{" "}
+                                  <span className="text-foreground">
                                   {item.fecha_inicio}
-                                </span>{" "}
-                                hasta{" "}
-                                <span className="text-foreground">
-                                  {item.fecha_fin}
-                                </span>
+                                  </span>{" "}
+                                  hasta{" "}
+                                  <span className="text-foreground">
+                                    {item.fecha_fin}
+                                  </span>
+                                </div>
                               </div>
                               {item.dias_counter && (
                                 <Badge
@@ -693,15 +702,18 @@ export function ContentModal({
                         >
                           <div className="flex justify-between items-start gap-2">
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" /> Desde{" "}
-                                <span className="text-foreground">
-                                  {item.fecha_inicio}
-                                </span>{" "}
-                                hasta{" "}
-                                <span className="text-foreground">
-                                  {item.fecha_fin}
-                                </span>
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-5 w-5" />
+                                <div>
+                                  Desde{" "}
+                                  <span className="text-foreground">
+                                    {item.fecha_inicio}
+                                  </span>{" "}
+                                  hasta{" "}
+                                  <span className="text-foreground">
+                                    {item.fecha_fin}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                             {renderStatusBadge(item.estado)}
@@ -727,7 +739,7 @@ export function ContentModal({
                               )}
                             </div>
                             {item.adicional && (
-                              <p className="text-muted-foreground italic">
+                              <p className="text-muted-foreground text-[9px] italic">
                                 "{item.adicional}"
                               </p>
                             )}

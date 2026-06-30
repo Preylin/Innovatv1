@@ -8,7 +8,6 @@ import { PanelSuperior } from "../components/interfaz_modulos/TopPanel";
 import { useMemo } from "react";
 import SpinAtom from "../components/atoms/spin/Spin";
 import { UseBarAdministracionIcons } from "../components/atoms/icons/AntDesign/administracion/barAdmIcons";
-import { UseComercialesIconsLO } from "../components/atoms/icons/OtrasLibs/Comerciales";
 import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
 
 export const Route = createFileRoute("/administracion")({
@@ -58,115 +57,97 @@ function useSiderBarContent(): AppMenuItem[] {
         icon: <UseBarAdministracionIcons name="inicio" />,
         to: "/administracion/",
       },
-      {
-        label: "Actividades administrativas",
-        key: "/administracion/actividades",
-        icon: <UseBarAdministracionIcons name="actividades" />,
-        to: "/administracion/actividades",
-      },
-      {
-        label: "Cotizaciones",
-        key: "/administracion/cotizaciones",
-        icon: <UseBarAdministracionIcons name="cotizaciones" />,
-        children: [
-          {
-            label: "Crear",
-            key: "/administracion/cotizaciones/crear",
-            icon: <UseBarAdministracionIcons name="agregar" />,
-            to: "/administracion/cotizaciones/crear",
-          },
-          {
-            label: "Pendientes",
-            key: "/administracion/cotizaciones/pendientes",
-            icon: <UseBarAdministracionIcons name="pendiente" />,
-            to: "/administracion/cotizaciones/pendientes",
-          },
-          {
-            label: "Hechas",
-            key: "/administracion/cotizaciones/hechas",
-            icon: <UseBarAdministracionIcons name="realizado" />,
-            to: "/administracion/cotizaciones/hechas",
-          },
-          {
-            label: "Consultas",
-            key: "/administracion/cotizaciones/consultas",
-            icon: <UseBarAdministracionIcons name="consultar" />,
-            to: "/administracion/cotizaciones/consultas",
-          },
-        ],
-      },
-      {
-        label: "Ordenes",
-        key: "/administracion/ordenes",
-        icon: <UseBarAdministracionIcons name="ordenes" />,
-        children: [
-          {
-            label: "Crear",
-            key: "/administracion/ordenes/crear",
-            icon: <UseBarAdministracionIcons name="agregar" />,
-            to: "/administracion/ordenes/crear",
-          },
-          {
-            label: "Pendientes",
-            key: "/administracion/ordenes/pendientes",
-            icon: <UseBarAdministracionIcons name="pendiente" />,
-            to: "/administracion/ordenes/pendientes",
-          },
-          {
-            label: "Hechas",
-            key: "/administracion/ordenes/hechas",
-            icon: <UseBarAdministracionIcons name="realizado" />,
-            to: "/administracion/ordenes/hechas",
-          },
-          {
-            label: "Consultas",
-            key: "/administracion/ordenes/consultas",
-            icon: <UseBarAdministracionIcons name="consultar" />,
-            to: "/administracion/ordenes/consultas",
-          },
-        ],
-      },
-      {
-        label: "Productos por adquirir",
-        key: "/administracion/productos",
-        icon: <UseBarAdministracionIcons name="productAdq" />,
-        to: "/administracion/productos",
-      },
+      // {
+      //   label: "Actividades administrativas",
+      //   key: "/administracion/actividades",
+      //   icon: <UseBarAdministracionIcons name="actividades" />,
+      //   to: "/administracion/actividades",
+      // },
+      // {
+      //   label: "Cotizaciones",
+      //   key: "/administracion/cotizaciones",
+      //   icon: <UseBarAdministracionIcons name="cotizaciones" />,
+      //   children: [
+      //     {
+      //       label: "Crear",
+      //       key: "/administracion/cotizaciones/crear",
+      //       icon: <UseBarAdministracionIcons name="agregar" />,
+      //       to: "/administracion/cotizaciones/crear",
+      //     },
+      //     {
+      //       label: "Pendientes",
+      //       key: "/administracion/cotizaciones/pendientes",
+      //       icon: <UseBarAdministracionIcons name="pendiente" />,
+      //       to: "/administracion/cotizaciones/pendientes",
+      //     },
+      //     {
+      //       label: "Hechas",
+      //       key: "/administracion/cotizaciones/hechas",
+      //       icon: <UseBarAdministracionIcons name="realizado" />,
+      //       to: "/administracion/cotizaciones/hechas",
+      //     },
+      //     {
+      //       label: "Consultas",
+      //       key: "/administracion/cotizaciones/consultas",
+      //       icon: <UseBarAdministracionIcons name="consultar" />,
+      //       to: "/administracion/cotizaciones/consultas",
+      //     },
+      //   ],
+      // },
+      // {
+      //   label: "Ordenes",
+      //   key: "/administracion/ordenes",
+      //   icon: <UseBarAdministracionIcons name="ordenes" />,
+      //   children: [
+      //     {
+      //       label: "Crear",
+      //       key: "/administracion/ordenes/crear",
+      //       icon: <UseBarAdministracionIcons name="agregar" />,
+      //       to: "/administracion/ordenes/crear",
+      //     },
+      //     {
+      //       label: "Pendientes",
+      //       key: "/administracion/ordenes/pendientes",
+      //       icon: <UseBarAdministracionIcons name="pendiente" />,
+      //       to: "/administracion/ordenes/pendientes",
+      //     },
+      //     {
+      //       label: "Hechas",
+      //       key: "/administracion/ordenes/hechas",
+      //       icon: <UseBarAdministracionIcons name="realizado" />,
+      //       to: "/administracion/ordenes/hechas",
+      //     },
+      //     {
+      //       label: "Consultas",
+      //       key: "/administracion/ordenes/consultas",
+      //       icon: <UseBarAdministracionIcons name="consultar" />,
+      //       to: "/administracion/ordenes/consultas",
+      //     },
+      //   ],
+      // },
+      // {
+      //   label: "Productos por adquirir",
+      //   key: "/administracion/productos",
+      //   icon: <UseBarAdministracionIcons name="productAdq" />,
+      //   to: "/administracion/productos",
+      // },
       {
         label: "Monitoreo",
         key: "/administracion/monitoreo",
         icon: <UseBarAdministracionIcons name="monitoreo" />,
         to: "/administracion/monitoreo",
       },
-      {
-        label: "Activos",
-        key: "/administracion/activos",
-        icon: <UseBarAdministracionIcons name="inicio" />,
-        to: "/administracion/activos",
-      },
+      // {
+      //   label: "Activos",
+      //   key: "/administracion/activos",
+      //   icon: <UseBarAdministracionIcons name="inicio" />,
+      //   to: "/administracion/activos",
+      // },
       {
         label: "Lista de contactos",
         key: "/administracion/lista",
         icon: <UseBarAdministracionIcons name="contactos" />,
-        children: [
-          {
-            label: "Proveedores",
-            key: "/administracion/lista/proveedores",
-            icon: (
-              <UseComercialesIconsLO
-                name="proveedor"
-                style={{ transform: "rotateY(180deg)" }}
-              />
-            ),
-            to: "/administracion/lista/proveedores",
-          },
-          {
-            label: "Clientes",
-            key: "/administracion/lista/clientes",
-            icon: <UseComercialesIconsLO name="cliente" />,
-            to: "/administracion/lista/clientes",
-          },
-        ],
+        to: "/administracion/lista",
       },
       {
         label: "Historial de operaciones",

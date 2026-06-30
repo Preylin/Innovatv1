@@ -26,7 +26,7 @@ class IventarioChipsOut(BaseModel):
     adicional: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class CreateChipInventario(BaseModel):
     numero_chip: str

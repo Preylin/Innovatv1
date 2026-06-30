@@ -61,7 +61,7 @@ class MCOut(BaseModel):
     estado: Optional[str] = "PENDIENTE"
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class MCUpdate(BaseModel):
     cliente_id: Optional[int]
@@ -79,3 +79,9 @@ class MCUpdate(BaseModel):
 
 class ActualizarEstadoSchema(BaseModel):
     estado: str
+
+class MCCalendarioVencimientosApiSchema(BaseModel):
+    fecha_fin: date
+
+    class Config:
+        model_config = ConfigDict(from_attributes=True)

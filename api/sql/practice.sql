@@ -6,7 +6,7 @@
 
 -- drop table if exists administracion.tabla_weather_monitoreo;
 -- drop table if exists administracion.tabla_pro_monitoreo;
--- drop table if exists administracion.tabla_serviciomc_monitoreo;
+-- drop table if exists administracion.tabla_serviciomc_monitoreo;s
 -- drop table if exists administracion.tabla_chips_servicios_monitoreo;
 -- drop table if exists administracion.tabla_chips_inventario_monitoreo;
 -- drop table if exists administracion.tabla_ubicaciones_monitoreo;
@@ -15,4 +15,6 @@
 -- from administracion.tabla_ubicaciones_monitoreo as c
 -- ORDER BY c.ubicacion ASC;
 
--- select * from administracion.tabla_chips_servicios_monitoreo;
+select csm.fecha_fin 
+from administracion.tabla_chips_servicios_monitoreo as csm
+where csm.estado = 'PENDIENTE'

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react"; // 1. Agregamos useEffect
 import { Input } from "#components/ui/input";
 import { Card, CardContent } from "#components/ui/card";
 import {
@@ -9,8 +9,8 @@ import {
 } from "lucide-react";
 import ErrorResultServer from "#components/pages/resultado/ErrorResultServer";
 import { Skeleton } from "#components/ui/skeleton";
-import { useClientesShortList } from "../model/api/clientes-api";
-import { useManagerDataClientes } from "../hooks/use-manager-data-clientes";
+import { useProveedoresList } from "../../clientes/model/api/clientes-api";
+import { useManagerDataProveedores } from "../../clientes/hooks/use-manager-data-clientes";
 
 function useDebounce<T>(value: T, delay = 250): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -26,27 +26,27 @@ function useDebounce<T>(value: T, delay = 250): T {
   return debouncedValue;
 }
 
-export default function ShowClientesLista() {
+export default function ShowProveedoresLista() {
   const [query, setQuery] = useState("");
-  const debouncedQuery = useDebounce(query, 250);
+  const debouncedQuery = useDebounce(query, 250); 
+
   const {
-    data: clientesApi,
+    data: proveedoresApi,
     isLoading,
     isError,
-  } = useClientesShortList();
-  const { ClientesList } = useManagerDataClientes(clientesApi);
+  } = useProveedoresList();
+  const { ProveedoresList } = useManagerDataProveedores(proveedoresApi);
 
-  // Filtro optimizado con useMemo
-  const filteredClientes = useMemo(() => {
+  const filteredProveedores = useMemo(() => {
     const normalizedTerm = debouncedQuery.toLowerCase().trim();
-    if (!normalizedTerm) return ClientesList || [];
+    if (!normalizedTerm) return ProveedoresList || [];
 
-    return (ClientesList || []).filter((item) =>
+    return (ProveedoresList || []).filter((item) =>
       Object.values(item).some((value) =>
         String(value).toLowerCase().includes(normalizedTerm),
       ),
     );
-  }, [ClientesList, debouncedQuery]);
+  }, [ProveedoresList, debouncedQuery]); // Se ejecuta solo cuando cambia la lista o termina el debounce
 
   if (isLoading) {
     return (
@@ -78,17 +78,17 @@ export default function ShowClientesLista() {
     );
   }
 
-  if (isError || !ClientesList) return <ErrorResultServer />;
+  if (isError || !ProveedoresList) return <ErrorResultServer />;
 
   return (
     <div className="px-2 space-y-2">
       <div className="sticky top-0 px-4 z-10 bg-background/95 backdrop-blur-md pb-4 border-b flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div>
           <h1 className=" text-xl md:text-2xl font-bold tracking-tight text-foreground">
-            Lista de Clientes
+            Proveedores
           </h1>
           <p className="text-sm text-muted-foreground">
-            Registros de Clientes del sistema ({filteredClientes.length}).
+            Registros de Proveedores del sistema ({filteredProveedores.length}).
           </p>
         </div>
         <div className="relative w-full sm:w-80">
@@ -96,23 +96,22 @@ export default function ShowClientesLista() {
           <Input
             type="search"
             placeholder="Buscar por RUC, Razón Social..."
-            value={query}
+            value={query} // Sigue atado a 'query' para que visualmente escriba al instante
             onChange={(e) => setQuery(e.target.value)}
             className="pl-9 bg-muted/40 focus-visible:bg-background transition-colors dark:text-muted-foreground"
           />
         </div>
       </div>
 
-      {/* Grid de Clientes */}
-      {filteredClientes.length > 0 ? (
+      {/* Grid de Proveedores */}
+      {filteredProveedores.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {filteredClientes.map((chip, index) => (
+          {filteredProveedores.map((chip, index) => (
             <Card
               key={chip.id || index}
               className="group overflow-hidden transition-all duration-200 hover:shadow-md hover:border-primary/20 border-muted-foreground/10"
             >
               <CardContent className="p-5 flex flex-col justify-between h-full space-y-4">
-                {/* Fila Superior: Razón Social e Índice */}
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-2.5">
                     <Building2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
@@ -125,7 +124,6 @@ export default function ShowClientesLista() {
                   </span>
                 </div>
 
-                {/* Fila Inferior: Detalles del documento */}
                 <div className="pt-2 border-t border-muted/60 flex items-center gap-2 text-xs text-muted-foreground">
                   <IdCard className="h-4 w-4 text-muted-foreground/70" />
                   <span className="font-mono tracking-wider bg-muted/50 px-2 py-1 rounded">

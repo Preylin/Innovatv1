@@ -13,7 +13,7 @@ from app.core.db import get_session
 from app.api.v1.administracion.globalClienteProveedor.modelGlobalCliente import GlobalCliente
 from app.api.v1.administracion.monitoreo.models.model_ubicaciones import TablaUbicacionesMonitoreo
 from app.api.v1.administracion.monitoreo.models.model_MC import ServicioMC
-from app.api.v1.administracion.monitoreo.schemas.schema_MC import MCImportacion, MCCreate, CreateCliente, CreateUbicacion, MCOut, MCUpdate, ActualizarEstadoSchema
+from app.api.v1.administracion.monitoreo.schemas.schema_MC import MCImportacion, MCCreate, CreateCliente, CreateUbicacion, MCOut, MCUpdate, ActualizarEstadoSchema, MCCalendarioVencimientosApiSchema
 
 router_servicio_mc = APIRouter(prefix="/servicio-mc", tags=["Servicio MC"], dependencies=[Depends(get_current_user)])
 
@@ -349,3 +349,23 @@ async def actualizar_servicio_mc_estado(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"Error interno del servidor al actualizar: {str(e)}"
         )
+
+@router_servicio_mc.get("/calendario-vencimientos", response_model=List[MCCalendarioVencimientosApiSchema])
+async def calendario_vencimientos(db: AsyncSession = Depends(get_session)):
+    query = (
+        select(
+            ServicioMC.fecha_fin
+        )
+        .select_from(ServicioMC)
+        .where(ServicioMC.estado == "PENDIENTE")
+        .order_by(ServicioMC.fecha_fin.asc())
+    )
+
+    try:
+        result = await db.execute(query)
+        servicios = result.mappings().all()
+        return servicios
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error interno: {str(e)}")

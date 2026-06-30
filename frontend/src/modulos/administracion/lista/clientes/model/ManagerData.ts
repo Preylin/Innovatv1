@@ -81,3 +81,44 @@ export class UbicacionesManager {
     }
   }
 }
+
+export interface ProveedoresManagerData {
+  key: number;
+  id: number;
+  nro_documento: string;
+  razon_social: string;
+}
+
+export class ProveedoresManager {
+  private data: ProveedoresManagerData[] = [];
+
+  constructor(initialData: ProveedoresManagerData[]) {
+    this.data = initialData;
+  }
+
+  // Funciones síncronas para evitar lidiar con Promesas en el renderizado
+  getData(): ProveedoresManagerData[] {
+    return this.data;
+  }
+
+  getDataById(id: number): ProveedoresManagerData | undefined {
+    return this.data.find((d) => d.id === id);
+  }
+
+  createData(newItem: ProveedoresManagerData): void {
+    this.data.push(newItem);
+  }
+
+  updateData(id: number, updatedItem: ProveedoresManagerData): void {
+    const index = this.data.findIndex((d) => d.id === id);
+    if (index !== -1) {
+      this.data[index] = updatedItem;
+    }
+  }
+  deleteData(id: number): void {
+    const index = this.data.findIndex((d) => d.id === id);
+    if (index !== -1) {
+      this.data.splice(index, 1);
+    }
+  }
+}

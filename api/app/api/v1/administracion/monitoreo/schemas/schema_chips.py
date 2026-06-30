@@ -14,9 +14,6 @@ class CreateCliente(BaseModel):
 class CreateUbicacion(BaseModel):
     ubicacion: texto_limpio
 
-class CreateIventarioChips(BaseModel):
-    numero_chip: texto_limpio
-
 class ChipsImportacion(BaseModel):
     nro_documento: texto_limpio
     razon_social: texto_limpio
@@ -54,7 +51,7 @@ class ChipsOut(BaseModel):
     adicional: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
 
 class ChipsUpdate(BaseModel):
     cliente_id: Optional[int]
@@ -68,3 +65,9 @@ class ChipsUpdate(BaseModel):
 
 class ActualizarEstadoSchema(BaseModel):
     estado: str
+
+class ChipsCalendarioVencimientosApiSchema(BaseModel):
+    fecha_fin: date
+
+    class Config:
+        model_config = ConfigDict(from_attributes=True)

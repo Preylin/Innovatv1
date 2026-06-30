@@ -89,3 +89,4 @@ export const ChipsMasivaApiSchema = z.object({
   adicional: z.string().nullable(),
 });
 export type ChipsMasivaApiType = z.infer<typeof ChipsMasivaApiSchema>;
+

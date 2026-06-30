@@ -18,7 +18,7 @@ from app.api.v1.administracion.monitoreo.models.model_weather import ServicioWea
 from app.api.v1.administracion.monitoreo.models.model_pro import ServicioPro
 from app.api.v1.administracion.monitoreo.models.model_MC import ServicioMC
 from app.api.v1.administracion.monitoreo.models.model_chips import ServicioChips
-from app.api.v1.administracion.monitoreo.schemas.schema_weather import WeatherImportacion, WeatherCreate, CreateCliente, CreateUbicacion, WeatherOut, WeatherUpdate, WeatherMasiva, ProMasiva, MCMasiva, ChipsMasiva, ActualizarEstadoSchema
+from app.api.v1.administracion.monitoreo.schemas.schema_weather import WeatherImportacion, WeatherCreate, CreateCliente, CreateUbicacion, WeatherOut, WeatherUpdate, WeatherMasiva, ProMasiva, MCMasiva, ChipsMasiva, ActualizarEstadoSchema, WeatherCalendarVencimientos
 
 router_servicio_weather = APIRouter(
     prefix="/servicio-weather", tags=["Servicio Weather"], dependencies=[Depends(get_current_user)])
@@ -441,4 +441,23 @@ async def importar_servicio_chips_masiva(cliente_id:int, ubicacion_id: int, db: 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error interno: {str(e)}")
 
+@router_servicio_weather.get("/calendario-vencimientos", response_model=List[WeatherCalendarVencimientos])
+async def calendario_vencimientos(db: AsyncSession = Depends(get_session)):
+    query = (
+        select(
+            ServicioWeather.fecha_fin
+        )
+        .select_from(ServicioWeather)
+        .where(ServicioWeather.estado == "PENDIENTE")
+        .order_by(ServicioWeather.fecha_fin.asc())
+    )
+
+    try:
+        result = await db.execute(query)
+        servicios = result.mappings().all()
+        return servicios
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error interno: {str(e)}")
 

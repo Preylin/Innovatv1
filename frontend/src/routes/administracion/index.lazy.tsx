@@ -33,8 +33,8 @@ function PanelGeneralAdministracion() {
       titulo: "Gestión Comercial",
       descripcion: "Administración de entidades y registros históricos.",
       items: [
-        { to: "/administracion/lista/clientes", label: "Clientes", color: "text-pink-600" },
-        { to: "/administracion/lista/proveedores", label: "Proveedores", color: "text-orange-600" },
+        { to: "/administracion/lista/", label: "Clientes", color: "text-pink-600" },
+        { to: "/administracion/lista/", label: "Proveedores", color: "text-orange-600" },
         { to: "/administracion/historial/ventas", label: "Historial Ventas", color: "text-emerald-600" },
         { to: "/administracion/historial/compras", label: "Historial Compras",color: "text-rose-600" },
       ]

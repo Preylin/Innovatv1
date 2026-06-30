@@ -15,3 +15,11 @@ export const UbicacionOutApiSchema = z.object({
 });
 
 export type UbicacionOutApiType = z.infer<typeof UbicacionOutApiSchema>;
+
+export const ProveedorOutApiSchema = z.object({
+  id: z.number(),
+  nro_documento: z.string(),
+  razon_social: z.string(),
+});
+
+export type ProveedorOutApiType = z.infer<typeof ProveedorOutApiSchema>;
