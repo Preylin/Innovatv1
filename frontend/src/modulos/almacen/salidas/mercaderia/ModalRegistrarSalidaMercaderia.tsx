@@ -34,7 +34,6 @@ import { useCreateSalidaMercaderia } from "../../../../api/queries/modulos/almac
 import { useCatalogoStockDetalladoMercaderiaList } from "../../../../api/queries/modulos/almacen/ingresos/mercaderia.api";
 import getBase64WithPrefix from "../../../../helpers/ImagesBase64";
 import { useClientesListaList } from "../../../../api/queries/modulos/administracion/lista/clientes/clientesLista.api";
-import ModalCreateClientesLista from "../../../administracion/lista/clientes/ModalListaCreateLista";
 const { Text } = Typography;
 
 const ProductoSchema = z.object({
@@ -653,10 +652,7 @@ function ComponenteRegistrarProductosFinal({
       width={"90%"}
       maskClosable={false}
     >
-      <ModalCreateClientesLista
-        open={ModalCliente.isToggled}
-        onClose={() => ModalCliente.setOff()}
-      />
+
       <form
         onSubmit={(e) => {
           e.preventDefault();

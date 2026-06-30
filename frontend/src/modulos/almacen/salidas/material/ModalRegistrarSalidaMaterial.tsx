@@ -31,7 +31,6 @@ import { useCreateSalidaMaterial } from "../../../../api/queries/modulos/almacen
 import { useCatalogoStockDetalladoMaterialList } from "../../../../api/queries/modulos/almacen/ingresos/material.api";
 import getBase64WithPrefix from "../../../../helpers/ImagesBase64";
 import { useClientesListaList } from "../../../../api/queries/modulos/administracion/lista/clientes/clientesLista.api";
-import ModalCreateClientesLista from "../../../administracion/lista/clientes/ModalListaCreateLista";
 const { Text } = Typography;
 
 const ProductoSchema = z.object({
@@ -775,10 +774,6 @@ function ModalRegistrarSalidaMaterial({
       width={"90%"}
       maskClosable={false}
     >
-      <ModalCreateClientesLista
-        open={ModalCliente.isToggled}
-        onClose={() => ModalCliente.setOff()}
-      />
       <form
         onSubmit={(e) => {
           e.preventDefault();
